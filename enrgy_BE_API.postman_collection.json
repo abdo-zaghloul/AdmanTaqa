@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Ministry of Energy Backend API",
-    "description": "API collection for the government-supervised multi-tenant backend (Authority, Service Providers, Fuel Stations).",
+    "description": "Location API only. Base path: /api/locations. Public endpoints use no auth; create/update/delete require auth + LOCATIONS_MANAGE.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -15,221 +15,26 @@
   },
   "item": [
     {
-      "name": "Health",
-      "item": [
-        {
-          "name": "Health Check",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/health",
-            "description": "Check if the API is running."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Register Organization",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"organizationName\": \"My Fuel Station\",\n  \"organizationType\": \"FUEL_STATION\",\n  \"email\": \"admin@station.com\",\n  \"password\": \"SecurePass123\",\n  \"fullName\": \"Admin User\",\n  \"phone\": \"+1234567890\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/register",
-            "description": "Register a new organization (SERVICE_PROVIDER or FUEL_STATION) with first user. Organization status: PENDING until Authority approves. Saves accessToken and refreshToken to collection variables.",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var json = pm.response.json();",
-                    "if (json.data && json.data.accessToken) {",
-                    "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
-                    "}",
-                    "if (json.data && json.data.refreshToken) {",
-                    "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "Login",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@station.com\",\n  \"password\": \"SecurePass123\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login",
-            "description": "Login with email and password. Returns accessToken and refreshToken. The Test script saves both tokens to collection variables so all other requests use the token automatically.",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var json = pm.response.json();",
-                    "if (json.data && json.data.accessToken) {",
-                    "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
-                    "    console.log('Access token saved to collection.');",
-                    "}",
-                    "if (json.data && json.data.refreshToken) {",
-                    "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
-                    "    console.log('Refresh token saved to collection.');",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "name": "Refresh Token",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/refresh",
-            "description": "Exchange refresh token for new access and refresh tokens. Saves the new tokens to collection variables.",
-            "event": [
-              {
-                "listen": "test",
-                "script": {
-                  "exec": [
-                    "var json = pm.response.json();",
-                    "if (json.data && json.data.accessToken) {",
-                    "    pm.collectionVariables.set('accessToken', json.data.accessToken);",
-                    "}",
-                    "if (json.data && json.data.refreshToken) {",
-                    "    pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
-                    "}"
-                  ],
-                  "type": "text/javascript"
-                }
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Organizations",
-      "item": [
-        {
-          "name": "Get My Organization",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/organizations/me",
-            "description": "Get current user's organization profile."
-          }
-        },
-        {
-          "name": "Update My Organization",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Organization Name\"\n}"
-            },
-            "url": "{{baseUrl}}/api/organizations/me",
-            "description": "Update own organization name (SP/FS only)."
-          }
-        },
-        {
-          "name": "List Organizations (Authority)",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/organizations?status=PENDING&page=1&limit=20",
-            "description": "List all organizations. Authority only. Query: status, type, page, limit."
-          }
-        },
-        {
-          "name": "Get Organization by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/organizations/1",
-            "description": "Get organization by ID. Own org or Authority."
-          }
-        },
-        {
-          "name": "Approve or Reject Organization (Authority)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"decision\": \"APPROVED\",\n  \"reason\": \"Documents verified.\"\n}"
-            },
-            "url": "{{baseUrl}}/api/organizations/1/approve",
-            "description": "Approve or reject organization. Authority only. decision: APPROVED | REJECTED."
-          }
-        },
-        {
-          "name": "List Organization Documents",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/organizations/1/documents",
-            "description": "List documents for an organization. Owner or Authority."
-          }
-        },
-        {
-          "name": "Upload Organization Document",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "file", "type": "file", "src": "" },
-                {
-                  "key": "documentType",
-                  "value": "LICENSE",
-                  "type": "text",
-                  "description": "LICENSE | REGISTRATION | OTHER"
-                }
-              ]
-            },
-            "url": "{{baseUrl}}/api/organizations/1/documents",
-            "description": "Upload document (multipart). documentType: LICENSE, REGISTRATION, or OTHER. Max 5MB."
-          }
-        },
-        {
-          "name": "Get Approval History",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/organizations/1/approval-history",
-            "description": "List approval/rejection history for organization."
-          }
-        }
-      ]
-    },
-    {
       "name": "Locations",
       "item": [
+        {
+          "name": "Get Location Tree",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/tree",
+            "description": "Full hierarchy: countries → governorates → cities → areas. Public."
+          }
+        },
         {
           "name": "List Countries",
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/countries",
-            "description": "List all countries. No auth required."
+            "description": "List all countries. Public."
           }
         },
         {
@@ -237,8 +42,9 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/countries/1/governorates",
-            "description": "List governorates by countryId."
+            "description": "List governorates by countryId. Public."
           }
         },
         {
@@ -246,8 +52,44 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/countries/1",
-            "description": "Get single country by ID."
+            "description": "Get single country by ID. Public."
+          }
+        },
+        {
+          "name": "Create Country",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Egypt\",\n  \"code\": \"EG\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/countries",
+            "description": "Create country. Auth + LOCATIONS_MANAGE. Body: name (required), code (optional)."
+          }
+        },
+        {
+          "name": "Update Country",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Egypt Updated\",\n  \"code\": \"EG\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/countries/1",
+            "description": "Update country. Auth + LOCATIONS_MANAGE. Body: name, code (optional)."
+          }
+        },
+        {
+          "name": "Delete Country",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/countries/1",
+            "description": "Delete country. Auth + LOCATIONS_MANAGE."
           }
         },
         {
@@ -255,8 +97,54 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/governorates/1/cities",
-            "description": "List cities by governorateId."
+            "description": "List cities by governorateId. Public."
+          }
+        },
+        {
+          "name": "Get Governorate by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/governorates/1",
+            "description": "Get single governorate by ID. Public."
+          }
+        },
+        {
+          "name": "Create Governorate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cairo\",\n  \"code\": \"CAI\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/countries/1/governorates",
+            "description": "Create governorate under country. Auth + LOCATIONS_MANAGE. Body: name (required), code (optional)."
+          }
+        },
+        {
+          "name": "Update Governorate",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cairo Governorate\",\n  \"code\": \"CAI\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/governorates/1",
+            "description": "Update governorate. Auth + LOCATIONS_MANAGE. Body: name, code (optional)."
+          }
+        },
+        {
+          "name": "Delete Governorate",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/governorates/1",
+            "description": "Delete governorate. Auth + LOCATIONS_MANAGE."
           }
         },
         {
@@ -264,8 +152,54 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/cities/1/areas",
-            "description": "List areas by cityId."
+            "description": "List areas by cityId. Public."
+          }
+        },
+        {
+          "name": "Get City by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/cities/1",
+            "description": "Get single city by ID. Public."
+          }
+        },
+        {
+          "name": "Create City",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nasr City\",\n  \"code\": \"NAS\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/governorates/1/cities",
+            "description": "Create city under governorate. Auth + LOCATIONS_MANAGE. Body: name (required), code (optional)."
+          }
+        },
+        {
+          "name": "Update City",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nasr City Updated\",\n  \"code\": \"NAS\"\n}"
+            },
+            "url": "{{baseUrl}}/api/locations/cities/1",
+            "description": "Update city. Auth + LOCATIONS_MANAGE. Body: name, code (optional)."
+          }
+        },
+        {
+          "name": "Delete City",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/locations/cities/1",
+            "description": "Delete city. Auth + LOCATIONS_MANAGE."
           }
         },
         {
@@ -273,430 +207,44 @@
           "request": {
             "auth": { "type": "noauth" },
             "method": "GET",
+            "header": [],
             "url": "{{baseUrl}}/api/locations/areas/1",
-            "description": "Get single area by ID."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Users",
-      "item": [
-        {
-          "name": "List Users",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/users",
-            "description": "List users in current organization. Authority may use ?organizationId= for another org."
+            "description": "Get single area by ID (e.g. for branch creation). Public."
           }
         },
         {
-          "name": "Get User by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/users/1",
-            "description": "Get user by ID. Same org or Authority."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Branches",
-      "item": [
-        {
-          "name": "List Branches",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/branches",
-            "description": "List branches of current organization. Returns nameEn, nameAr, status, FuelTypes, FuelStationType. Requires approved org."
-          }
-        },
-        {
-          "name": "Get Branch by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/branches/1",
-            "description": "Get branch by ID. Includes Area, FuelStationType, FuelTypes."
-          }
-        },
-        {
-          "name": "Create Branch",
+          "name": "Create Area",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nameEn\": \"Green Fuel - Main\",\n  \"nameAr\": \"جرين فيول - الرئيسية\",\n  \"licenseNumber\": \"FS-2024-001\",\n  \"stationTypeId\": 1,\n  \"areaId\": 1,\n  \"street\": \"شارع التحرير\",\n  \"latitude\": 30.0444,\n  \"longitude\": 31.2357,\n  \"workingHours\": { \"sun\": {\"open\":\"08:00\",\"close\":\"22:00\"}, \"mon\": {\"open\":\"24h\"} },\n  \"address\": \"Nasr City\",\n  \"ownerName\": \"Ahmed Owner\",\n  \"ownerEmail\": \"owner@example.com\",\n  \"managerName\": \"Manager Name\",\n  \"managerEmail\": \"manager@example.com\",\n  \"managerPhone\": \"+201234567890\",\n  \"fuelTypeIds\": [1, 2, 3]\n}"
+              "raw": "{\n  \"name\": \"District 1\",\n  \"code\": \"D1\"\n}"
             },
-            "url": "{{baseUrl}}/api/branches",
-            "description": "Create branch. Required: nameEn, nameAr, areaId. Optional: licenseNumber, stationTypeId, street, latitude, longitude, workingHours, address, owner*, manager*, fuelTypeIds. Requires branches:create."
+            "url": "{{baseUrl}}/api/locations/cities/1/areas",
+            "description": "Create area under city. Auth + LOCATIONS_MANAGE. Body: name (required), code (optional)."
           }
         },
         {
-          "name": "Update Branch",
+          "name": "Update Area",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nameEn\": \"Updated Name En\",\n  \"nameAr\": \"اسم محدث\",\n  \"address\": \"New Address\",\n  \"status\": \"APPROVED\",\n  \"isActive\": true,\n  \"fuelTypeIds\": [1, 2, 3, 4]\n}"
+              "raw": "{\n  \"name\": \"District 1 Updated\",\n  \"code\": \"D1\"\n}"
             },
-            "url": "{{baseUrl}}/api/branches/1",
-            "description": "Update branch. Optional: nameEn, nameAr, licenseNumber, stationTypeId, street, latitude, longitude, workingHours, address, owner*, manager*, status (APPROVED|SUSPENDED|PENDING), isActive, fuelTypeIds. Requires branches:update."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Branch Requests",
-      "item": [
-        {
-          "name": "Submit Branch Request",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nameEn\": \"Green Fuel - 6th October\",\n  \"nameAr\": \"جرين فيول - السادس من أكتوبر\",\n  \"licenseNumber\": \"FS-2024-002\",\n  \"stationTypeId\": 1,\n  \"areaId\": 1,\n  \"street\": \"شارع التحرير\",\n  \"latitude\": 30.0444,\n  \"longitude\": 31.2357,\n  \"workingHours\": { \"sun\": {\"open\":\"08:00\",\"close\":\"22:00\"} },\n  \"address\": \"6th October City\",\n  \"ownerName\": \"Owner Name\",\n  \"ownerEmail\": \"owner@example.com\",\n  \"managerName\": \"Manager Name\",\n  \"managerEmail\": \"manager@example.com\",\n  \"managerPhone\": \"+201234567890\",\n  \"createManagerAccount\": false,\n  \"fuelTypeIds\": [1, 2, 3]\n}"
-            },
-            "url": "{{baseUrl}}/api/branch-requests",
-            "description": "Submit fuel station registration request. Returns request data with unique referenceCode. Fuel Station only. Requires branch-requests:create."
+            "url": "{{baseUrl}}/api/locations/areas/1",
+            "description": "Update area. Auth + LOCATIONS_MANAGE. Body: name, code (optional)."
           }
         },
         {
-          "name": "List Branch Requests",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/branch-requests?status=PENDING&page=1&limit=20",
-            "description": "List branch requests. Fuel Station: own org. Authority: all. Query: status (PENDING|UNDER_REVIEW|APPROVED|REJECTED), page, limit."
-          }
-        },
-        {
-          "name": "Get Branch Request by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/branch-requests/1",
-            "description": "Get branch request by ID with referenceCode. Owner or Authority."
-          }
-        },
-        {
-          "name": "Approve Branch Request (Authority)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/api/branch-requests/1/approve",
-            "description": "Approve branch request. Creates Branch with status APPROVED. Authority only. Requires branch-requests:approve."
-          }
-        },
-        {
-          "name": "Reject Branch Request (Authority)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"reason\": \"Incomplete documents\"\n}"
-            },
-            "url": "{{baseUrl}}/api/branch-requests/1/reject",
-            "description": "Reject branch request with optional reason. Authority only. Requires branch-requests:approve."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Fuel Station Types",
-      "item": [
-        {
-          "name": "List Fuel Station Types",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/fuel-station-types",
-            "description": "List active fuel station types (Full Service, Self Service, etc.) for dropdowns."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Fuel Types",
-      "item": [
-        {
-          "name": "List Fuel Types",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/fuel-types",
-            "description": "List active fuel types (91, 90, 95, Diesel, Natural Gas) for dropdowns."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Roles",
-      "item": [
-        {
-          "name": "List Roles",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/roles",
-            "description": "List roles for current organization (or Authority global roles)."
-          }
-        },
-        {
-          "name": "List Permissions for Org Type",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/roles/permissions",
-            "description": "List permissions allowed for current org type (for role assignment)."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Service Requests",
-      "item": [
-        {
-          "name": "List Service Requests",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/requests?page=1&limit=50",
-            "description": "List service requests. FS: own; SP: linked stations; Authority: all."
-          }
-        },
-        {
-          "name": "Get Service Request by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/requests/1",
-            "description": "Get service request by ID."
-          }
-        },
-        {
-          "name": "Create Service Request",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"branchId\": 1,\n  \"formData\": { \"description\": \"Repair needed\" },\n  \"areaId\": 1,\n  \"cityId\": 1\n}"
-            },
-            "url": "{{baseUrl}}/api/requests",
-            "description": "Create service request (Fuel Station only). Requires approved org and requests:create."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Quotations",
-      "item": [
-        {
-          "name": "List Quotations",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/quotations?limit=50",
-            "description": "List quotations. Authority sees metadata only (no pricing)."
-          }
-        },
-        {
-          "name": "Get Quotation by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/quotations/1",
-            "description": "Get quotation by ID. Authority: no pricing."
-          }
-        },
-        {
-          "name": "Submit Quotation",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"serviceRequestId\": 1,\n  \"amount\": 1500.00,\n  \"currency\": \"USD\"\n}"
-            },
-            "url": "{{baseUrl}}/api/quotations",
-            "description": "Submit quotation (Service Provider only). Requires quotations:submit."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Job Orders",
-      "item": [
-        {
-          "name": "List Job Orders",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/job-orders?limit=50",
-            "description": "List job orders. Authority sees metadata only (no financial)."
-          }
-        },
-        {
-          "name": "Get Job Order by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/job-orders/1",
-            "description": "Get job order by ID."
-          }
-        },
-        {
-          "name": "Create Job Order",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"quotationId\": 1,\n  \"assignedBranchId\": 1,\n  \"executionDetails\": { \"notes\": \"Scheduled\" }\n}"
-            },
-            "url": "{{baseUrl}}/api/job-orders",
-            "description": "Create job order from quotation (Service Provider). Requires job-orders:update."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Inspections",
-      "item": [
-        {
-          "name": "List Inspections",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/inspections?limit=50",
-            "description": "List inspections. Authority only. Optional: targetOrganizationId."
-          }
-        },
-        {
-          "name": "Get Inspection by ID",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/inspections/1",
-            "description": "Get inspection by ID. Authority only."
-          }
-        },
-        {
-          "name": "Create Inspection",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"branchId\": 1,\n  \"targetType\": \"FUEL_STATION\",\n  \"targetOrganizationId\": 1,\n  \"findings\": { \"summary\": \"All compliant\" }\n}"
-            },
-            "url": "{{baseUrl}}/api/inspections",
-            "description": "Create inspection. Authority only. targetType: FUEL_STATION | SERVICE_PROVIDER."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Audit",
-      "item": [
-        {
-          "name": "List Audit Logs",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/audit?page=1&limit=50",
-            "description": "List audit logs. Authority only. Query: organizationId, branchId, resourceType, resourceId, page, limit."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Onboarding",
-      "item": [
-        {
-          "name": "List Onboarding Items",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/onboarding",
-            "description": "List onboarding items (public: active only, ordered). With auth use ?all=true to get all items."
-          }
-        },
-        {
-          "name": "List Onboarding Items (All - Auth)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/onboarding?all=true",
-            "description": "List all onboarding items including inactive. Requires authentication."
-          }
-        },
-        {
-          "name": "List Onboarding Items (Paginated)",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/onboarding/paginated?page=1&limit=20",
-            "description": "List onboarding items with pagination. Returns data with id and pagination meta (page, limit, total, totalPages). Query: page (default 1), limit (default 20, max 100). With auth use ?all=true to include inactive."
-          }
-        },
-        {
-          "name": "List Onboarding Items (Paginated, All - Auth)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/onboarding/paginated?page=1&limit=20&all=true",
-            "description": "Paginated list including inactive items. Requires authentication."
-          }
-        },
-        {
-          "name": "Get Onboarding by ID",
-          "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/api/onboarding/1",
-            "description": "Get single onboarding item by ID. Public."
-          }
-        },
-        {
-          "name": "Create Onboarding Item",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "title", "value": "Welcome", "type": "text", "description": "Required" },
-                { "key": "description", "value": "Short description", "type": "text", "description": "Optional" },
-                { "key": "content", "value": "", "type": "text", "description": "Optional" },
-                { "key": "order", "value": "0", "type": "text", "description": "Optional, default 0" },
-                { "key": "isActive", "value": "true", "type": "text", "description": "Optional, default true" },
-                { "key": "image", "type": "file", "src": "", "description": "Image file (field name 'image' or 'file'). JPEG, PNG, GIF, WebP. Max 5MB." }
-              ]
-            },
-            "url": "{{baseUrl}}/api/onboarding",
-            "description": "Create onboarding item. Auth required. Send image as multipart field 'image' or 'file'; or set imageUrl in body."
-          }
-        },
-        {
-          "name": "Update Onboarding Item",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "title", "value": "Updated Title", "type": "text", "description": "Optional" },
-                { "key": "description", "value": "", "type": "text", "description": "Optional" },
-                { "key": "content", "value": "", "type": "text", "description": "Optional" },
-                { "key": "order", "value": "0", "type": "text", "description": "Optional" },
-                { "key": "isActive", "value": "true", "type": "text", "description": "Optional" },
-                { "key": "image", "type": "file", "src": "", "description": "New image (field 'image' or 'file'). Replaces existing if provided." }
-              ]
-            },
-            "url": "{{baseUrl}}/api/onboarding/1",
-            "description": "Update onboarding item. Auth required. Optional image as 'image' or 'file'."
-          }
-        },
-        {
-          "name": "Delete Onboarding Item",
+          "name": "Delete Area",
           "request": {
             "method": "DELETE",
             "header": [],
-            "url": "{{baseUrl}}/api/onboarding/1",
-            "description": "Delete onboarding item. Auth required."
+            "url": "{{baseUrl}}/api/locations/areas/1",
+            "description": "Delete area. Auth + LOCATIONS_MANAGE."
           }
         }
       ]

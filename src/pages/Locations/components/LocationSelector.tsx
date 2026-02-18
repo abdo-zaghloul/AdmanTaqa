@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import {
     Card,
     CardContent,
@@ -6,23 +7,27 @@ import {
     CardTitle,
     CardFooter,
 } from "@/components/ui/card";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Globe, Landmark, Building, Navigation } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MapPin, Globe, Landmark, Building, Navigation, EllipsisVertical, Plus, Pencil, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export type LocationLevel = "country" | "governorate" | "city" | "area";
+
+interface LocationItemShape {
+    id: number;
+    name: string;
+    code: string;
+}
 
 interface LocationSelectorProps {
     // Data
-    countries: any[];
-    governorates: any[];
-    cities: any[];
-    areas: any[];
+    countries: LocationItemShape[];
+    governorates: LocationItemShape[];
+    cities: LocationItemShape[];
+    areas: LocationItemShape[];
     // Loading states
     loadingCountries: boolean;
     loadingGovs: boolean;
@@ -43,6 +48,10 @@ interface LocationSelectorProps {
     selectedGov?: string;
     selectedCity?: string;
     selectedArea?: string;
+    // CRUD from selector menu
+    onCreateLevel?: (level: LocationLevel) => void;
+    onEditLevel?: (level: LocationLevel, item: LocationItemShape) => void;
+    onDeleteLevel?: (level: LocationLevel, item: { id: number; name: string }) => void;
 }
 
 export default function LocationSelector({
@@ -66,7 +75,76 @@ export default function LocationSelector({
     selectedGov,
     selectedCity,
     selectedArea,
+    onCreateLevel,
+    onEditLevel,
+    onDeleteLevel,
 }: LocationSelectorProps) {
+    const [openMenu, setOpenMenu] = useState<LocationLevel | null>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const triggerRefs = useRef<Record<LocationLevel, HTMLButtonElement | null>>({ country: null, governorate: null, city: null, area: null });
+
+    useEffect(() => {
+        if (openMenu === null) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as Node;
+            if (menuRef.current?.contains(target)) return;
+            if (triggerRefs.current[openMenu]?.contains(target)) return;
+            setOpenMenu(null);
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [openMenu]);
+
+    const renderLevelMenu = (level: LocationLevel, selectedId: string, items: LocationItemShape[]) => {
+        const selectedItem = items.find((i) => i.id.toString() === selectedId);
+        const isOpen = openMenu === level;
+        return (
+            <div className="relative">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={(e) => { e.preventDefault(); setOpenMenu(isOpen ? null : level); }}
+                    ref={(el) => { triggerRefs.current[level] = el; }}
+                    aria-label={`${level} menu`}
+                >
+                    <EllipsisVertical size={16} />
+                </Button>
+                {isOpen && (
+                    <div
+                        ref={menuRef}
+                        className="absolute right-0 top-full z-50 mt-1 min-w-[160px] rounded-md border bg-popover py-1 text-popover-foreground shadow-md"
+                    >
+                        <button
+                            type="button"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                            onClick={() => { onCreateLevel?.(level); setOpenMenu(null); }}
+                        >
+                            <Plus className="h-4 w-4" /> Create
+                        </button>
+                        <button
+                            type="button"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted disabled:opacity-50 disabled:pointer-events-none"
+                            disabled={!selectedItem}
+                            onClick={() => { if (selectedItem) { onEditLevel?.(level, selectedItem); setOpenMenu(null); } }}
+                        >
+                            <Pencil className="h-4 w-4" /> Update
+                        </button>
+                        <button
+                            type="button"
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-destructive disabled:opacity-50 disabled:pointer-events-none"
+                            disabled={!selectedItem}
+                            onClick={() => { if (selectedItem) { onDeleteLevel?.(level, selectedItem); setOpenMenu(null); } }}
+                        >
+                            <Trash2 className="h-4 w-4" /> Delete
+                        </button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
         <div className="grid gap-6 md:grid-cols-2">
             {/* Selection Card */}
@@ -79,112 +157,171 @@ export default function LocationSelector({
                     <CardDescription>Drill down to find a specific area.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {/* Country Select */}
+                    {/* Country checkboxes */}
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground" />
-                            Country
-                        </Label>
-                        <Select
-                            value={selectedCountryId}
-                            onValueChange={(val) => {
-                                setSelectedCountryId(val);
-                                setSelectedGovernorateId("");
-                                setSelectedCityId("");
-                                setSelectedAreaId("");
-                            }}
-                            disabled={loadingCountries}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={loadingCountries ? "Loading countries..." : "Select Country"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {countries.map((country) => (
-                                    <SelectItem key={country.id} value={country.id.toString()}>
-                                        {country.name} ({country.code})
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between gap-2">
+                            <Label className="flex items-center gap-2">
+                                <Globe className="h-4 w-4 text-muted-foreground" />
+                                Country
+                            </Label>
+                            {renderLevelMenu("country", selectedCountryId, countries)}
+                        </div>
+                        <div className={cn("grid grid-cols-2 gap-2 rounded-md border p-2 space-y-1 max-h-[180px] overflow-y-auto", loadingCountries && "opacity-60")}>
+                            {loadingCountries ? (
+                                <p className="text-sm text-muted-foreground py-2">Loading countries...</p>
+                            ) : countries.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-2">No countries.</p>
+                            ) : (
+                                countries.map((country) => (
+                                    <label
+                                        key={country.id}
+                                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={selectedCountryId === country.id.toString()}
+                                            onCheckedChange={(checked) => {
+                                                const id = country.id.toString();
+                                                if (checked) {
+                                                    setSelectedCountryId(id);
+                                                    setSelectedGovernorateId("");
+                                                    setSelectedCityId("");
+                                                    setSelectedAreaId("");
+                                                } else if (selectedCountryId === id) {
+                                                    setSelectedCountryId("");
+                                                    setSelectedGovernorateId("");
+                                                    setSelectedCityId("");
+                                                    setSelectedAreaId("");
+                                                }
+                                            }}
+                                        />
+                                        <span>{country.name}{country.code ? ` (${country.code})` : ""}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
                     </div>
 
-                    {/* Governorate Select */}
+                    {/* Governorate checkboxes */}
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <Landmark className="h-4 w-4 text-muted-foreground" />
-                            Governorate
-                        </Label>
-                        <Select
-                            value={selectedGovernorateId}
-                            onValueChange={(val) => {
-                                setSelectedGovernorateId(val);
-                                setSelectedCityId("");
-                                setSelectedAreaId("");
-                            }}
-                            disabled={!selectedCountryId || loadingGovs}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={!selectedCountryId ? "Select a country first" : loadingGovs ? "Loading..." : "Select Governorate"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {governorates.map((gov) => (
-                                    <SelectItem key={gov.id} value={gov.id.toString()}>
-                                        {gov.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between gap-2">
+                            <Label className="flex items-center gap-2">
+                                <Landmark className="h-4 w-4 text-muted-foreground" />
+                                Governorate
+                            </Label>
+                            {selectedCountryId ? renderLevelMenu("governorate", selectedGovernorateId, governorates) : null}
+                        </div>
+                        <div className={cn("grid grid-cols-2 gap-2 rounded-md border-b p-2 space-y-1 max-h-[180px] overflow-y-auto", (!selectedCountryId || loadingGovs) && "opacity-60")}>
+                            {!selectedCountryId ? (
+                                <p className="text-sm text-muted-foreground py-2">Select a country first.</p>
+                            ) : loadingGovs ? (
+                                <p className="text-sm text-muted-foreground py-2">Loading...</p>
+                            ) : governorates.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-2">No governorates.</p>
+                            ) : (
+                                governorates.map((gov) => (
+                                    <label
+                                        key={gov.id}
+                                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={selectedGovernorateId === gov.id.toString()}
+                                            onCheckedChange={(checked) => {
+                                                const id = gov.id.toString();
+                                                if (checked) {
+                                                    setSelectedGovernorateId(id);
+                                                    setSelectedCityId("");
+                                                    setSelectedAreaId("");
+                                                } else if (selectedGovernorateId === id) {
+                                                    setSelectedGovernorateId("");
+                                                    setSelectedCityId("");
+                                                    setSelectedAreaId("");
+                                                }
+                                            }}
+                                        />
+                                        <span>{gov.name}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
                     </div>
 
-                    {/* City Select */}
+                    {/* City checkboxes */}
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <Building className="h-4 w-4 text-muted-foreground" />
-                            City
-                        </Label>
-                        <Select
-                            value={selectedCityId}
-                            onValueChange={(val) => {
-                                setSelectedCityId(val);
-                                setSelectedAreaId("");
-                            }}
-                            disabled={!selectedGovernorateId || loadingCities}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={!selectedGovernorateId ? "Select a governorate first" : loadingCities ? "Loading..." : "Select City"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {cities.map((city) => (
-                                    <SelectItem key={city.id} value={city.id.toString()}>
-                                        {city.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between gap-2">
+                            <Label className="flex items-center gap-2">
+                                <Building className="h-4 w-4 text-muted-foreground" />
+                                City
+                            </Label>
+                            {selectedGovernorateId ? renderLevelMenu("city", selectedCityId, cities) : null}
+                        </div>
+                        <div className={cn("grid grid-cols-2 gap-2 rounded-md border-b p-2 space-y-1 max-h-[180px] overflow-y-auto", (!selectedGovernorateId || loadingCities) && "opacity-60")}>
+                            {!selectedGovernorateId ? (
+                                <p className="text-sm text-muted-foreground py-2">Select a governorate first.</p>
+                            ) : loadingCities ? (
+                                <p className="text-sm text-muted-foreground py-2">Loading...</p>
+                            ) : cities.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-2">No cities.</p>
+                            ) : (
+                                cities.map((city) => (
+                                    <label
+                                        key={city.id}
+                                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={selectedCityId === city.id.toString()}
+                                            onCheckedChange={(checked) => {
+                                                const id = city.id.toString();
+                                                if (checked) {
+                                                    setSelectedCityId(id);
+                                                    setSelectedAreaId("");
+                                                } else if (selectedCityId === id) {
+                                                    setSelectedCityId("");
+                                                    setSelectedAreaId("");
+                                                }
+                                            }}
+                                        />
+                                        <span>{city.name}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
                     </div>
 
-                    {/* Area Select */}
+                    {/* Area checkboxes */}
                     <div className="space-y-2">
-                        <Label className="flex items-center gap-2">
-                            <Navigation className="h-4 w-4 text-muted-foreground" />
-                            Area
-                        </Label>
-                        <Select
-                            value={selectedAreaId}
-                            onValueChange={setSelectedAreaId}
-                            disabled={!selectedCityId || loadingAreas}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder={!selectedCityId ? "Select a city first" : loadingAreas ? "Loading..." : "Select Area"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {areas.map((area) => (
-                                    <SelectItem key={area.id} value={area.id.toString()}>
-                                        {area.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center justify-between gap-2">
+                            <Label className="flex items-center gap-2">
+                                <Navigation className="h-4 w-4 text-muted-foreground" />
+                                Area
+                            </Label>
+                            {selectedCityId ? renderLevelMenu("area", selectedAreaId, areas) : null}
+                        </div>
+                        <div className={cn("grid grid-cols-2 gap-2 rounded-md border-b p-2 space-y-1 max-h-[180px] overflow-y-auto", (!selectedCityId || loadingAreas) && "opacity-60")}>
+                            {!selectedCityId ? (
+                                <p className="text-sm text-muted-foreground py-2">Select a city first.</p>
+                            ) : loadingAreas ? (
+                                <p className="text-sm text-muted-foreground py-2">Loading...</p>
+                            ) : areas.length === 0 ? (
+                                <p className="text-sm text-muted-foreground py-2">No areas.</p>
+                            ) : (
+                                areas.map((area) => (
+                                    <label
+                                        key={area.id}
+                                        className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/50 cursor-pointer text-sm"
+                                    >
+                                        <Checkbox
+                                            checked={selectedAreaId === area.id.toString()}
+                                            onCheckedChange={(checked) => {
+                                                const id = area.id.toString();
+                                                if (checked) setSelectedAreaId(id);
+                                                else if (selectedAreaId === id) setSelectedAreaId("");
+                                            }}
+                                        />
+                                        <span>{area.name}</span>
+                                    </label>
+                                ))
+                            )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>
