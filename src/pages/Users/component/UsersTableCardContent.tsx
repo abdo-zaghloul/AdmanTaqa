@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { CardContent } from "@/components/ui/card";
 import {
@@ -22,13 +23,13 @@ import {
 import { CheckCircle2, MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
 
 export type UserRow = {
-  id: string;
+  id: number | string;
   fullName: string;
   email: string;
-  phone: string;
-  role: string;
-  orgName: string;
-  status: string;
+  phone?: string;
+  role?: string;
+  orgName?: string;
+  status?: string;
 };
 
 type UsersTableCardContentProps = {
@@ -36,7 +37,8 @@ type UsersTableCardContentProps = {
   onDeleteConfirm?: (user: UserRow) => void;
 };
 
-function getRoleBadge(role: string) {
+function getRoleBadge(role?: string) {
+  if (!role) return <Badge variant="secondary">—</Badge>;
   const variants: Record<string, string> = {
     ADMIN: "bg-blue-50 text-blue-700 border-blue-200",
     AUTHORITY: "bg-purple-50 text-purple-700 border-purple-200",
@@ -51,11 +53,36 @@ function getRoleBadge(role: string) {
   );
 }
 
+type DropdownPlacement = { top: number; left: number; userId: string } | null;
+
 export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersTableCardContentProps) {
   const navigate = useNavigate();
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [dropdownPlacement, setDropdownPlacement] = useState<DropdownPlacement>(null);
   const [userToDelete, setUserToDelete] = useState<UserRow | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!dropdownPlacement) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        dropdownRef.current?.contains(target) ||
+        triggerRef.current?.contains(target)
+      )
+        return;
+      setDropdownPlacement(null);
+      triggerRef.current = null;
+    };
+    const onScroll = () => setDropdownPlacement(null);
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [dropdownPlacement]);
 
   const handleDeleteClick = (user: UserRow) => {
     setUserToDelete(user);
@@ -100,8 +127,8 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
                       <div className="flex flex-col">
                         <span className="font-bold text-sm">{user.fullName}</span>
                         <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <CheckCircle2 className={`h-2.5 w-2.5 ${user.status === "ACTIVE" ? "text-green-500" : "text-slate-400"}`} />
-                          {user.status}
+                          <CheckCircle2 className={`h-2.5 w-2.5 ${(user.status ?? "ACTIVE") === "ACTIVE" ? "text-green-500" : "text-slate-400"}`} />
+                          {user.status ?? "ACTIVE"}
                         </span>
                       </div>
                     </div>
@@ -112,60 +139,30 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
                       <span className="text-muted-foreground text-[10px] font-mono">{user.id}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
-                  <TableCell className="text-right px-6">
-                    <div className="relative">
+                  <TableCell>{getRoleBadge(user.role ?? undefined)}</TableCell>
+                  <TableCell className="text-right px-6 relative">
+                    <div className="flex justify-end">
                       <Button
+                        ref={(el) => {
+                          if (dropdownPlacement?.userId === String(user.id))
+                            triggerRef.current = el;
+                        }}
                         variant="outline"
                         size="sm"
                         className="h-8 w-8 p-0 hover:bg-accent"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setOpenDropdown(openDropdown === user.id ? null : user.id);
+                          const idStr = String(user.id);
+                          const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                          setDropdownPlacement(
+                            dropdownPlacement?.userId === idStr
+                              ? null
+                              : { top: rect.bottom + 4, left: rect.right - 192, userId: idStr }
+                          );
                         }}
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
-
-                      {openDropdown === user.id && (
-                        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-900 rounded-md border shadow-lg z-50 overflow-hidden">
-                          <div className="py-1">
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start text-sm h-9 px-3 py-1"
-                              onClick={() => {
-                                navigate(`/users/${user.id}`);
-                                setOpenDropdown(null);
-                              }}
-                            >
-                              <Eye className="h-3.5 w-3.5 mr-2" />
-                              View
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start text-sm h-9 px-3 py-1"
-                              onClick={() => {
-                                navigate(`/users/${user.id}/edit`, { state: { userData: user } });
-                                setOpenDropdown(null);
-                              }}
-                            >
-                              <Pencil className="h-3.5 w-3.5 mr-2" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              className="w-full justify-start text-sm h-9 px-3 py-1 text-red-600 hover:text-red-600 hover:bg-red-50"
-                              onClick={() => {
-                                handleDeleteClick(user);
-                                setOpenDropdown(null);
-                              }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -174,6 +171,57 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
           </TableBody>
         </Table>
       </div>
+
+      {dropdownPlacement &&
+        (() => {
+          const user = users.find((u) => String(u.id) === dropdownPlacement.userId);
+          if (!user) return null;
+          const menu = (
+            <div
+              ref={dropdownRef}
+              className="fixed z-[100] w-48 rounded-md border bg-background shadow-lg py-1"
+              style={{
+                top: dropdownPlacement.top,
+                left: dropdownPlacement.left,
+              }}
+            >
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm h-9 px-3 py-1"
+                onClick={() => {
+                  navigate(`/users/${user.id}`);
+                  setDropdownPlacement(null);
+                }}
+              >
+                <Eye className="h-3.5 w-3.5 mr-2" />
+                View
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm h-9 px-3 py-1"
+                onClick={() => {
+                  navigate(`/users/${user.id}/edit`, { state: { userData: user } });
+                  setDropdownPlacement(null);
+                }}
+              >
+                <Pencil className="h-3.5 w-3.5 mr-2" />
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-sm h-9 px-3 py-1 text-red-600 hover:text-red-600 hover:bg-red-50"
+                onClick={() => {
+                  handleDeleteClick(user);
+                  setDropdownPlacement(null);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Delete
+              </Button>
+            </div>
+          );
+          return createPortal(menu, document.body);
+        })()}
 
       <Dialog open={isDeleteModalOpen} onOpenChange={(open) => !open && (setIsDeleteModalOpen(false), setUserToDelete(null))}>
         <DialogContent>

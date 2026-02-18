@@ -41,20 +41,12 @@ export default function LocationFormDialog({
   onOpenChange,
   mode,
   level,
-  // initialValues,
-  onSubmit,
+   onSubmit,
   submitting,
 }: LocationFormDialogProps) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-
-  // useEffect(() => {
-  //   if (open) {
-  //     setName(initialValues?.name ?? "");
-  //     setCode(initialValues?.code ?? "");
-  //   }
-  // }, [open, initialValues?.name, initialValues?.code]);
-
+ 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;

@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { Card, CardHeader } from "@/components/ui/card";
-// import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-// import ServiceRequestsTableHeader from "./Component/ServiceRequestsTableHeader";
-import TableServiceRequests from "./Component/TableServiceRequests";
-// import { CardHeader } from "@/components/ui/card";
-// import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import ServiceRequestsTableHeader from "./Component/ServiceRequestsTableHeader";
+import TableServiceRequests from "./Component/TableServiceRequests";
+import useGetOrganization from "@/hooks/Organization/useGetOrganization";
+import PendingApprovalGuard from "@/components/PendingApprovalGuard";
 
 // Mock Data
 const MOCK_REQUESTS = [
@@ -52,6 +49,8 @@ const MOCK_REQUESTS = [
 
 export default function ServiceRequests() {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: orgResponse, isLoading: orgLoading } = useGetOrganization();
+  const organization = orgResponse?.data;
 
   const filteredRequests = MOCK_REQUESTS.filter(
     (req) =>
@@ -61,26 +60,25 @@ export default function ServiceRequests() {
       req.branch.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-left duration-500">
-      <ServiceRequestsTableHeader />
-      <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-
-        <CardHeader className="pb-3 px-6 pt-6">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search requests, stations, branches..."
-              className="pl-10 bg-background/50 border-muted-foreground/10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-
-        <TableServiceRequests requests={filteredRequests} />
-      </Card>
-    </div>
+    <PendingApprovalGuard organization={organization} isLoading={orgLoading}>
+      <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-left duration-500">
+        <ServiceRequestsTableHeader />
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+          <CardHeader className="pb-3 px-6 pt-6">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search requests, stations, branches..."
+                className="pl-10 bg-background/50 border-muted-foreground/10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </CardHeader>
+          <TableServiceRequests requests={filteredRequests} />
+        </Card>
+      </div>
+    </PendingApprovalGuard>
   );
 }

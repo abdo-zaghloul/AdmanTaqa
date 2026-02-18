@@ -17,7 +17,8 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
- import { useState } from "react";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
   label: string;
@@ -94,8 +95,10 @@ export default function AppSidebar() {
     "Users": false
   });
 
+  const { logout } = useAuth();
   const handleLogout = () => {
-     navigate("/login");
+    logout();
+    navigate("/login");
   };
 
   const toggleDropdown = (label: string) => {

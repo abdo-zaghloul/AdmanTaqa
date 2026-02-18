@@ -1,4 +1,6 @@
+import axios from "axios";
 import axiosInstance from "../config";
+import { apiUrl } from "../config";
 import type { AuthResponse } from "@/types/auth";
 
 export interface LoginBody {
@@ -15,6 +17,10 @@ export interface RegisterBody {
   phone?: string;
 }
 
+export interface RefreshBody {
+  refreshToken: string;
+}
+
 export const authService = {
   async login(body: LoginBody): Promise<AuthResponse> {
     const { data } = await axiosInstance.post<AuthResponse>("auth/login", body);
@@ -22,6 +28,12 @@ export const authService = {
   },
   async register(body: RegisterBody): Promise<AuthResponse> {
     const { data } = await axiosInstance.post<AuthResponse>("auth/register", body);
+    return data;
+  },
+  async refresh(body: RefreshBody): Promise<AuthResponse> {
+    const { data } = await axios.post<AuthResponse>(`${apiUrl}auth/refresh`, body, {
+      headers: { "Content-Type": "application/json" },
+    });
     return data;
   },
 };

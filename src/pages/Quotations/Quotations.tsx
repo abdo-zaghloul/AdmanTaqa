@@ -2,6 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import useGetOrganization from "@/hooks/Organization/useGetOrganization";
+import PendingApprovalGuard from "@/components/PendingApprovalGuard";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +62,8 @@ const MOCK_QUOTATIONS = [
 
 export default function Quotations() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { data: orgResponse, isLoading: orgLoading } = useGetOrganization();
+  const organization = orgResponse?.data;
 
   const handleSubmitOffer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +72,7 @@ export default function Quotations() {
   };
 
   return (
+    <PendingApprovalGuard organization={organization} isLoading={orgLoading}>
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -145,5 +150,6 @@ export default function Quotations() {
         <TableQuotations quotations={MOCK_QUOTATIONS} />
       </Card>
     </div>
+    </PendingApprovalGuard>
   );
 }

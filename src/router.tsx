@@ -1,6 +1,11 @@
 import { createHashRouter } from "react-router-dom";
 import Layout from "./components/Layout";
-import Organizations from "./pages/Organizations/Organizations";
+  // Authority
+import OrganizationDetails from "./pages/Authority/Organizations/OrganizationDetails";
+import Organizations from "./pages/Authority/Organizations/Organizations";
+import CreateRegisterOrganization from "./pages/Authority/Organizations/CreateRegisterOrganization";
+
+
 import Locations from "./pages/Locations/Locations";
 import Branches from "./pages/Branches/Branches";
 import BranchDetails from "./pages/Branches/BranchDetails";
@@ -27,11 +32,9 @@ import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import OrganizationDetails from "./pages/Organizations/OrganizationDetails";
 import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
 import EditRole from "./pages/Roles/EditRole";
-import CreateRegisterOrganization from "./pages/Organizations/CreateRegisterOrganization";
-// import FuelRetail from './pages/fuelRetail/FuelRetail';
+
 import FuelRetailDetails from './pages/fuelRetail/FuelRetailDetails';
 import RegisterFuelRetail from './pages/fuelRetail/RegisterFuelRetail';
 import EditFuelRetail from './pages/fuelRetail/EditFuelRetail';
@@ -56,7 +59,7 @@ export const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <Branches />,
+        element: <Profile />,
       },
       {
         path: "roles/:id/edit",

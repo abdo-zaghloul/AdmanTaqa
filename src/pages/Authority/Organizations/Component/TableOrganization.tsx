@@ -11,29 +11,58 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Eye } from "lucide-react";
+import { Search, Filter, Eye, CheckCircle2, XCircle } from "lucide-react";
+import type { OrganizationProfile } from "@/types/organization";
+import type { UseMutationResult } from "@tanstack/react-query";
 
-export type OrganizationRow = {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  email: string;
-  createdAt: string;
-};
+export type OrganizationRow = OrganizationProfile;
 
 type TableOrganizationProps = {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   organizations: OrganizationRow[];
+  onApprove?: (id: number | string) => void;
+  onReject?: (id: number | string, reason?: string) => void;
+  approveMutation?: UseMutationResult<unknown, Error, { id: number | string; body: { decision: "APPROVED" | "REJECTED"; reason?: string } }> | null;
 };
+
+function StatusBadge({ status }: { status: string }) {
+  if (status === "APPROVED")
+    return (
+      <Badge className="bg-green-50 text-green-700 border-green-200 text-xs">
+        Approved
+      </Badge>
+    );
+  if (status === "PENDING")
+    return (
+      <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+        Pending
+      </Badge>
+    );
+  if (status === "REJECTED")
+    return (
+      <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200 text-xs">
+        Rejected
+      </Badge>
+    );
+  return <Badge variant="outline">{status}</Badge>;
+}
 
 export default function TableOrganization({
   searchQuery,
   onSearchChange,
   organizations,
+  onApprove,
+  onReject,
+  approveMutation,
 }: TableOrganizationProps) {
   const navigate = useNavigate();
+  const isPending = approveMutation?.isPending ?? false;
+
+  const handleReject = (org: OrganizationRow) => {
+    const reason = window.prompt("Rejection reason (optional):");
+    onReject?.(org.id, reason ?? undefined);
+  };
 
   return (
     <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm">
@@ -61,9 +90,10 @@ export default function TableOrganization({
           <Table>
             <TableHeader className="bg-muted/40 divide-y">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[120px] font-bold text-foreground">ID</TableHead>
+                <TableHead className="w-[80px] font-bold text-foreground">ID</TableHead>
                 <TableHead className="font-bold text-foreground">Organization</TableHead>
                 <TableHead className="font-bold text-foreground">Type</TableHead>
+                <TableHead className="font-bold text-foreground">Status</TableHead>
                 <TableHead className="font-bold text-foreground">Created At</TableHead>
                 <TableHead className="text-right font-bold text-foreground px-6">Actions</TableHead>
               </TableRow>
@@ -74,15 +104,15 @@ export default function TableOrganization({
                   <TableRow key={org.id} className="hover:bg-muted/20 transition-colors border-b last:border-0">
                     <TableCell className="font-mono text-xs font-semibold text-primary/80">{org.id}</TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-sm">{org.name}</span>
-                        <span className="text-xs text-muted-foreground">{org.email}</span>
-                      </div>
+                      <span className="font-bold text-sm">{org.name}</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-normal border-primary/20 bg-primary/5 text-primary/80">
                         {org.type.replace("_", " ")}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={org.status} />
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm font-medium">
                       {new Date(org.createdAt).toLocaleDateString("en-GB", {
@@ -92,21 +122,46 @@ export default function TableOrganization({
                       })}
                     </TableCell>
                     <TableCell className="text-right px-6">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-2 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
-                        onClick={() => navigate(`/organizations/${org.id}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        View Details
-                      </Button>
+                      <div className="flex items-center justify-end gap-2 flex-wrap">
+                        {org.status === "PENDING" && onApprove && onReject && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleReject(org)}
+                              disabled={isPending}
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                              Reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1.5 bg-green-600 hover:bg-green-700"
+                              onClick={() => onApprove(org.id)}
+                              disabled={isPending}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Approve
+                            </Button>
+                          </>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-2 hover:bg-primary/5 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+                          onClick={() => navigate(`/organizations/${org.id}`)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-40 text-center">
+                  <TableCell colSpan={6} className="h-40 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2 opacity-50">
                       <Search className="h-8 w-8" />
                       <p className="text-sm">No organizations found matching your search.</p>

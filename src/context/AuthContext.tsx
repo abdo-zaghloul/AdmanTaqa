@@ -32,6 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOrganization(data.organization);
     setAccessToken(data.accessToken);
     localStorage.setItem("access_token", data.accessToken);
+    if (data.refreshToken) {
+      localStorage.setItem("refresh_token", data.refreshToken);
+    }
   };
 
   const logout = () => {
@@ -39,6 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOrganization(null);
     setAccessToken(null);
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
   };
 
   return (
