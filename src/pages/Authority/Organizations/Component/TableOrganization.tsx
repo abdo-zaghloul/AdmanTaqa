@@ -13,8 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Eye } from "lucide-react";
 import type { OrganizationProfile } from "@/types/organization";
-import type { UseMutationResult } from "@tanstack/react-query";
-import OrganizationApproveRejectButtons from "./OrganizationApproveRejectButtons";
+import OrganizationActions from "./OrganizationActions";
 
 export type OrganizationRow = OrganizationProfile;
 
@@ -22,9 +21,6 @@ type TableOrganizationProps = {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   organizations: OrganizationRow[];
-  onApprove?: (id: number | string) => void;
-  onReject?: (id: number | string, reason?: string) => void;
-  approveMutation?: UseMutationResult<unknown, Error, { id: number | string; body: { decision: "APPROVED" | "REJECTED"; reason?: string } }> | null;
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -53,12 +49,8 @@ export default function TableOrganization({
   searchQuery,
   onSearchChange,
   organizations,
-  onApprove,
-  onReject,
-  approveMutation,
 }: TableOrganizationProps) {
   const navigate = useNavigate();
-  const isPending = approveMutation?.isPending ?? false;
 
   return (
     <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm">
@@ -119,14 +111,12 @@ export default function TableOrganization({
                     </TableCell>
                     <TableCell className="text-right px-6">
                       <div className="flex items-center justify-end gap-2 flex-wrap">
-                        {onApprove && onReject && (
-                          <OrganizationApproveRejectButtons
-                            organization={org}
-                            onApprove={onApprove}
-                            onReject={onReject}
-                            isPending={isPending}
-                          />
-                        )}
+                        <OrganizationActions
+                          orgId={org.id}
+                          orgName={org.name}
+                          status={org.status}
+                          variant="compact"
+                        />
                         <Button
                           variant="outline"
                           size="sm"

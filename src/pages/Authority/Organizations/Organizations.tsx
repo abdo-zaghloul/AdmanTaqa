@@ -1,17 +1,11 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { toast } from "sonner";
 import TableOrganization from "./Component/TableOrganization";
 import useGetOrganizations from "@/hooks/Organization/useGetOrganizations";
-import useApproveOrganization from "@/hooks/Organization/useApproveOrganization";
 
 export default function Organizations() {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const { data, isLoading, isError, error } = useGetOrganizations({ page: 1, limit: 20 });
-  const approveMutation = useApproveOrganization();
+
   const filteredOrgs = useMemo(() => {
     const list = data?.data?.items ?? [];
     if (!searchQuery.trim()) return list;
@@ -22,27 +16,6 @@ export default function Organizations() {
         String(org.id).toLowerCase().includes(q)
     );
   }, [data?.data?.items, searchQuery]);
-// console.log(error);
-
-  const handleApprove = (id: number | string) => {
-    approveMutation.mutate(
-      { id, body: { decision: "APPROVED" } },
-      {
-        onSuccess: () => toast.success("Organization approved."),
-        onError: (e) => toast.error((e as Error)?.message ?? "Failed to approve."),
-      }
-    );
-  };
-
-  const handleReject = (id: number | string, reason?: string) => {
-    approveMutation.mutate(
-      { id, body: { decision: "REJECTED", reason } },
-      {
-        onSuccess: () => toast.success("Organization rejected."),
-        onError: (e) => toast.error((e as Error)?.message ?? "Failed to reject."),
-      }
-    );
-  };
 
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
@@ -53,10 +26,6 @@ export default function Organizations() {
             Manage and monitor all service providers and fuel stations.
           </p>
         </div>
-        <Button className="gap-2 shadow-sm" onClick={() => navigate("/organizations/register")}>
-          <Plus className="h-4 w-4" />
-          Register Organization
-        </Button>
       </div>
 
       {isLoading ? (
@@ -72,9 +41,6 @@ export default function Organizations() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           organizations={filteredOrgs}
-          onApprove={handleApprove}
-          onReject={handleReject}
-          approveMutation={approveMutation}
         />
       )}
     </div>

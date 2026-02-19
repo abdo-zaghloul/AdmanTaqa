@@ -1,18 +1,7 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Building2,
   ChevronLeft,
@@ -22,11 +11,9 @@ import {
   Clock,
   Shield,
   FileText,
-  Activity,
 } from "lucide-react";
-import { toast } from "sonner";
 import useGetOrganizationById from "@/hooks/Organization/useGetOrganizationById";
-import useApproveOrganization from "@/hooks/Organization/useApproveOrganization";
+import OrganizationActions from "./Component/OrganizationActions";
 
 export default function OrganizationDetails() {
   const { id } = useParams<{ id: string }>();
@@ -34,46 +21,6 @@ export default function OrganizationDetails() {
   const orgId = id ?? "";
 
   const { data: org, isLoading: orgLoading, isError: orgError } = useGetOrganizationById(orgId);
-  const approveMutation = useApproveOrganization();
-  const [rejectModalOpen, setRejectModalOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
-
-  const handleApprove = () => {
-    if (!orgId) return;
-    approveMutation.mutate(
-      { id: orgId, body: { decision: "APPROVED" } },
-      {
-        onSuccess: () => {
-          toast.success("Organization approved.");
-          navigate("/organizations");
-        },
-        onError: (e) => toast.error((e as Error)?.message ?? "Failed to approve."),
-      }
-    );
-  };
-
-  const handleRejectSubmit = () => {
-    if (!orgId) return;
-    approveMutation.mutate(
-      { id: orgId, body: { decision: "REJECTED", reason: rejectReason || undefined } },
-      {
-        onSuccess: () => {
-          toast.success("Organization rejected.");
-          setRejectModalOpen(false);
-          setRejectReason("");
-          navigate("/organizations");
-        },
-        onError: (e) => {
-          toast.error((e as Error)?.message ?? "Failed to reject.");
-        },
-      }
-    );
-  };
-
-  const openRejectModal = () => {
-    setRejectReason("");
-    setRejectModalOpen(true);
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -154,33 +101,20 @@ export default function OrganizationDetails() {
         </div>
 
         <div className="flex items-center gap-3">
-          {org.status === "PENDING" ? (
-            <>
-              <Button
-                variant="destructive"
-                className="gap-2 shadow-lg"
-                onClick={openRejectModal}
-                disabled={approveMutation.isPending}
-              >
-                <XCircle className="h-4 w-4" />
-                Reject
-              </Button>
-              <Button
-                className="gap-2 shadow-lg bg-green-600 hover:bg-green-700"
-                onClick={handleApprove}
-                disabled={approveMutation.isPending}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Approve
-              </Button>
-            </>
-          ) : (
+          <OrganizationActions
+            orgId={org.id}
+            orgName={org.name}
+            status={org.status}
+            onSuccess={() => navigate("/organizations")}
+          />
+          {org.status !== "PENDING" && (
             <Button variant="outline" className="gap-2 shadow-sm">
               <Shield className="h-4 w-4" />
               Manage Permissions
             </Button>
           )}
         </div>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -231,30 +165,6 @@ export default function OrganizationDetails() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm shadow-slate-200/50 overflow-hidden">
-            <CardHeader className="border-b bg-slate-50/50 py-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Overview
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-6 pb-0 px-0">
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100">
-                <div className="p-6 text-center hover:bg-slate-50 transition-colors">
-                  <p className="text-3xl font-black text-slate-900 mb-1">{org.type}</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Type
-                  </p>
-                </div>
-                <div className="p-6 text-center hover:bg-slate-50 transition-colors">
-                  <p className="text-3xl font-black text-slate-900 mb-1">{org.status}</p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Status
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -276,47 +186,6 @@ export default function OrganizationDetails() {
         </div>
       </div>
 
-      {/* Reject Reason Modal */}
-      <Dialog open={rejectModalOpen} onOpenChange={setRejectModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Reject Organization</DialogTitle>
-            <DialogDescription>
-              Optionally provide a reason for rejecting this organization. The reason may be shown to the organization.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reject-reason">Reason (optional)</Label>
-              <Textarea
-                id="reject-reason"
-                placeholder="e.g. Incomplete documents, missing information..."
-                className="min-h-[100px]"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setRejectModalOpen(false)}
-              disabled={approveMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleRejectSubmit}
-              disabled={approveMutation.isPending}
-            >
-              {approveMutation.isPending ? "Rejecting..." : "Reject"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
