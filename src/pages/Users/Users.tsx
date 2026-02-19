@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Card, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -10,22 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, UserPlus, Filter } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { Search, Filter } from "lucide-react";
 import UsersTableCardContent from "./component/UsersTableCardContent";
+import CreateUserDialog from "./component/CreateUserDialog";
 import type { UserRow } from "./component/UsersTableCardContent";
 import useGetUsers from "@/hooks/Users/useGetUsers";
-import useCreateUser from "@/hooks/Users/useCreateUser";
-import type { CreateUserBody, ApiUser } from "@/types/user";
+import type { ApiUser } from "@/types/user";
 
 function toUserRow(u: ApiUser): UserRow {
   return {
@@ -42,50 +31,24 @@ function toUserRow(u: ApiUser): UserRow {
 export default function Users() {
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<CreateUserBody>({
-    email: "",
-    fullName: "",
-    password: "",
-    phone: "",
-  });
 
   const { data, isLoading, isError, error } = useGetUsers();
-  const createMutation = useCreateUser();
-  const users = data?.data ?? [];
+  const users = useMemo(() => data?.data ?? [], [data?.data]);
   const rows = useMemo(() => users.map(toUserRow), [users]);
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const list = q
       ? rows.filter(
-          (u) =>
-            u.fullName.toLowerCase().includes(q) ||
-            u.email.toLowerCase().includes(q) ||
-            String(u.id).toLowerCase().includes(q)
-        )
+        (u) =>
+          u.fullName.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          String(u.id).toLowerCase().includes(q)
+      )
       : rows;
     return roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
   }, [rows, searchQuery, roleFilter]);
 
-  const handleCreateUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    const body: CreateUserBody = {
-      email: createForm.email.trim(),
-      fullName: createForm.fullName.trim(),
-      password: createForm.password,
-      phone: createForm.phone?.trim() || undefined,
-    };
-    createMutation.mutate(body, {
-      onSuccess: () => {
-        toast.success("User created successfully.");
-        setIsCreateModalOpen(false);
-        setCreateForm({ email: "", fullName: "", password: "", phone: "" });
-      },
-      onError: (e) => toast.error((e as Error)?.message ?? "Failed to create user."),
-    });
-  };
-
-  const handleDeleteUser = (_user: UserRow) => {
+  const handleDeleteUser = () => {
     toast.info("Delete user is not implemented in the API. Use team/deactivate if available.");
   };
 
@@ -98,76 +61,9 @@ export default function Users() {
             Manage user accounts in your organization.
           </p>
         </div>
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-sm">
-              <UserPlus className="h-4 w-4" />
-              Create New User
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
-              <DialogDescription>
-                Add a new user to your organization. Body: email, fullName, password, phone (optional).
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreateUser} className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    placeholder="John Doe"
-                    value={createForm.fullName}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, fullName: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    value={createForm.email}
-                    onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone (optional)</Label>
-                <Input
-                  id="phone"
-                  placeholder="+966..."
-                  value={createForm.phone ?? ""}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))}
-                />
-              </div>
-              <DialogFooter className="pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? "Creating..." : "Create User"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <CreateUserDialog />
       </div>
+      {/* {console.log(isError, error)} */}
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-muted-foreground">

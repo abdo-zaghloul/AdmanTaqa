@@ -11,9 +11,10 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { Search, Filter, Eye } from "lucide-react";
 import type { OrganizationProfile } from "@/types/organization";
 import type { UseMutationResult } from "@tanstack/react-query";
+import OrganizationApproveRejectButtons from "./OrganizationApproveRejectButtons";
 
 export type OrganizationRow = OrganizationProfile;
 
@@ -58,11 +59,6 @@ export default function TableOrganization({
 }: TableOrganizationProps) {
   const navigate = useNavigate();
   const isPending = approveMutation?.isPending ?? false;
-
-  const handleReject = (org: OrganizationRow) => {
-    const reason = window.prompt("Rejection reason (optional):");
-    onReject?.(org.id, reason ?? undefined);
-  };
 
   return (
     <Card className="border-none shadow-xl bg-card/50 backdrop-blur-sm">
@@ -123,28 +119,13 @@ export default function TableOrganization({
                     </TableCell>
                     <TableCell className="text-right px-6">
                       <div className="flex items-center justify-end gap-2 flex-wrap">
-                        {org.status === "PENDING" && onApprove && onReject && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleReject(org)}
-                              disabled={isPending}
-                            >
-                              <XCircle className="h-3.5 w-3.5" />
-                              Reject
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="h-8 gap-1.5 bg-green-600 hover:bg-green-700"
-                              onClick={() => onApprove(org.id)}
-                              disabled={isPending}
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Approve
-                            </Button>
-                          </>
+                        {onApprove && onReject && (
+                          <OrganizationApproveRejectButtons
+                            organization={org}
+                            onApprove={onApprove}
+                            onReject={onReject}
+                            isPending={isPending}
+                          />
                         )}
                         <Button
                           variant="outline"

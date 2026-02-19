@@ -22,6 +22,7 @@ export default function Organizations() {
         String(org.id).toLowerCase().includes(q)
     );
   }, [data?.data?.items, searchQuery]);
+// console.log(error);
 
   const handleApprove = (id: number | string) => {
     approveMutation.mutate(

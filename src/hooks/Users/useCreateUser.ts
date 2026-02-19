@@ -3,8 +3,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateUserBody } from "@/types/user";
 
 const createUser = async (body: CreateUserBody) => {
-  const response = await axiosInstance.post("users", body);
-  return response.data;
+  try {
+    const response = await axiosInstance.post("users", body);
+    return response.data;
+  } catch (err) {
+    const withResponse = err as { response?: { data?: { message?: string } } };
+    const message =
+      typeof withResponse.response?.data?.message === "string"
+        ? withResponse.response.data.message
+        : err instanceof Error
+          ? err.message
+          : "Failed to create user.";
+    throw new Error(message);
+  }
 };
 
 export default function useCreateUser() {

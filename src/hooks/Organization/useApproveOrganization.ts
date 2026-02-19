@@ -6,8 +6,19 @@ const approveOrganization = async (
   id: number | string,
   body: ApproveOrganizationBody
 ) => {
-  const response = await axiosInstance.post(`organizations/${id}/approve`, body);
-  return response.data;
+  try {
+    const response = await axiosInstance.post(`organizations/${id}/approve`, body);
+    return response.data;
+  } catch (err) {
+    const withResponse = err as { response?: { data?: { message?: string } } };
+    const message =
+      typeof withResponse.response?.data?.message === "string"
+        ? withResponse.response.data.message
+        : err instanceof Error
+          ? err.message
+          : "Failed to approve organization.";
+    throw new Error(message);
+  }
 };
 
 export default function useApproveOrganization() {
