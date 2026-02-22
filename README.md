@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# TAQA Admin Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+واجهة إدارة مبنية بـ React + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## Full Routes Audit
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+هذا الجرد مبني على الصفحات المسجلة في `src/router.tsx` ومقسّم حسب الربط مع الباك:
 
-## React Compiler
+- **Backend-integrated**: الصفحة مربوطة API فعليًا.
+- **Frontend-only**: الصفحة Mock/Static بدون ربط API فعلي.
+- **Mixed/partial**: الصفحة فيها جزء مربوط باك وجزء Mock.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Backend-integrated (18)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- `/login` → `src/pages/Auth/Login.tsx`
+- `/register` → `src/pages/Auth/Register.tsx`
+- `/` (index) → `src/pages/Profile/Profile.tsx`
+- `/profile` → `src/pages/Profile/Profile.tsx`
+- `/organizations` → `src/pages/Authority/Organizations/Organizations.tsx`
+- `/organizations/:id` → `src/pages/Authority/Organizations/OrganizationDetails.tsx`
+- `/locations` → `src/pages/Locations/Locations.tsx`
+- `/branches` → `src/pages/Branches/Branches.tsx`
+- `/branches/create` → `src/pages/Branches/CreateBranch.tsx`
+- `/branches/:id/edit` → `src/pages/Branches/EditBranch.tsx`
+- `/branches/:id` → `src/pages/Branches/BranchDetails.tsx`
+- `/users` → `src/pages/Users/Users.tsx`
+- `/users/:id` → `src/pages/Users/UserDetails.tsx`
+- `/registrations` → `src/pages/Registrations/RegistrationsPage.tsx`
+- `/registrations/:id` → `src/pages/Registrations/RegistrationDetailPage.tsx`
+- `/onboarding` → `src/pages/Onboarding/OnboardingPage.tsx`
+- `/onboarding/:id` → `src/pages/Onboarding/OnboardingDetails.tsx`
+- `OrganizationActions` logic → `src/pages/Authority/Organizations/Component/OrganizationActions.tsx`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Frontend-only / Mock (15)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `/roles` → `src/pages/Roles/Roles.tsx`
+- `/roles/create` → `src/pages/Roles/CreateCustomRole.tsx`
+- `/roles/:id` → `src/pages/Roles/RoleDetails.tsx`
+- `/roles/:id/edit` → `src/pages/Roles/EditRole.tsx`
+ - `/fuel-retail` → `src/pages/fuelRetail/fuelRetail.tsx`
+- `/fuel-retail/:id` → `src/pages/fuelRetail/FuelRetailDetails.tsx`
+- `/fuel-retail/register` → `src/pages/fuelRetail/RegisterFuelRetail.tsx`
+- `/fuel-retail/:id/edit` → `src/pages/fuelRetail/EditFuelRetail.tsx`
+- `/service-requests/:id` → `src/pages/ServiceRequests/ServiceRequestDetails.tsx`
+- `/job-orders` → `src/pages/JobOrders/JobOrders.tsx`
+- `/job-orders/:id` → `src/pages/JobOrders/JobOrderDetails.tsx`
+- `/inspections` → `src/pages/Inspections/Inspections.tsx`
+- `/audit-log` → `src/pages/AuditLog/AuditLog.tsx`
+- `*` → `src/pages/NotFound/NotFound.tsx`
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Mixed / Partial (2)
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `/service-requests` → `src/pages/ServiceRequests/ServiceRequests.tsx`
+  - فيه guard/organization من الباك + الداتا الأساسية Mock.
+- `/quotations` → `src/pages/Quotations/Quotations.tsx`
+  - فيه guard/organization من الباك + الداتا الأساسية Mock.
+
+---
+
+## Summary
+
+- **Backend-integrated:** 18
+- **Frontend-only:** 15
+- **Mixed/partial:** 2
+- **Total routes audited:** 35
