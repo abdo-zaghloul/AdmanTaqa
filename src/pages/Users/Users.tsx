@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { toast } from "sonner";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -25,6 +24,7 @@ function toUserRow(u: ApiUser): UserRow {
     role: u.role,
     orgName: u.organization?.name,
     status: u.isActive === false ? "INACTIVE" : "ACTIVE",
+    isActive: u.isActive !== false,
   };
 }
 
@@ -47,10 +47,6 @@ export default function Users() {
       : rows;
     return roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
   }, [rows, searchQuery, roleFilter]);
-
-  const handleDeleteUser = () => {
-    toast.info("Delete user is not implemented in the API. Use team/deactivate if available.");
-  };
 
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in zoom-in-95 duration-500">
@@ -107,7 +103,7 @@ export default function Users() {
               </div>
             </div>
           </CardHeader>
-          <UsersTableCardContent users={filteredUsers} onDeleteConfirm={handleDeleteUser} />
+          <UsersTableCardContent users={filteredUsers} />
         </Card>
       )}
     </div>

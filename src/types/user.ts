@@ -29,3 +29,11 @@ export interface CreateUserBody {
   password: string;
   phone?: string;
 }
+
+/** PATCH /api/users/:id - Update user (all fields optional, send only changed) */
+export interface UpdateUserBody {
+  fullName?: string;
+  phone?: string | null;
+  isActive?: boolean;
+  password?: string;
+}

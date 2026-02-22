@@ -12,15 +12,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { CheckCircle2, MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import EditUserDialog from "./EditUserDialog";
+import DeleteUserDialog from "./DeleteUserDialog";
 
 export type UserRow = {
   id: number | string;
@@ -30,11 +24,11 @@ export type UserRow = {
   role?: string;
   orgName?: string;
   status?: string;
+  isActive?: boolean;
 };
 
 type UsersTableCardContentProps = {
   users: UserRow[];
-  onDeleteConfirm?: (user: UserRow) => void;
 };
 
 function getRoleBadge(role?: string) {
@@ -55,13 +49,14 @@ function getRoleBadge(role?: string) {
 
 type DropdownPlacement = { top: number; left: number; userId: string } | null;
 
-export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersTableCardContentProps) {
+export default function UsersTableCardContent({ users }: UsersTableCardContentProps) {
   const navigate = useNavigate();
   const [dropdownPlacement, setDropdownPlacement] = useState<DropdownPlacement>(null);
-  const [userToDelete, setUserToDelete] = useState<UserRow | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const [editUser, setEditUser] = useState<UserRow | null>(null);
+  const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
 
   useEffect(() => {
     if (!dropdownPlacement) return;
@@ -83,19 +78,6 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
       window.removeEventListener("scroll", onScroll, true);
     };
   }, [dropdownPlacement]);
-
-  const handleDeleteClick = (user: UserRow) => {
-    setUserToDelete(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (userToDelete) {
-      onDeleteConfirm?.(userToDelete);
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-    }
-  };
 
   return (
     <CardContent className="p-0">
@@ -200,7 +182,7 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
                 variant="ghost"
                 className="w-full justify-start text-sm h-9 px-3 py-1"
                 onClick={() => {
-                  navigate(`/users/${user.id}/edit`, { state: { userData: user } });
+                  setEditUser(user);
                   setDropdownPlacement(null);
                 }}
               >
@@ -211,7 +193,7 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
                 variant="ghost"
                 className="w-full justify-start text-sm h-9 px-3 py-1 text-red-600 hover:text-red-600 hover:bg-red-50"
                 onClick={() => {
-                  handleDeleteClick(user);
+                  setDeleteUser(user);
                   setDropdownPlacement(null);
                 }}
               >
@@ -223,24 +205,24 @@ export default function UsersTableCardContent({ users, onDeleteConfirm }: UsersT
           return createPortal(menu, document.body);
         })()}
 
-      <Dialog open={isDeleteModalOpen} onOpenChange={(open) => !open && (setIsDeleteModalOpen(false), setUserToDelete(null))}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete the user &quot;{userToDelete?.fullName}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setIsDeleteModalOpen(false); setUserToDelete(null); }}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {editUser && (
+        <EditUserDialog
+          open={!!editUser}
+          onOpenChange={(open) => { if (!open) setEditUser(null); }}
+          user={{
+            id: editUser.id,
+            fullName: editUser.fullName,
+            phone: editUser.phone,
+            isActive: editUser.isActive,
+          }}
+        />
+      )}
+
+      <DeleteUserDialog
+        open={!!deleteUser}
+        onOpenChange={(open) => { if (!open) setDeleteUser(null); }}
+        user={deleteUser}
+      />
     </CardContent>
   );
 }

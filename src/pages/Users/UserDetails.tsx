@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,12 @@ import {
   User,
   Shield,
   Building2,
-//   Activity,
-//   Calendar,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import useGetUserById from "@/hooks/Users/useGetUserById";
+import EditUserDialog from "./component/EditUserDialog";
+import DeleteUserDialog from "./component/DeleteUserDialog";
 
 function getRoleBadge(role?: string) {
   if (!role) return <Badge variant="secondary">—</Badge>;
@@ -35,6 +38,8 @@ export default function UserDetails() {
   const navigate = useNavigate();
   const { data: user, isLoading, isError } = useGetUserById(id);
   const status = user?.isActive === false ? "INACTIVE" : "ACTIVE";
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading || !id) {
     return (
@@ -83,20 +88,16 @@ export default function UserDetails() {
                     </div>
                 </div>
 
-                {/* <div className="flex items-center gap-2">
-                    <Button variant="outline" className="gap-2 shadow-sm" onClick={handleResetPassword}>
-                        <Key className="h-4 w-4" />
-                        Reset Password
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="gap-2 shadow-sm" onClick={() => setEditOpen(true)}>
+                        <Pencil className="h-4 w-4" />
+                        Edit
                     </Button>
-                    <Button
-                        variant={user.status === 'ACTIVE' ? "destructive" : "default"}
-                        className="gap-2 shadow-lg"
-                        onClick={handleToggleStatus}
-                    >
-                        {user.status === 'ACTIVE' ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-                        {user.status === 'ACTIVE' ? 'Deactivate Account' : 'Activate Account'}
+                    <Button variant="destructive" className="gap-2 shadow-lg" onClick={() => setDeleteOpen(true)}>
+                        <Trash2 className="h-4 w-4" />
+                        Delete
                     </Button>
-                </div> */}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -149,6 +150,26 @@ export default function UserDetails() {
                 </div>
  
             </div>
+
+            <EditUserDialog
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              user={{
+                id: user.id,
+                fullName: user.fullName,
+                phone: user.phone,
+                isActive: user.isActive,
+              }}
+            />
+
+            <DeleteUserDialog
+              open={deleteOpen}
+              onOpenChange={(open) => {
+                setDeleteOpen(open);
+                if (!open) navigate("/users");
+              }}
+              user={{ id: user.id, fullName: user.fullName }}
+            />
         </div>
     );
 }
