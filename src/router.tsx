@@ -3,8 +3,7 @@ import Layout from "./components/Layout";
   // Authority
 import OrganizationDetails from "./pages/Authority/Organizations/OrganizationDetails";
 import Organizations from "./pages/Authority/Organizations/Organizations";
-import CreateRegisterOrganization from "./pages/Authority/Organizations/CreateRegisterOrganization";
-
+ 
 
 import Locations from "./pages/Locations/Locations";
 import Branches from "./pages/Branches/Branches";
@@ -14,7 +13,7 @@ import EditBranch from "./pages/Branches/EditBranch";
 import Roles from "./pages/Roles/Roles";
 import CreateCustomRole from "./pages/Roles/CreateCustomRole";
 import RoleDetails from "./pages/Roles/RoleDetails";
-import ServiceRequests from "./pages/ServiceRequests/ServiceRequests";
+// import ServiceRequests from "./pages/ServiceRequests/ServiceRequests";
 import Quotations from "./pages/Quotations/Quotations";
 import JobOrders from "./pages/JobOrders/JobOrders";
 import JobOrderDetails from "./pages/JobOrders/JobOrderDetails";
@@ -32,13 +31,18 @@ import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
+// import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
 import EditRole from "./pages/Roles/EditRole";
 
 import FuelRetailDetails from './pages/fuelRetail/FuelRetailDetails';
 import RegisterFuelRetail from './pages/fuelRetail/RegisterFuelRetail';
 import EditFuelRetail from './pages/fuelRetail/EditFuelRetail';
 import FuelRetail from "./pages/fuelRetail/fuelRetail";
+// import ServiceProviders from "./pages/ServiceRequests/ServiceRequests";
+// import ServiceRequests from "./pages/ServiceRequests/ServiceOfferings";
+import ServiceCategories from "./pages/ServiceCategories/ServiceCategories";
+import ServiceOfferings from "./pages/ServiceOfferings/ServiceOfferings";
+// import ServiceOfferings from "./pages/ServiceRequests/ServiceOfferings";
 
 export const router = createHashRouter([
   {
@@ -65,10 +69,12 @@ export const router = createHashRouter([
         path: "roles/:id/edit",
         element: <EditRole />,
       },
-      {
-        path: "organizations/register",
-        element: <CreateRegisterOrganization />,
-      },
+      
+      // {
+      //   path: "service-providers",
+      //   element: <ServiceProviders/>,
+      // },
+      
       {
         path: "organizations",
         element: <Organizations />,
@@ -138,13 +144,17 @@ export const router = createHashRouter([
         element: <UpdateUser />,
       },
       {
-        path: "service-requests",
-        element: <ServiceRequests />,
+        path: "service-Offering",
+        element: <ServiceOfferings />,
       },
       {
-        path: "service-requests/:id",
-        element: <ServiceRequestDetails />,
+        path: "service-categories",
+        element: <ServiceCategories />,
       },
+      // {
+      //   path: "service-requests/:id",
+      //   element: <ServiceRequestDetails />,
+      // },
       {
         path: "quotations",
         element: <Quotations />,

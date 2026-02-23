@@ -1,82 +1,27 @@
 import { useState } from "react";
 import { Activity } from "lucide-react";
 import TableAuditLog from "./Component/TableAuditLog";
-
-// Mock Data
-const MOCK_AUDIT_LOGS = [
-  {
-    id: "LOG-9901",
-    user: "Mohammed Khalid",
-    action: "APPROVE_ORGANIZATION",
-    resource: "ORGANIZATION",
-    resourceId: "ORG-002",
-    timestamp: "2024-02-10T15:30:00Z",
-    details: "Approved EcoEnergy Services after document review.",
-  },
-  {
-    id: "LOG-9902",
-    user: "Ahmed Mansour",
-    action: "CREATE_USER",
-    resource: "USER",
-    resourceId: "USR-105",
-    timestamp: "2024-02-10T14:45:00Z",
-    details: "Created new technician account for Yasser Fawzi.",
-  },
-  {
-    id: "LOG-9903",
-    user: "Sarah Al-Ghamdi",
-    action: "UPDATE_BRANCH",
-    resource: "BRANCH",
-    resourceId: "BR-102",
-    timestamp: "2024-02-10T12:00:00Z",
-    details: "Updated branch contact information and address.",
-  },
-  {
-    id: "LOG-9904",
-    user: "System",
-    action: "LOGIN_SUCCESS",
-    resource: "AUTH",
-    resourceId: "USR-001",
-    timestamp: "2024-02-10T09:00:00Z",
-    details: "User Ahmed Mansour logged in from 192.168.1.1",
-  },
-  {
-    id: "LOG-9905",
-    user: "Laila Ibrahim",
-    action: "SUBMIT_QUOTATION",
-    resource: "QUOTATION",
-    resourceId: "QUO-9005",
-    timestamp: "2024-02-09T18:30:00Z",
-    details: "Submitted financial offer for pump maintenance request.",
-  },
-  {
-    id: "LOG-9906",
-    user: "Mohammed Khalid",
-    action: "REJECT_QUOTATION",
-    resource: "QUOTATION",
-    resourceId: "QUO-9003",
-    timestamp: "2024-02-09T16:00:00Z",
-    details: "Rejected quotation due to exceeding budget limits.",
-  },
-  {
-    id: "LOG-9907",
-    user: "System",
-    action: "LOGIN_FAILED",
-    resource: "AUTH",
-    resourceId: "USR-999",
-    timestamp: "2024-02-09T10:15:00Z",
-    details: "Failed login attempt from unknown IP address.",
-  },
-];
+import useGetAuditLogs from "@/hooks/Audit/useGetAuditLogs";
  
 export default function AuditLog() {
-  const [searchQuery, setSearchQuery] = useState(""); 
-  const filteredLogs = MOCK_AUDIT_LOGS.filter((log) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data, isLoading, isError, error } = useGetAuditLogs(1, 50);
+
+  const logs = (data?.items ?? []).map((log) => ({
+    action: log.action,
+    resourceType: log.resourceType,
+    resourceId: log.resourceId,
+    ip: log.ip,
+    createdAt: log.createdAt,
+  }));
+
+  const filteredLogs = logs.filter((log) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      log.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.resourceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchQuery.toLowerCase());
+      log.action.toLowerCase().includes(q) ||
+      log.resourceType.toLowerCase().includes(q) ||
+      log.resourceId.toLowerCase().includes(q) ||
+      String(log.ip ?? "").toLowerCase().includes(q);
     return matchesSearch;
   });
 
@@ -95,11 +40,24 @@ export default function AuditLog() {
         </div>
       </div>
 
+      {isLoading ? (
+        <div className="rounded-lg border bg-card p-8 text-sm text-muted-foreground">
+          Loading audit logs...
+        </div>
+      ) : isError ? (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-8 text-sm text-destructive">
+          {error instanceof Error ? error.message : "Failed to load audit logs."}
+        </div>
+      ) : (
       <TableAuditLog
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         logs={filteredLogs}
+        total={data?.total}
+        page={data?.page}
+        limit={data?.limit}
       />
+      )}
     </div>
   );
 }

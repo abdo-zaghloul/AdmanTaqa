@@ -5,6 +5,13 @@ export interface User {
     organizationId: number;
 }
 
+export interface AuthRole {
+    id: number | string;
+    name: string;
+    organizationId?: number | null;
+    isSystem?: boolean;
+}
+
 export interface Organization {
     id: number;
     name: string;
@@ -15,6 +22,8 @@ export interface Organization {
 export interface AuthData {
     user: User;
     organization: Organization;
+    roles?: AuthRole[];
+    permissions?: string[];
     accessToken: string;
     refreshToken: string;
     expiresIn: string;
@@ -23,5 +32,18 @@ export interface AuthData {
 export interface AuthResponse {
     success: boolean;
     data: AuthData;
+    message?: string;
+}
+
+export interface MeData {
+    user: User;
+    organization: Organization;
+    roles?: AuthRole[];
+    permissions?: string[];
+}
+
+export interface MeResponse {
+    success: boolean;
+    data: MeData;
     message?: string;
 }

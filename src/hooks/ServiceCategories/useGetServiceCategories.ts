@@ -1,16 +1,26 @@
 import axiosInstance from "@/api/config";
 import { useQuery } from "@tanstack/react-query";
-import type { ServiceCategory } from "@/types/organization";
-
-interface ServiceCategoriesListResponse {
-  success: boolean;
-  data: ServiceCategory[];
-  message?: string;
-}
+import type {
+  ServiceCategory,
+  ServiceCategoriesListResponse,
+} from "@/types/serviceCategory";
+import { normalizeServiceCategoriesList } from "./utils";
 
 const getServiceCategories = async (): Promise<ServiceCategory[]> => {
-  const response = await axiosInstance.get<ServiceCategoriesListResponse>("service-categories");
-  return response.data?.data ?? [];
+  try {
+    const response =
+      await axiosInstance.get<ServiceCategoriesListResponse>("service-categories");
+    return normalizeServiceCategoriesList(response.data);
+  } catch (err) {
+    const withResponse = err as { response?: { data?: { message?: string } } };
+    const message =
+      typeof withResponse.response?.data?.message === "string"
+        ? withResponse.response.data.message
+        : err instanceof Error
+        ? err.message
+        : "Failed to fetch service categories.";
+    throw new Error(message);
+  }
 };
 
 export default function useGetServiceCategories() {

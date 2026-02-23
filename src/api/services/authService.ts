@@ -1,7 +1,7 @@
 import axios from "axios";
 import axiosInstance from "../config";
 import { apiUrl } from "../config";
-import type { AuthResponse } from "@/types/auth";
+import type { AuthResponse, MeResponse } from "@/types/auth";
 
 export interface LoginBody {
   email: string;
@@ -34,6 +34,10 @@ export const authService = {
     const { data } = await axios.post<AuthResponse>(`${apiUrl}auth/refresh`, body, {
       headers: { "Content-Type": "application/json" },
     });
+    return data;
+  },
+  async me(): Promise<MeResponse> {
+    const { data } = await axiosInstance.get<MeResponse>("auth/me");
     return data;
   },
 };

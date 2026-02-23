@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import useGetOrganization from "@/hooks/Organization/useGetOrganization";
 import PendingApprovalGuard from "@/components/PendingApprovalGuard";
+import useGetQuotations from "@/hooks/Quotations/useGetQuotations";
+import useCreateQuotation from "@/hooks/Quotations/useCreateQuotation";
 import {
   Dialog,
   DialogContent,
@@ -15,61 +17,70 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { DollarSign, Plus } from "lucide-react";
 import QuotationsTableHeader from "./Component/QuotationsTableHeader";
 import TableQuotations from "./Component/TableQuotations";
-
-// Mock Data
-const MOCK_QUOTATIONS = [
-  {
-    id: "QUO-9001",
-    requestId: "REQ-2024-001",
-    provider: "EcoEnergy Services",
-    amount: 1250,
-    currency: "SAR",
-    status: "ACCEPTED",
-    submittedAt: "2024-02-09T10:00:00Z",
-  },
-  {
-    id: "QUO-9002",
-    requestId: "REQ-2024-001",
-    provider: "Maintenance Masters",
-    amount: 1100,
-    currency: "SAR",
-    status: "PENDING",
-    submittedAt: "2024-02-09T11:30:00Z",
-  },
-  {
-    id: "QUO-9003",
-    requestId: "REQ-2024-002",
-    provider: "EcoEnergy Services",
-    amount: 4500,
-    currency: "SAR",
-    status: "DRAFT",
-    submittedAt: "2024-02-07T14:20:00Z",
-  },
-  {
-    id: "QUO-9004",
-    requestId: "REQ-2024-004",
-    provider: "Local Tech Squad",
-    amount: 800,
-    currency: "SAR",
-    status: "REJECTED",
-    submittedAt: "2024-02-10T09:00:00Z",
-  },
-];
+import { useAuth } from "@/context/AuthContext";
 
 export default function Quotations() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 50;
+  const [serviceRequestId, setServiceRequestId] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const { data: orgResponse, isLoading: orgLoading } = useGetOrganization();
+  const { permissions } = useAuth();
   const organization = orgResponse?.data;
+  const { data, isLoading, isError, error } = useGetQuotations(page, limit);
+  const createQuotation = useCreateQuotation();
 
-  const handleSubmitOffer = (e: React.FormEvent) => {
+  const canSubmitQuotation =
+    organization?.type === "SERVICE_PROVIDER" &&
+    permissions.includes("quotations:submit");
+
+  const handleSubmitOffer = (e: FormEvent) => {
     e.preventDefault();
-    toast.success("Quotation submitted successfully!");
-    setIsCreateModalOpen(false);
+    const requestIdNum = Number(serviceRequestId);
+    const amountNum = Number(amount);
+    if (!requestIdNum || Number.isNaN(requestIdNum)) {
+      toast.error("Please enter a valid service request ID.");
+      return;
+    }
+    if (!amountNum || Number.isNaN(amountNum)) {
+      toast.error("Please enter a valid amount.");
+      return;
+    }
+
+    createQuotation.mutate(
+      {
+        serviceRequestId: requestIdNum,
+        amount: amountNum,
+        currency: currency || "USD",
+      },
+      {
+        onSuccess: () => {
+          toast.success("Quotation submitted successfully!");
+          setIsCreateModalOpen(false);
+          setServiceRequestId("");
+          setAmount("");
+          setCurrency("USD");
+        },
+        onError: (err) => {
+          toast.error(err instanceof Error ? err.message : "Failed to submit quotation.");
+        },
+      }
+    );
   };
+
+  const rows = (data?.items ?? []).map((item) => ({
+    id: item.id,
+    serviceRequestId: item.serviceRequestId,
+    serviceProviderOrganizationId: item.serviceProviderOrganizationId,
+    pricing: item.QuotationPricing ?? null,
+    status: item.status,
+    submittedAt: item.createdAt,
+  }));
 
   return (
     <PendingApprovalGuard organization={organization} isLoading={orgLoading}>
@@ -82,72 +93,112 @@ export default function Quotations() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 shadow-md">
-                <Plus className="h-4 w-4" />
-                Submit New Offer
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[550px]">
-              <DialogHeader>
-                <DialogTitle>Submit New Offer</DialogTitle>
-                <DialogDescription>
-                  Create and send a new quotation for a service request.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmitOffer} className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+          {canSubmitQuotation && (
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2 shadow-md">
+                  <Plus className="h-4 w-4" />
+                  Submit New Offer
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[550px]">
+                <DialogHeader>
+                  <DialogTitle>Submit New Offer</DialogTitle>
+                  <DialogDescription>
+                    Submit quotation for a service request.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmitOffer} className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="requestRef">Request Reference</Label>
-                    <Input id="requestRef" placeholder="e.g., REQ-2024-001" required />
+                    <Label htmlFor="serviceRequestId">Service Request ID</Label>
+                    <Input
+                      id="serviceRequestId"
+                      type="number"
+                      value={serviceRequestId}
+                      onChange={(e) => setServiceRequestId(e.target.value)}
+                      placeholder="e.g., 15"
+                      required
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Total Amount (SAR)</Label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input id="amount" type="number" className="pl-9" placeholder="0.00" required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="amount">Amount</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="amount"
+                          type="number"
+                          className="pl-9"
+                          placeholder="0.00"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="currency">Currency</Label>
+                      <Input
+                        id="currency"
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        placeholder="USD"
+                        required
+                      />
                     </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="subject">Quotation Subject</Label>
-                  <Input id="subject" placeholder="e.g., Repair Proposal for Fuel Pump" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Scope of Work</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe the services and items included in this offer..."
-                    className="min-h-[100px]"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="validUntil">Valid Until</Label>
-                    <Input id="validUntil" type="date" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="file">Attach PDF (Optional)</Label>
-                    <Input id="file" type="file" accept=".pdf" className="cursor-pointer" />
-                  </div>
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Send Offer</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <DialogFooter className="pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createQuotation.isPending}>
+                      {createQuotation.isPending ? "Submitting..." : "Send Offer"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-        <QuotationsTableHeader />
-        <TableQuotations quotations={MOCK_QUOTATIONS} />
+        <QuotationsTableHeader total={data?.total} page={data?.page} />
+        {isLoading ? (
+          <div className="p-6 text-sm text-muted-foreground">Loading quotations...</div>
+        ) : isError ? (
+          <div className="p-6 text-sm text-destructive">
+            {error instanceof Error ? error.message : "Failed to load quotations."}
+          </div>
+        ) : (
+          <TableQuotations quotations={rows} />
+        )}
+        <div className="px-6 pb-6 flex items-center justify-between">
+          <div />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground"> {page}</span>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const maxPage = Math.max(
+                  1,
+                  Math.ceil((data?.total ?? rows.length) / Math.max(limit, 1))
+                );
+                setPage((p) => (p < maxPage ? p + 1 : p));
+              }}
+              disabled={page >= Math.max(1, Math.ceil((data?.total ?? rows.length) / Math.max(limit, 1)))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
     </PendingApprovalGuard>

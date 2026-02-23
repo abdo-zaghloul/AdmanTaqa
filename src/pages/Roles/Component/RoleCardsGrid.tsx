@@ -1,18 +1,18 @@
-import { useState } from "react";
+// import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ShieldCheck, ShieldAlert, Users, Lock, Pencil, Trash2 } from "lucide-react";
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from "@/components/ui/dialog";
+import { ShieldCheck, ShieldAlert, Users, Lock, Pencil } from "lucide-react";
 
 export type RoleRow = {
   id: string;
@@ -28,23 +28,23 @@ type RoleCardsGridProps = {
   onDeleteConfirm?: (role: { id: string; name: string }) => void;
 };
 
-export default function RoleCardsGrid({ roles, onDeleteConfirm }: RoleCardsGridProps) {
+export default function RoleCardsGrid({ roles }: RoleCardsGridProps) {
   const navigate = useNavigate();
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [roleToDelete, setRoleToDelete] = useState<{ id: string; name: string } | null>(null);
+  // const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  // const [roleToDelete, setRoleToDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const handleDeleteClick = (role: { id: string; name: string }) => {
-    setRoleToDelete(role);
-    setOpenDeleteDialog(true);
-  };
+  // const handleDeleteClick = (role: { id: string; name: string }) => {
+  //   setRoleToDelete(role);
+  //   setOpenDeleteDialog(true);
+  // };
 
-  const handleDeleteConfirm = () => {
-    if (roleToDelete) {
-      onDeleteConfirm?.(roleToDelete);
-      setOpenDeleteDialog(false);
-      setRoleToDelete(null);
-    }
-  };
+  // const handleDeleteConfirm = () => {
+  //   if (roleToDelete) {
+  //     onDeleteConfirm?.(roleToDelete);
+  //     // setOpenDeleteDialog(false);
+  //     setRoleToDelete(null);
+  //   }
+  // };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -117,7 +117,7 @@ export default function RoleCardsGrid({ roles, onDeleteConfirm }: RoleCardsGridP
               <Pencil className="h-3.5 w-3.5 mr-2" />
               Edit
             </Button>
-            <Dialog
+            {/* <Dialog
               open={openDeleteDialog && roleToDelete?.id === role.id}
               onOpenChange={(open) => !open && setOpenDeleteDialog(false)}
             >
@@ -165,7 +165,7 @@ export default function RoleCardsGrid({ roles, onDeleteConfirm }: RoleCardsGridP
                   </Button>
                 </DialogFooter>
               </DialogContent>
-            </Dialog>
+            </Dialog> */}
           </CardFooter>
         </Card>
       ))}

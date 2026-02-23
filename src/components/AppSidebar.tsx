@@ -5,6 +5,7 @@ import {
   ShieldCheck,
   Users,
   ClipboardList,
+  Tags,
   FileOutput,
   Briefcase,
   SearchCheck,
@@ -56,8 +57,9 @@ const navGroups: NavGroup[] = [
         icon: Building2,
         isDropdown: true,
         children: [
-          { label: "service providers", path: "/organizations", icon: Building2 },
-          { label: "Fuel Retail", path: "/fuel-retail", icon: Building2 }
+          // { label: "service providers (service providers)", path: "/service-providers", icon: Building2 },
+          { label: "organizations (authority)", path: "/organizations", icon: Building2 },
+          { label: "Fuel (fuel-retail)", path: "/fuel-retail", icon: Building2 }
         ]
       },
       { 
@@ -75,7 +77,8 @@ const navGroups: NavGroup[] = [
       
       { label: "Branches", path: "/branches", icon: GitBranch },
       { label: "Locations", path: "/locations", icon: MapPin },
-      { label: "Service Requests", path: "/service-requests", icon: ClipboardList },
+      { label: "Service Offering", path: "/service-Offering", icon: ClipboardList },
+      { label: "Service Categories", path: "/service-categories", icon: Tags },
       { label: "Job Orders", path: "/job-orders", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       

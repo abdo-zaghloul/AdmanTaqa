@@ -7,7 +7,7 @@
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3000" },
     { "key": "accessToken", "value": "" },
-    { "key": "refreshToken", "value": "" }
+    { "key": "refreshTokصخقen", "value": "" }
   ],
   "auth": {
     "type": "bearer",
@@ -316,6 +316,56 @@
             },
             "url": "{{baseUrl}}/api/organizations/1/service-provider-profile/documents",
             "description": "Upload document to service provider profile. Multipart: file, documentType."
+          }
+        },
+        {
+          "name": "List Service Offerings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/organizations/1/service-offerings",
+            "description": "List service offerings for an organization (location = city + governorate, fixed price). Optional query: serviceCategoryId, cityId, governorateId. Own org or Authority."
+          }
+        },
+        {
+          "name": "Create Service Offering",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceCategoryId\": 1,\n  \"cityId\": 1,\n  \"governorateId\": 1,\n  \"amount\": 99.50,\n  \"currency\": \"USD\"\n}"
+            },
+            "url": "{{baseUrl}}/api/organizations/1/service-offerings",
+            "description": "Create a service offering: service (category) in a city and governorate at a fixed price. Body: serviceCategoryId, cityId, governorateId (city must belong to governorate), amount, currency (optional, default USD)."
+          }
+        },
+        {
+          "name": "Get Service Offering by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/organizations/1/service-offerings/1",
+            "description": "Get a single service offering by ID. URL: .../organizations/:id/service-offerings/:offeringId"
+          }
+        },
+        {
+          "name": "Update Service Offering",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 89.00,\n  \"currency\": \"USD\"\n}"
+            },
+            "url": "{{baseUrl}}/api/organizations/1/service-offerings/1",
+            "description": "Update service offering amount and/or currency. Body: amount (optional), currency (optional)."
+          }
+        },
+        {
+          "name": "Delete Service Offering",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/organizations/1/service-offerings/1",
+            "description": "Delete a service offering. URL: .../organizations/:id/service-offerings/:offeringId"
           }
         }
       ]
@@ -1405,23 +1455,39 @@
               "raw": "{\n  \"workOrderId\": 1,\n  \"assignedUserId\": 1,\n  \"branchId\": 1,\n  \"notes\": \"Task notes\"\n}"
             },
             "url": "{{baseUrl}}/api/internal-tasks",
-            "description": "Create internal task. Requires internal_tasks.assign. Body: workOrderId, assignedUserId (optional), branchId (optional), notes (optional)."
+            "description": "Create internal task (Fuel Station only). Requires internal_tasks.assign. Body: workOrderId, assignedUserId (optional), branchId (optional), notes (optional)."
           }
         },
         {
           "name": "List Internal Tasks",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/internal-tasks?status=IN_PROGRESS&workOrderId=1",
-            "description": "List internal tasks. Requires internal_tasks.read. Query: status, workOrderId, assignedUserId."
+            "url": "{{baseUrl}}/api/internal-tasks?status=IN_PROGRESS&workOrderId=1&assignedUserId=1",
+            "description": "List internal tasks. Manager: org-wide; Technician: own tasks only. Query: status (comma-separated), workOrderId, assignedUserId."
+          }
+        },
+        {
+          "name": "Get My Internal Tasks",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/internal-tasks/my?tab=IN_PROGRESS&page=1&limit=10",
+            "description": "Technician flow: tasks assigned to current user. Query: tab (IN_PROGRESS|PAUSED|COMPLETED|CLOSED), page, limit."
           }
         },
         {
           "name": "Get Internal Tasks Stats",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/internal-tasks/stats",
-            "description": "Get internal tasks statistics. Requires internal_tasks.read."
+            "url": "{{baseUrl}}/api/internal-tasks/stats?workOrderId=1",
+            "description": "Get internal tasks statistics. Query: workOrderId (optional)."
+          }
+        },
+        {
+          "name": "Get Internal Task Review Queue",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/internal-tasks/review-queue",
+            "description": "List COMPLETED tasks awaiting manager review. Requires internal_tasks.review."
           }
         },
         {
@@ -1439,10 +1505,23 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"message\": \"Optional note\"\n}"
+              "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"message\": \"Optional note\",\n  \"requestedItems\": [\n    { \"assetId\": 1, \"quantity\": 2, \"notes\": \"Spare part\" }\n  ]\n}"
             },
             "url": "{{baseUrl}}/api/internal-tasks/1/status",
-            "description": "Update task status. Allowed: IN_PROGRESS, PAUSED, WAITING_PARTS, COMPLETED. Requires internal_tasks.update_status."
+            "description": "Update task status (Technician). Allowed: IN_PROGRESS, PAUSED, WAITING_PARTS, COMPLETED. For WAITING_PARTS, requestedItems (assetId/sparePartId, quantity, notes) auto-creates WarehouseOrder."
+          }
+        },
+        {
+          "name": "Review Task",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APPROVE\",\n  \"message\": \"Approved\",\n  \"reopenReason\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/internal-tasks/1/review",
+            "description": "Review completed task. Requires internal_tasks.review. Body: decision (APPROVE|REJECT), message (optional), reopenReason (optional, for REJECT)."
           }
         },
         {
@@ -1450,7 +1529,7 @@
           "request": {
             "method": "PATCH",
             "url": "{{baseUrl}}/api/internal-tasks/1/close",
-            "description": "Close internal task. Requires internal_tasks.close."
+            "description": "Close internal task. Requires internal_tasks.close. Closes Work Order as well."
           }
         },
         {
@@ -1478,18 +1557,68 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"branchId\": 1\n}"
+              "raw": "{\n  \"title\": \"Pump maintenance\",\n  \"description\": \"Inspect and repair pump A\",\n  \"branchId\": 1,\n  \"assetId\": 1,\n  \"priority\": \"HIGH\",\n  \"assignedUserId\": 2\n}"
             },
             "url": "{{baseUrl}}/api/work-orders",
-            "description": "Create work order. Requires workorders.create. Body: branchId (optional)."
+            "description": "Create work order (Fuel Station only). Requires workorders.create. Body: title (required), description (optional), branchId (optional), assetId (optional), priority (LOW|MEDIUM|HIGH, optional), assignedUserId (optional - creates InternalTask if caller has internal_tasks.assign)."
           }
         },
         {
           "name": "List Work Orders",
           "request": {
             "method": "GET",
-            "url": "{{baseUrl}}/api/work-orders",
-            "description": "List work orders. Requires workorders.read."
+            "url": "{{baseUrl}}/api/work-orders?status=PENDING&branchId=1&assetId=1&priority=HIGH&page=1&limit=20",
+            "description": "List work orders. Requires workorders.read. Query: status, branchId, assetId, priority, page, limit."
+          }
+        },
+        {
+          "name": "Get Work Order Review Queue",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/work-orders/review-queue?page=1&limit=10",
+            "description": "List work orders with status UNDER_REVIEW (manager review queue). Requires workorders.approve. Query: page, limit."
+          }
+        },
+        {
+          "name": "Get Work Order by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/work-orders/1",
+            "description": "Get work order by ID. Requires workorders.read."
+          }
+        },
+        {
+          "name": "Update Work Order",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated title\",\n  \"description\": \"Updated description\",\n  \"priority\": \"MEDIUM\",\n  \"branchId\": 1,\n  \"assetId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/work-orders/1",
+            "description": "Update work order (no status change). Requires workorders.update. Body: title, description, priority, branchId, assetId (all optional)."
+          }
+        },
+        {
+          "name": "Review Work Order",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"APPROVE\",\n  \"note\": \"Work completed satisfactorily\"\n}"
+            },
+            "url": "{{baseUrl}}/api/work-orders/1/review",
+            "description": "Review work order (must be UNDER_REVIEW). Requires workorders.approve. Body: action (APPROVE|REJECT), note (optional). APPROVE closes WO; REJECT reopens latest completed task."
+          }
+        },
+        {
+          "name": "Close Work Order",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/work-orders/1/close",
+            "description": "Close work order. Allowed when status is UNDER_REVIEW or IN_PROGRESS. Requires workorders.approve."
           }
         }
       ]
@@ -1502,7 +1631,101 @@
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/api/dashboard/summary",
-            "description": "Get dashboard summary (counters, role-aware). Requires internal_tasks.read."
+            "description": "Get dashboard summary (Fuel Station only). Technician: inProgress, paused, underReview. Manager/Owner: pendingWorkOrders, inProgressTasks, underReviewTasks, closedTasks. Requires internal_tasks.read."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Warehouses",
+      "item": [
+        {
+          "name": "List Warehouses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/warehouses",
+            "description": "List warehouses for current organization. Requires warehouse.read. Fuel Station only."
+          }
+        },
+        {
+          "name": "Create Warehouse",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Main Warehouse\",\n  \"branchId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/warehouses",
+            "description": "Create warehouse. Requires warehouse.manage. Body: name (required), branchId (optional)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Warehouse Orders",
+      "item": [
+        {
+          "name": "Create Warehouse Order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workOrderId\": 1,\n  \"warehouseId\": 1,\n  \"internalTaskId\": 1,\n  \"items\": [\n    { \"assetId\": 1, \"quantity\": 2, \"notes\": \"Spare parts\" },\n    { \"sparePartId\": 1, \"quantity\": 1 }\n  ],\n  \"notes\": \"For maintenance task\"\n}"
+            },
+            "url": "{{baseUrl}}/api/warehouse-orders",
+            "description": "Create warehouse order. Requires warehouse_orders.create. Body: workOrderId, warehouseId, internalTaskId (optional), items (array: assetId or sparePartId, quantity, notes)."
+          }
+        },
+        {
+          "name": "List Warehouse Orders",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/warehouse-orders?status=PENDING&workOrderId=1&page=1&limit=20",
+            "description": "List warehouse orders. Query: status (PENDING|ASSIGNED|PICKING|READY_FOR_DELIVERY|DELIVERED|CLOSED), workOrderId, page, limit."
+          }
+        },
+        {
+          "name": "Get Warehouse Order by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/warehouse-orders/1",
+            "description": "Get warehouse order by ID. Requires warehouse_orders.read."
+          }
+        },
+        {
+          "name": "Assign Warehouse Order",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignedTechnicianId\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/warehouse-orders/1/assign",
+            "description": "Assign warehouse order to technician. Requires warehouse_orders.assign. Body: assignedTechnicianId."
+          }
+        },
+        {
+          "name": "Update Warehouse Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ASSIGNED\",\n  \"message\": \"Optional note\"\n}"
+            },
+            "url": "{{baseUrl}}/api/warehouse-orders/1/status",
+            "description": "Update warehouse order status. Valid transitions: PENDING→ASSIGNED→PICKING→READY_FOR_DELIVERY→DELIVERED. Requires warehouse_orders.update_status."
+          }
+        },
+        {
+          "name": "Close Warehouse Order",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/warehouse-orders/1/close",
+            "description": "Close warehouse order. Requires warehouse_orders.close."
           }
         }
       ]

@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -9,15 +8,13 @@ import {
 } from "@/components/ui/table";
 import { CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import type { QuotationItem } from "@/types/quotation";
 
 export type QuotationRow = {
-  id: string;
-  requestId: string;
-  provider: string;
-  amount: number;
-  currency: string;
+  id: number;
+  serviceRequestId: number;
+  serviceProviderOrganizationId?: number | null;
+  pricing?: QuotationItem["QuotationPricing"];
   status: string;
   submittedAt: string;
 };
@@ -28,7 +25,7 @@ type TableQuotationsProps = {
 
 function getStatusBadge(status: string) {
   const styles: Record<string, string> = {
-    ACCEPTED: "bg-green-50 text-green-700 border-green-200",
+    SUBMITTED: "bg-green-50 text-green-700 border-green-200",
     PENDING: "bg-amber-50 text-amber-700 border-amber-200",
     REJECTED: "bg-red-50 text-red-700 border-red-200",
     DRAFT: "bg-slate-50 text-slate-700 border-slate-200",
@@ -41,7 +38,16 @@ function getStatusBadge(status: string) {
 }
 
 export default function TableQuotations({ quotations }: TableQuotationsProps) {
-  const navigate = useNavigate();
+  console.log(quotations);
+  
+  const formatAmount = (row: QuotationRow) => {
+    const amount = row.pricing?.amount;
+    const currency = row.pricing?.currency ?? "";
+    if (amount == null) return "N/A";
+    const numeric = Number(amount);
+    if (Number.isNaN(numeric)) return `${currency} ${String(amount)}`.trim();
+    return `${currency} ${numeric.toLocaleString()}`.trim();
+  };
 
   return (
     <CardContent className="p-0">
@@ -53,13 +59,12 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
             <TableHead className="font-bold text-foreground">Provider</TableHead>
             <TableHead className="font-bold text-foreground">Amount</TableHead>
             <TableHead className="font-bold text-foreground">Status</TableHead>
-            <TableHead className="text-right font-bold text-foreground px-6">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {quotations.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                 No quotations found.
               </TableCell>
             </TableRow>
@@ -69,27 +74,21 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
                 key={quo.id}
                 className="hover:bg-muted/20 transition-all border-b last:border-0 border-muted/20"
               >
-                <TableCell className="font-mono text-xs font-bold text-primary/70">{quo.id}</TableCell>
-                <TableCell className="font-mono text-xs text-muted-foreground">{quo.requestId}</TableCell>
-                <TableCell className="font-semibold text-sm">{quo.provider}</TableCell>
+                <TableCell className="font-mono text-xs font-bold text-primary/70">
+                  Q-{quo.id}
+                </TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">
+                  REQ-{quo.serviceRequestId}
+                </TableCell>
+                <TableCell className="font-semibold text-sm">
+                  {quo.serviceProviderOrganizationId != null
+                    ? `Org #${quo.serviceProviderOrganizationId}`
+                    : "N/A"}
+                </TableCell>
                 <TableCell className="font-bold text-slate-700">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-muted-foreground">{quo.currency}</span>
-                    {quo.amount.toLocaleString()}
-                  </div>
+                  {formatAmount(quo)}
                 </TableCell>
                 <TableCell>{getStatusBadge(quo.status)}</TableCell>
-                <TableCell className="text-right px-6">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 gap-2 hover:bg-primary/5 hover:text-primary transition-all rounded-md"
-                    onClick={() => navigate(`/quotations/${quo.id}`)}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    View
-                  </Button>
-                </TableCell>
               </TableRow>
             ))
           )}

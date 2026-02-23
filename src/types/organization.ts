@@ -1,6 +1,10 @@
+import type { ServiceCategory } from "@/types/serviceCategory";
+
 export interface OrganizationProfile {
     id: number;
     name: string;
+    nameEn: string;
+    nameAr: string;
     type: "FUEL_STATION" | "SERVICE_PROVIDER" | "AUTHORITY";
     status: "PENDING" | "APPROVED" | "REJECTED";
     rejectionReason: string | null;
@@ -68,16 +72,70 @@ export interface OrganizationApprovalHistoryResponse {
     message?: string;
 }
 
-export interface ServiceCategory {
-    id: number;
-    name: string;
-    code?: string;
-}
-
 export interface OrganizationServiceCategoriesResponse {
     success: boolean;
     data: ServiceCategory[];
     message?: string;
+}
+
+/** Service Offerings: /api/organizations/:id/service-offerings */
+export interface ServiceOffering {
+    id: number;
+    organizationId: number;
+    serviceCategoryId: number;
+    cityId: number;
+    governorateId: number;
+    amount: number | string;
+    currency: string;
+    createdAt: string;
+    updatedAt: string;
+    ServiceCategory?: {
+        id: number;
+        nameEn?: string;
+        nameAr?: string;
+        code?: string;
+    };
+    City?: {
+        id: number;
+        name?: string;
+        code?: string;
+    };
+    Governorate?: {
+        id: number;
+        name?: string;
+        code?: string;
+    };
+}
+
+export interface ServiceOfferingsListResponse {
+    success: boolean;
+    data: ServiceOffering[];
+    message?: string;
+}
+
+export interface ServiceOfferingResponse {
+    success: boolean;
+    data: ServiceOffering;
+    message?: string;
+}
+
+export interface ServiceOfferingsFilter {
+    serviceCategoryId?: number;
+    cityId?: number;
+    governorateId?: number;
+}
+
+export interface CreateServiceOfferingBody {
+    serviceCategoryId: number;
+    cityId: number;
+    governorateId: number;
+    amount: number;
+    currency?: string;
+}
+
+export interface UpdateServiceOfferingBody {
+    amount?: number;
+    currency?: string;
 }
 
 /** Service Provider Profile. GET/POST/PATCH/DELETE .../service-provider-profile */

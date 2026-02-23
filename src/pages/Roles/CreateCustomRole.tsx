@@ -7,14 +7,49 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft } from "lucide-react";
+import { useMemo, useState, type FormEvent } from "react";
+import useGetRolePermissions from "@/hooks/Roles/useGetRolePermissions";
+import useCreateRole from "@/hooks/Roles/useCreateRole";
 
 export default function CreateCustomRole() {
     const navigate = useNavigate();
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
+    const { data: permissions = [], isLoading: permissionsLoading } = useGetRolePermissions();
+    const createMutation = useCreateRole();
 
-    const handleCreateRole = (e: React.FormEvent) => {
+    const permissionItems = useMemo(
+        () => permissions.filter((p) => typeof p.id === "number" && p.id > 0),
+        [permissions]
+    );
+
+    const handleCreateRole = (e: FormEvent) => {
         e.preventDefault();
-        toast.success("Role created successfully!");
-        navigate('/roles');
+        createMutation.mutate(
+            {
+                name,
+                description: description || undefined,
+                permissionIds: selectedPermissionIds,
+            },
+            {
+                onSuccess: () => {
+                    toast.success("Role created successfully!");
+                    navigate('/roles');
+                },
+                onError: (err) => {
+                    toast.error(err instanceof Error ? err.message : "Failed to create role.");
+                },
+            }
+        );
+    };
+
+    const togglePermission = (permissionId: number) => {
+        setSelectedPermissionIds((prev) =>
+            prev.includes(permissionId)
+                ? prev.filter((id) => id !== permissionId)
+                : [...prev, permissionId]
+        );
     };
 
     return (
@@ -41,7 +76,13 @@ export default function CreateCustomRole() {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="roleName">Role Name</Label>
-                                <Input id="roleName" placeholder="e.g., Compliance Officer" required />
+                                <Input
+                                    id="roleName"
+                                    placeholder="e.g., Compliance Officer"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="description">Description</Label>
@@ -49,7 +90,8 @@ export default function CreateCustomRole() {
                                     id="description"
                                     placeholder="Describe the responsibilities and access scope..."
                                     className="min-h-[80px]"
-                                    required
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
                                 />
                             </div>
                         </div>
@@ -57,34 +99,31 @@ export default function CreateCustomRole() {
                         <div className="space-y-3">
                             <Label className="text-base font-semibold">Permissions</Label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-slate-50/50">
-                                <div className="flex items-start space-x-2">
-                                    <Checkbox id="perm-users" />
-                                    <div className="grid gap-1.5 leading-none">
-                                        <Label htmlFor="perm-users" className="text-sm font-medium leading-none">User Management</Label>
-                                        <p className="text-[10px] text-muted-foreground">View, create, and edit users</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start space-x-2">
-                                    <Checkbox id="perm-branches" />
-                                    <div className="grid gap-1.5 leading-none">
-                                        <Label htmlFor="perm-branches" className="text-sm font-medium leading-none">Branch Operations</Label>
-                                        <p className="text-[10px] text-muted-foreground">Manage branches and details</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start space-x-2">
-                                    <Checkbox id="perm-requests" />
-                                    <div className="grid gap-1.5 leading-none">
-                                        <Label htmlFor="perm-requests" className="text-sm font-medium leading-none">Service Requests</Label>
-                                        <p className="text-[10px] text-muted-foreground">Submit and track requests</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start space-x-2">
-                                    <Checkbox id="perm-finance" />
-                                    <div className="grid gap-1.5 leading-none">
-                                        <Label htmlFor="perm-finance" className="text-sm font-medium leading-none">Financial Access</Label>
-                                        <p className="text-[10px] text-muted-foreground">View quotations and invoices</p>
-                                    </div>
-                                </div>
+                                {permissionsLoading ? (
+                                    <p className="text-sm text-muted-foreground">Loading permissions...</p>
+                                ) : permissionItems.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        No assignable permissions were returned from API.
+                                    </p>
+                                ) : (
+                                    permissionItems.map((permission) => (
+                                        <div key={permission.id} className="flex items-start space-x-2">
+                                            <Checkbox
+                                                id={`perm-${permission.id}`}
+                                                checked={selectedPermissionIds.includes(permission.id)}
+                                                onCheckedChange={() => togglePermission(permission.id)}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                                <Label htmlFor={`perm-${permission.id}`} className="text-sm font-medium leading-none">
+                                                    {permission.name || permission.code}
+                                                </Label>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    {permission.description || permission.code}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
@@ -92,7 +131,9 @@ export default function CreateCustomRole() {
                             <Button type="button" variant="outline" onClick={() => navigate('/roles')}>
                                 Cancel
                             </Button>
-                            <Button type="submit">Create Role</Button>
+                            <Button type="submit" disabled={createMutation.isPending}>
+                                {createMutation.isPending ? "Creating..." : "Create Role"}
+                            </Button>
                         </div>
                     </form>
                 </CardContent>

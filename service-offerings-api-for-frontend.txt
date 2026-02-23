@@ -1,0 +1,215 @@
+================================================================================
+  Service Offerings API – توثيق للفرونت إند
+  (عرض أسعار الخدمات حسب المنظمة + المدينة والمحافظة)
+================================================================================
+
+١) أساسيات
+----------
+- الملف في الباك إند: src/routes/serviceOffering.routes.js
+- كل الـ routes مربوطة تحت:  /api/organizations/:id
+  يعني الـ Base URL للعروض:  {{baseUrl}}/api/organizations/:id
+  و :id = معرف المنظمة (organizationId) اللي عايز تتعامل مع عروضها.
+
+- كل الطلبات تحتاج مصادقة: مطلوب إرسال Header:
+  Authorization: Bearer <accessToken>
+
+- من يسمح له بالوصول:
+  * صاحب المنظمة (نفس organizationId بتاع اليوزر المسجل دخوله).
+  * أو منظمة من نوع Authority (الجهة).
+  أي طلب لمنظمة تانية بدون صلاحية يرجع 403 Forbidden.
+
+
+٢) قائمة الـ Endpoints
+----------------------
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 1) عرض قائمة العروض (List)                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Method:  GET
+  URL:     /api/organizations/:id/service-offerings
+
+  Params (في الرابط):
+    - id  (مطلوب): معرف المنظمة – أرقام فقط.
+
+  Query (اختياري – في الرابط بعد ?):
+    - serviceCategoryId  (رقم): فلتر حسب فئة الخدمة.
+    - cityId              (رقم): فلتر حسب المدينة.
+    - governorateId       (رقم): فلتر حسب المحافظة.
+
+  مثال:
+    GET /api/organizations/1/service-offerings
+    GET /api/organizations/1/service-offerings?governorateId=2
+    GET /api/organizations/1/service-offerings?cityId=3&serviceCategoryId=1
+
+  Response 200:
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "organizationId": 1,
+          "serviceCategoryId": 1,
+          "cityId": 1,
+          "governorateId": 1,
+          "amount": "99.50",
+          "currency": "USD",
+          "createdAt": "...",
+          "updatedAt": "...",
+          "ServiceCategory": { "id": 1, "nameEn": "...", "nameAr": "...", "code": "..." },
+          "City":          { "id": 1, "name": "...", "code": "..." },
+          "Governorate":   { "id": 1, "name": "...", "code": "..." }
+        }
+      ]
+    }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 2) إنشاء عرض جديد (Create)                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Method:  POST
+  URL:     /api/organizations/:id/service-offerings
+
+  Params:
+    - id  (مطلوب): معرف المنظمة.
+
+  Body (JSON):
+    - serviceCategoryId  (number, مطلوب): معرف فئة الخدمة.
+    - cityId             (number, مطلوب): معرف المدينة.
+    - governorateId      (number, مطلوب): معرف المحافظة.
+    - amount             (number, مطلوب): السعر – رقم موجب.
+    - currency           (string, اختياري): كود العملة 3 أحرف، افتراضي "USD".
+
+  ملاحظات للفرونت إند:
+    - المدينة لازم تتبع المحافظة (city.governorateId = governorateId).
+    - ممنوع تكرار نفس (منظمة + فئة خدمة + مدينة + محافظة) – لو موجود يرجع 400.
+    - فئة الخدمة لازم تكون معتمدة (APPROVED).
+
+  مثال Body:
+    {
+      "serviceCategoryId": 1,
+      "cityId": 1,
+      "governorateId": 1,
+      "amount": 99.50,
+      "currency": "USD"
+    }
+
+  Response 201:
+    {
+      "success": true,
+      "data": { ... نفس شكل عنصر في الـ list مع ServiceCategory, City, Governorate ... }
+    }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 3) جلب عرض واحد (Get by ID)                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Method:  GET
+  URL:     /api/organizations/:id/service-offerings/:offeringId
+
+  Params:
+    - id         (مطلوب): معرف المنظمة.
+    - offeringId  (مطلوب): معرف العرض – أرقام فقط.
+
+  Response 200:
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "organizationId": 1,
+        "serviceCategoryId": 1,
+        "cityId": 1,
+        "governorateId": 1,
+        "amount": "99.50",
+        "currency": "USD",
+        "createdAt": "...",
+        "updatedAt": "...",
+        "ServiceCategory": { "id": 1, "nameEn": "...", "nameAr": "...", "code": "..." },
+        "City":          { "id": 1, "name": "...", "code": "..." },
+        "Governorate":   { "id": 1, "name": "...", "code": "..." }
+      }
+    }
+
+  لو العرض مش موجود أو مش تابع للمنظمة: 404 مع رسالة "Service offering not found".
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 4) تحديث عرض (Update)                                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Method:  PATCH
+  URL:     /api/organizations/:id/service-offerings/:offeringId
+
+  Params:
+    - id         (مطلوب): معرف المنظمة.
+    - offeringId (مطلوب): معرف العرض.
+
+  Body (JSON – الحقول كلها اختيارية، نرسل اللي يتغير فقط):
+    - amount   (number, اختياري): السعر الجديد – رقم موجب.
+    - currency (string, اختياري): كود العملة 3 أحرف.
+
+  مثال:
+    { "amount": 89.00 }
+    أو
+    { "amount": 120, "currency": "USD" }
+
+  Response 200:
+    {
+      "success": true,
+      "data": { ... نفس شكل عنصر الـ list مع العلاقات ... }
+    }
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 5) حذف عرض (Delete)                                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  Method:  DELETE
+  URL:     /api/organizations/:id/service-offerings/:offeringId
+
+  Params:
+    - id         (مطلوب): معرف المنظمة.
+    - offeringId (مطلوب): معرف العرض.
+
+  Response 200:
+    {
+      "success": true,
+      "message": "Service offering deleted"
+    }
+
+  لو العرض مش موجود أو مش تابع للمنظمة: 404.
+
+
+٣) الـ Validation (من طرف الباك إند)
+-------------------------------------
+- id و offeringId في الرابط: أرقام صحيحة فقط (مثلاً 1, 2, 123).
+- Query params لو استخدمتها (serviceCategoryId, cityId, governorateId): أرقام.
+- amount: رقم موجب.
+- currency: 3 أحرف بالضبط (مثل USD, EGP).
+- عند الخطأ في الـ validation يرجع 400 مع:
+  { "success": false, "message": "Validation failed", "errors": [ { "field": "...", "message": "..." } ] }
+
+
+٤) أخطاء شائعة (Status Codes)
+------------------------------
+- 400 Bad Request: بيانات غير صحيحة، أو المدينة مش تبع المحافظة، أو عرض مكرر لنفس (منظمة + فئة + مدينة + محافظة).
+- 401 Unauthorized: مفيش توكن أو التوكن منتهي.
+- 403 Forbidden: المستخدم مش صاحب المنظمة ولا Authority.
+- 404 Not Found: المنظمة أو العرض أو فئة الخدمة أو المدينة أو المحافظة مش موجودة.
+
+
+٥) ملخص للفرونت إند
+--------------------
+- Base:  GET/POST/PATCH/DELETE  على  /api/organizations/:organizationId/service-offerings
+- كل الطلبات: Header  Authorization: Bearer <accessToken>
+- List:  GET مع optional query  serviceCategoryId, cityId, governorateId
+- Create: POST مع body  serviceCategoryId, cityId, governorateId, amount, currency (optional)
+- Get one:   GET  .../service-offerings/:offeringId
+- Update:    PATCH .../service-offerings/:offeringId  مع body  amount و/أو currency
+- Delete:    DELETE .../service-offerings/:offeringId
+- كل response ناجح:  { "success": true, "data": ... }  أو  "message" في الحذف.
+- في الـ data دائماً ممكن تستخدم ServiceCategory, City, Governorate لعرض الاسم أو التصنيف في الواجهة.
+
+================================================================================

@@ -38,7 +38,25 @@ export function useLoginForm() {
     try {
       const response = await authService.login(data);
       if (response.success && response.data) {
-        login(response.data);
+        let roles = response.data.roles ?? [];
+        let permissions = response.data.permissions ?? [];
+
+        // Prefer /auth/me as the source of permissions after login.
+        try {
+          const me = await authService.me();
+          if (me.success && me.data) {
+            roles = me.data.roles ?? roles;
+            permissions = me.data.permissions ?? permissions;
+          }
+        } catch {
+          // Keep login flow alive even if /auth/me fails.
+        }
+
+        login({
+          ...response.data,
+          roles,
+          permissions,
+        });
         toast.success("Welcome back! Login successful");
         const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
         navigate(from || "/", { replace: true });
