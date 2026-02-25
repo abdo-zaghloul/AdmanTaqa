@@ -136,15 +136,22 @@ export const normalizePathKey = (path: string) => path.replace(/^\/+/, "");
 export const canAccessByRule = (
   rule: AccessRule | undefined,
   organizationType: OrgType | undefined,
-  _permissions: string[]
+  permissions: string[]
 ) => {
-  void _permissions;
   if (!rule) return true;
   if (rule.orgTypes?.length) {
     if (!organizationType || !rule.orgTypes.includes(organizationType)) return false;
   }
 
-  // Permission-based gating is intentionally disabled for now.
-  // Access is currently enforced by organization type only.
+  // If permissions were loaded, enforce permission checks.
+  // If backend returns no permissions for a session, fall back to org-type gating.
+  if (permissions.length > 0 && rule.anyPermissions?.length) {
+    const allowed = rule.anyPermissions.some((code) => permissions.includes(code));
+    if (!allowed) return false;
+  }
+  if (permissions.length > 0 && rule.allPermissions?.length) {
+    const allowed = rule.allPermissions.every((code) => permissions.includes(code));
+    if (!allowed) return false;
+  }
   return true;
 };

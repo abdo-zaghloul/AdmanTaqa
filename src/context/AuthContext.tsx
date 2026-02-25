@@ -19,6 +19,14 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const ORG_TYPE_STORAGE_KEY = "organization_type";
+
+const isOrganizationType = (
+  value: string | null
+): value is Organization["type"] =>
+  value === "FUEL_STATION" ||
+  value === "SERVICE_PROVIDER" ||
+  value === "AUTHORITY";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,6 +44,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     setAccessToken(token);
+    const cachedOrganizationType = localStorage.getItem(ORG_TYPE_STORAGE_KEY);
+    if (isOrganizationType(cachedOrganizationType)) {
+      // Lightweight fallback to keep org-type based guards stable across refresh
+      // until /me completes (or if it fails temporarily).
+      setOrganization((prev) =>
+        prev ??
+        ({
+          id: 0,
+          name: "",
+          type: cachedOrganizationType,
+          status: "APPROVED",
+        } as Organization)
+      );
+    }
+
     void (async () => {
       try {
         const me = await authService.me();
@@ -44,6 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setOrganization(me.data.organization);
           setRoles(me.data.roles ?? []);
           setPermissions(me.data.permissions ?? []);
+          localStorage.setItem(ORG_TYPE_STORAGE_KEY, me.data.organization.type);
         }
       } catch {
         // If token is stale, keep fallback auth state based on token only.
@@ -60,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPermissions(data.permissions ?? []);
     setAccessToken(data.accessToken);
     localStorage.setItem("access_token", data.accessToken);
+    localStorage.setItem(ORG_TYPE_STORAGE_KEY, data.organization.type);
     if (data.refreshToken) {
       localStorage.setItem("refresh_token", data.refreshToken);
     }
@@ -73,6 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAccessToken(null);
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem(ORG_TYPE_STORAGE_KEY);
   };
 
   const { hasPermission, hasAnyPermission, hasAllPermissions } =
