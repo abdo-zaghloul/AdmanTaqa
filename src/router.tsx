@@ -31,6 +31,7 @@ import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RouteAccessGuard from "./components/RouteAccessGuard";
 // import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
 import EditRole from "./pages/Roles/EditRole";
 
@@ -42,6 +43,12 @@ import FuelRetail from "./pages/fuelRetail/fuelRetail";
 // import ServiceRequests from "./pages/ServiceRequests/ServiceOfferings";
 import ServiceCategories from "./pages/ServiceCategories/ServiceCategories";
 import ServiceOfferings from "./pages/ServiceOfferings/ServiceOfferings";
+import BranchRequests from "./pages/BranchRequests/BranchRequests";
+import CreateBranchRequest from "./pages/BranchRequests/CreateBranchRequest";
+import BranchRequestDetails from "./pages/BranchRequests/BranchRequestDetails";
+import WorkOrders from "./pages/WorkOrders/WorkOrders";
+import WorkOrderDetails from "./pages/WorkOrders/WorkOrderDetails";
+import WorkOrdersReviewQueue from "./pages/WorkOrders/WorkOrdersReviewQueue";
 // import ServiceOfferings from "./pages/ServiceRequests/ServiceOfferings";
 
 export const router = createHashRouter([
@@ -67,89 +74,188 @@ export const router = createHashRouter([
       },
       {
         path: "roles/:id/edit",
-        element: <EditRole />,
+        element: (
+          <RouteAccessGuard pathKey="roles/:id/edit">
+            <EditRole />
+          </RouteAccessGuard>
+        ),
       },
-      
-      // {
-      //   path: "service-providers",
-      //   element: <ServiceProviders/>,
-      // },
-      
+     
       {
         path: "organizations",
-        element: <Organizations />,
+        element: (
+          <RouteAccessGuard pathKey="organizations">
+            <Organizations />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "fuel-retail",
-        element: <FuelRetail />,
+        element: (
+          <RouteAccessGuard pathKey="fuel-retail">
+            <FuelRetail />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "fuel-retail/:id",
-        element: <FuelRetailDetails />,
+        element: (
+          <RouteAccessGuard pathKey="fuel-retail/:id">
+            <FuelRetailDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "fuel-retail/register",
-        element: <RegisterFuelRetail />,
+        element: (
+          <RouteAccessGuard pathKey="fuel-retail/register">
+            <RegisterFuelRetail />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "fuel-retail/:id/edit",
-        element: <EditFuelRetail />,
+        element: (
+          <RouteAccessGuard pathKey="fuel-retail/:id/edit">
+            <EditFuelRetail />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "organizations/:id",
-        element: <OrganizationDetails />,
+        element: (
+          <RouteAccessGuard pathKey="organizations/:id">
+            <OrganizationDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "locations",
-        element: <Locations />,
+        element: (
+          <RouteAccessGuard pathKey="locations">
+            <Locations />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "branches",
-        element: <Branches />,
+        element: (
+          <RouteAccessGuard pathKey="branches">
+            <Branches />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "branch-requests",
+        element: (
+          <RouteAccessGuard pathKey="branch-requests">
+            <BranchRequests />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "branch-requests/create",
+        element: (
+          <RouteAccessGuard pathKey="branch-requests/create">
+            <CreateBranchRequest />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "branch-requests/:id",
+        element: (
+          <RouteAccessGuard pathKey="branch-requests/:id">
+            <BranchRequestDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "branches/create",
-        element: <CreateBranch />,
+        element: (
+          <RouteAccessGuard pathKey="branches/create">
+            <CreateBranch />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "branches/:id/edit",
-        element: <EditBranch />,
+        element: (
+          <RouteAccessGuard pathKey="branches/:id/edit">
+            <EditBranch />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "branches/:id",
-        element: <BranchDetails />,
+        element: (
+          <RouteAccessGuard pathKey="branches/:id">
+            <BranchDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "roles/create",
-        element: <CreateCustomRole />,
+        element: (
+          <RouteAccessGuard pathKey="roles/create">
+            <CreateCustomRole />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "roles",
-        element: <Roles />,
+        element: (
+          <RouteAccessGuard pathKey="roles">
+            <Roles />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "roles/:id",
-        element: <RoleDetails />,
+        element: (
+          <RouteAccessGuard pathKey="roles/:id">
+            <RoleDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "users",
-        element: <Users />,
+        element: (
+          <RouteAccessGuard pathKey="users">
+            <Users />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "users/:id",
-        element: <UserDetails />,
+        element: (
+          <RouteAccessGuard pathKey="users/:id">
+            <UserDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "users/:id/edit",
-        element: <UpdateUser />,
+        element: (
+          <RouteAccessGuard pathKey="users/:id/edit">
+            <UpdateUser />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "service-Offering",
-        element: <ServiceOfferings />,
+        element: (
+          <RouteAccessGuard pathKey="service-Offering">
+            <ServiceOfferings />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "service-categories",
-        element: <ServiceCategories />,
+        element: (
+          <RouteAccessGuard pathKey="service-categories">
+            <ServiceCategories />
+          </RouteAccessGuard>
+        ),
       },
       // {
       //   path: "service-requests/:id",
@@ -157,23 +263,67 @@ export const router = createHashRouter([
       // },
       {
         path: "quotations",
-        element: <Quotations />,
+        element: (
+          <RouteAccessGuard pathKey="quotations">
+            <Quotations />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "job-orders",
-        element: <JobOrders />,
+        element: (
+          <RouteAccessGuard pathKey="job-orders">
+            <JobOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "work-orders",
+        element: (
+          <RouteAccessGuard pathKey="work-orders">
+            <WorkOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "work-orders/review-queue",
+        element: (
+          <RouteAccessGuard pathKey="work-orders/review-queue">
+            <WorkOrdersReviewQueue />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "work-orders/:id",
+        element: (
+          <RouteAccessGuard pathKey="work-orders/:id">
+            <WorkOrderDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "job-orders/:id",
-        element: <JobOrderDetails />,
+        element: (
+          <RouteAccessGuard pathKey="job-orders/:id">
+            <JobOrderDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "inspections",
-        element: <Inspections />,
+        element: (
+          <RouteAccessGuard pathKey="inspections">
+            <Inspections />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "audit-log",
-        element: <AuditLog />,
+        element: (
+          <RouteAccessGuard pathKey="audit-log">
+            <AuditLog />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "profile",
@@ -181,19 +331,35 @@ export const router = createHashRouter([
       },
       {
         path: "registrations",
-        element: <RegistrationsPage />,
+        element: (
+          <RouteAccessGuard pathKey="registrations">
+            <RegistrationsPage />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "registrations/:id",
-        element: <RegistrationDetailPage />,
+        element: (
+          <RouteAccessGuard pathKey="registrations/:id">
+            <RegistrationDetailPage />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "onboarding",
-        element: <OnboardingPage />,
+        element: (
+          <RouteAccessGuard pathKey="onboarding">
+            <OnboardingPage />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "onboarding/:id",
-        element: <OnboardingDetails />,
+        element: (
+          <RouteAccessGuard pathKey="onboarding/:id">
+            <OnboardingDetails />
+          </RouteAccessGuard>
+        ),
       },
       {
         path: "*",

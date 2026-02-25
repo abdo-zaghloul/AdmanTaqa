@@ -35,7 +35,7 @@ export default function RegistrationsTable() {
   const loadData = async (page: number) => {
     try {
       setLoading(true);
-      const response = await fetchRegistrations('pending', page, pageSize);
+      const response = await fetchRegistrations('approved', page, pageSize);
       setRegistrations(response.data);
       setTotalPages(response.totalPages);
       setTotalItems(response.total);
@@ -116,7 +116,7 @@ export default function RegistrationsTable() {
           <div className="rounded-2xl bg-primary/10 p-6 mb-6">
             <FileText className="h-14 w-14 text-primary/70" />
           </div>
-          <h3 className="text-xl font-bold text-slate-900 mb-2">No pending registrations</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No approved registrations</h3>
           <p className="text-muted-foreground text-sm">Everything is caught up! New applications will appear here.</p>
         </CardContent>
       </Card>

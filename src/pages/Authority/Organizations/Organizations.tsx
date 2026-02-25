@@ -7,7 +7,9 @@ export default function Organizations() {
   const { data, isLoading, isError, error } = useGetOrganizations({ page: 1, limit: 20 });
 
   const filteredOrgs = useMemo(() => {
-    const list = data?.data?.items ?? [];
+    const list = (data?.data?.items ?? []).filter(
+      (org) => org.status === "PENDING" || org.status === "REJECTED"
+    );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
     return list.filter(

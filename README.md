@@ -1,71 +1,158 @@
 # TAQA Admin Frontend
 
-واجهة إدارة مبنية بـ React + TypeScript + Vite.
+TAQA Admin is a React + TypeScript admin dashboard used to manage organizations, branches, users, registrations, onboarding, branch requests, work orders, and related authority/provider workflows.
 
-## Full Routes Audit
+## Tech Stack
 
-هذا الجرد مبني على الصفحات المسجلة في `src/router.tsx` ومقسّم حسب الربط مع الباك:
+- React 19
+- TypeScript
+- Vite (rolldown-vite)
+- React Router
+- TanStack Query
+- Axios
+- Tailwind CSS + Radix UI primitives
+- React Hook Form + Zod
+- Sonner (toasts)
 
-- **Backend-integrated**: الصفحة مربوطة API فعليًا.
-- **Frontend-only**: الصفحة Mock/Static بدون ربط API فعلي.
-- **Mixed/partial**: الصفحة فيها جزء مربوط باك وجزء Mock.
+## Project Architecture
 
----
+The app is organized around pages, feature hooks, and shared infrastructure:
 
-## Backend-integrated (18)
+- `src/pages/` contains route-level screens and feature UI.
+- `src/hooks/` contains data-fetching and mutation hooks per domain.
+- `src/api/services/` contains API service methods grouped by module.
+- `src/components/` contains app shell and reusable UI building blocks.
+- `src/context/` contains global state providers (`AuthContext`).
+- `src/lib/` contains shared utilities (permissions, access rules, helpers).
+- `src/types/` contains domain and API typing contracts.
 
-- `/login` → `src/pages/Auth/Login.tsx`
-- `/register` → `src/pages/Auth/Register.tsx`
-- `/` (index) → `src/pages/Profile/Profile.tsx`
-- `/profile` → `src/pages/Profile/Profile.tsx`
-- `/organizations` → `src/pages/Authority/Organizations/Organizations.tsx`
-- `/organizations/:id` → `src/pages/Authority/Organizations/OrganizationDetails.tsx`
-- `/locations` → `src/pages/Locations/Locations.tsx`
-- `/branches` → `src/pages/Branches/Branches.tsx`
-- `/branches/create` → `src/pages/Branches/CreateBranch.tsx`
-- `/branches/:id/edit` → `src/pages/Branches/EditBranch.tsx`
-- `/branches/:id` → `src/pages/Branches/BranchDetails.tsx`
-- `/users` → `src/pages/Users/Users.tsx`
-- `/users/:id` → `src/pages/Users/UserDetails.tsx`
-- `/registrations` → `src/pages/Registrations/RegistrationsPage.tsx`
-- `/registrations/:id` → `src/pages/Registrations/RegistrationDetailPage.tsx`
-- `/onboarding` → `src/pages/Onboarding/OnboardingPage.tsx`
-- `/onboarding/:id` → `src/pages/Onboarding/OnboardingDetails.tsx`
-- `OrganizationActions` logic → `src/pages/Authority/Organizations/Component/OrganizationActions.tsx`
+## Runtime Flow
 
----
+### App Bootstrap
 
-## Frontend-only / Mock (15)
+The app starts in `src/main.tsx`:
 
-- `/roles` → `src/pages/Roles/Roles.tsx`
-- `/roles/create` → `src/pages/Roles/CreateCustomRole.tsx`
-- `/roles/:id` → `src/pages/Roles/RoleDetails.tsx`
-- `/roles/:id/edit` → `src/pages/Roles/EditRole.tsx`
- - `/fuel-retail` → `src/pages/fuelRetail/fuelRetail.tsx`
-- `/fuel-retail/:id` → `src/pages/fuelRetail/FuelRetailDetails.tsx`
-- `/fuel-retail/register` → `src/pages/fuelRetail/RegisterFuelRetail.tsx`
-- `/fuel-retail/:id/edit` → `src/pages/fuelRetail/EditFuelRetail.tsx`
-- `/service-requests/:id` → `src/pages/ServiceRequests/ServiceRequestDetails.tsx`
-- `/job-orders` → `src/pages/JobOrders/JobOrders.tsx`
-- `/job-orders/:id` → `src/pages/JobOrders/JobOrderDetails.tsx`
-- `/inspections` → `src/pages/Inspections/Inspections.tsx`
-- `/audit-log` → `src/pages/AuditLog/AuditLog.tsx`
-- `*` → `src/pages/NotFound/NotFound.tsx`
+1. Creates a `QueryClient`.
+2. Wraps app with `QueryClientProvider`.
+3. Wraps app with `AuthProvider`.
+4. Mounts `RouterProvider` with the hash router.
 
----
+### Routing & Layout
 
-## Mixed / Partial (2)
+- Router definition lives in `src/router.tsx` (`createHashRouter`).
+- `/login` and `/register` are public.
+- All authenticated app routes are nested under `/` and rendered inside `Layout`.
+- `Layout` renders:
+  - Sidebar (`AppSidebar`)
+  - Top header
+  - Page outlet (`<Outlet />`)
 
-- `/service-requests` → `src/pages/ServiceRequests/ServiceRequests.tsx`
-  - فيه guard/organization من الباك + الداتا الأساسية Mock.
-- `/quotations` → `src/pages/Quotations/Quotations.tsx`
-  - فيه guard/organization من الباك + الداتا الأساسية Mock.
+### Authentication
 
----
+Authentication state is managed in `src/context/AuthContext.tsx`:
 
-## Summary
+- Stores `user`, `organization`, `roles`, `permissions`, tokens, and loading state.
+- On app load:
+  - Reads `access_token` from local storage.
+  - Calls `authService.me()` to hydrate identity and permissions.
+- Exposes helpers:
+  - `isAuthenticated`
+  - `hasPermission`, `hasAnyPermission`, `hasAllPermissions`
+  - `login` / `logout`
 
-- **Backend-integrated:** 18
-- **Frontend-only:** 15
-- **Mixed/partial:** 2
-- **Total routes audited:** 35
+`ProtectedRoute` (`src/components/ProtectedRoute.tsx`) enforces login:
+
+- Shows spinner while auth loads.
+- Redirects unauthenticated users to `/login`.
+
+### Authorization (Route-Level Access Control)
+
+Route-level authorization is handled by:
+
+- `src/lib/accessControl.ts`:
+  - `ROUTE_ACCESS_RULES`
+  - `canAccessByRule(...)`
+  - `normalizePathKey(...)`
+- `src/components/RouteAccessGuard.tsx`:
+  - Evaluates route access using org type + permissions.
+  - Renders page content when allowed.
+  - Renders Access Denied UI when denied.
+
+Related guide:
+
+- `docs/route-access-guard-cycle.md`
+
+### Sidebar Visibility
+
+`src/components/AppSidebar.tsx` uses the same access-rule map (`ROUTE_ACCESS_RULES`) via `canAccessByRule(...)` to hide inaccessible menu items, keeping sidebar visibility aligned with page access guards.
+
+## API Layer
+
+The Axios client is configured in `src/api/config.ts`:
+
+- Sets base URL to:
+  - `https://enrgy-be-development.up.railway.app/api/`
+- Adds `Authorization: Bearer <token>` on requests when token exists.
+- Handles `401` with refresh-token flow:
+  - Calls `auth/refresh`
+  - Retries failed requests after refresh
+  - Redirects to `#/login` if refresh fails
+
+## Key Feature Areas
+
+Major route domains in `src/router.tsx`:
+
+- Auth: `login`, `register`
+- Profile
+- Organizations (authority)
+- Branches & locations
+- Users & roles
+- Registrations & onboarding
+- Service offerings/categories
+- Fuel retail
+- Branch requests
+- Quotations
+- Job orders
+- Work orders + review queue
+- Inspections & audit logs
+
+## Development
+
+### Prerequisites
+
+- Node.js 20+ recommended
+- npm
+
+### Install
+
+```bash
+npm install
+```
+
+### Run in Development
+
+```bash
+npm run dev
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+## Route Audit (Legacy Reference)
+
+The previous README included a route audit split by backend integration level. If needed, you can regenerate and maintain that list from `src/router.tsx`, but this README now focuses on overall project architecture and development flow.

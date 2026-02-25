@@ -20,6 +20,11 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import {
+  ROUTE_ACCESS_RULES,
+  canAccessByRule,
+  normalizePathKey,
+} from "@/lib/accessControl";
 
 interface NavItem {
   label: string;
@@ -76,10 +81,12 @@ const navGroups: NavGroup[] = [
       { label: "Profile", path: "/profile", icon: UserCog },
       
       { label: "Branches", path: "/branches", icon: GitBranch },
+      { label: "Branch Requests", path: "/branch-requests", icon: GitBranch },
       { label: "Locations", path: "/locations", icon: MapPin },
       { label: "Service Offering", path: "/service-Offering", icon: ClipboardList },
       { label: "Service Categories", path: "/service-categories", icon: Tags },
       { label: "Job Orders", path: "/job-orders", icon: Briefcase },
+      { label: "Work Orders", path: "/work-orders", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       
       { label: "Inspections", path: "/inspections", icon: SearchCheck },
@@ -98,7 +105,7 @@ export default function AppSidebar() {
     "Users": false
   });
 
-  const { logout } = useAuth();
+  const { logout, organization, permissions } = useAuth();
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -117,6 +124,28 @@ export default function AppSidebar() {
     }
     return false;
   };
+
+  const canSeePath = (path?: string) => {
+    if (!path) return true;
+    const pathKey = normalizePathKey(path);
+    return canAccessByRule(
+      ROUTE_ACCESS_RULES[pathKey],
+      organization?.type,
+      permissions
+    );
+  };
+
+  const canSeeItem = (item: NavItem): boolean => {
+    if (item.isDropdown && item.children) {
+      return item.children.some((child) => canSeeItem(child));
+    }
+    return canSeePath(item.path);
+  };
+
+  const visibleGroups = navGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => canSeeItem(item)),
+  }));
 
   const renderItem = (item: NavItem) => {
     if (item.isDropdown) {
@@ -140,7 +169,7 @@ export default function AppSidebar() {
           </SidebarMenuItem>
           {isOpen && item.children && (
             <div className="ml-8 border-l-2 border-slate-200 pl-2">
-              {item.children.map((child) => (
+              {item.children.filter((child) => canSeeItem(child)).map((child) => (
                 <SidebarMenuItem key={child.path}>
                   <SidebarMenuButton
                     className="px-4 py-4 hover:bg-primary/5 transition-all group/btn"
@@ -182,7 +211,7 @@ export default function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest opacity-60 px-4 mt-2">
               {group.label}
