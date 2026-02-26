@@ -28,6 +28,7 @@ export interface CreateUserBody {
   fullName: string;
   password: string;
   phone?: string;
+  roleId?: number;
 }
 
 /** PATCH /api/users/:id - Update user (all fields optional, send only changed) */

@@ -12,15 +12,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import useCreateUser from "@/hooks/Users/useCreateUser";
+import useGetRoles from "@/hooks/Roles/useGetRoles";
 import type { CreateUserBody } from "@/types/user";
 
-const initialForm: CreateUserBody & { phone?: string } = {
+type CreateUserForm = {
+  email: string;
+  fullName: string;
+  password: string;
+  phone?: string;
+  roleId: string;
+};
+
+const initialForm: CreateUserForm = {
   email: "",
   fullName: "",
   password: "",
   phone: "",
+  roleId: "",
 };
 
 type CreateUserDialogProps = {
@@ -32,6 +49,7 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const createMutation = useCreateUser();
+  const { data: roles = [], isLoading: rolesLoading } = useGetRoles();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +58,7 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
       fullName: form.fullName.trim(),
       password: form.password,
       phone: form.phone?.trim() || undefined,
+      roleId: form.roleId ? Number(form.roleId) : undefined,
     };
     createMutation.mutate(body, {
       onSuccess: () => {
@@ -70,7 +89,7 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            Add a new user to your organization. Body: email, fullName, password, phone (optional).
+            Add a new user to your organization. You can optionally assign a role during creation.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -116,6 +135,29 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
               value={form.phone ?? ""}
               onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Role (optional)</Label>
+            <Select
+              value={form.roleId || "none"}
+              onValueChange={(value) =>
+                setForm((p) => ({ ...p, roleId: value === "none" ? "" : value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={rolesLoading ? "Loading roles..." : "Select role (optional)"}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {roles.map((role) => (
+                  <SelectItem key={role.id} value={String(role.id)}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

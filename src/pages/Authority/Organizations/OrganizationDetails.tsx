@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import useGetOrganizationById from "@/hooks/Organization/useGetOrganizationById";
+import useGetOrganizationDocuments from "@/hooks/Organization/useGetOrganizationDocuments";
 import OrganizationActions from "./Component/OrganizationActions";
 
 export default function OrganizationDetails() {
@@ -21,6 +22,10 @@ export default function OrganizationDetails() {
   const orgId = id ?? "";
 
   const { data: org, isLoading: orgLoading, isError: orgError } = useGetOrganizationById(orgId);
+  const {
+    data: documents = [],
+    isLoading: documentsLoading,
+  } = useGetOrganizationDocuments(org?.id);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -47,6 +52,21 @@ export default function OrganizationDetails() {
         );
       default:
         return <Badge>{status}</Badge>;
+    }
+  };
+
+  const getDocUrl = (url?: string, fileUrl?: string) => url ?? fileUrl ?? "#";
+
+  const getDocTypeLabel = (documentType?: string) => {
+    switch (documentType) {
+      case "LICENSE":
+        return "License";
+      case "REGISTRATION":
+        return "Registration";
+      case "OTHER":
+        return "Other";
+      default:
+        return documentType ?? "Document";
     }
   };
 
@@ -162,6 +182,46 @@ export default function OrganizationDetails() {
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm shadow-slate-200/50">
+            <CardHeader className="border-b bg-slate-50/50 py-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {documentsLoading ? (
+                <p className="text-sm text-muted-foreground">Loading documents...</p>
+              ) : documents.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">No documents uploaded yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {documents.map((doc) => (
+                    <li key={doc.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">
+                          {doc.fileName ?? getDocTypeLabel(doc.documentType)}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {getDocTypeLabel(doc.documentType)}
+                          {doc.createdAt ? ` • ${new Date(doc.createdAt).toLocaleDateString()}` : ""}
+                        </p>
+                      </div>
+                      <a
+                        href={getDocUrl(doc.url, doc.fileUrl)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        View
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardContent>
           </Card>
 
