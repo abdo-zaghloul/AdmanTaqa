@@ -1,0 +1,335 @@
+{
+	"info": {
+		"_postman_id": "energy-platform-api-001",
+		"name": "Energy Platform API",
+		"description": "API collection for enrgy-BE (Gas/Energy maintenance platform).\n\n**Setup:**\n1. Set `baseUrl` (e.g. `http://localhost:4000`).\n2. Run **Auth > Login** with email/password; the access token is saved automatically.\n3. All other requests use `Authorization: Bearer {{accessToken}}`.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:4000" },
+		{ "key": "accessToken", "value": "" }
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"organizationName\": \"My Company\",\n  \"organizationType\": \"SERVICE_PROVIDER\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Admin User\",\n  \"phone\": \"+201000000000\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/register",
+						"description": "Register new organization (SERVICE_PROVIDER or FUEL_STATION). Org starts as PENDING.",
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();",
+									"if (json.success && json.data && json.data.accessToken) {",
+									"  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@techserve.com\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/login",
+						"description": "Login with email/password. Saves accessToken to collection variable.",
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/refresh",
+						"description": "Get new access token using refresh token.",
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Me",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/auth/me",
+						"description": "Current user profile with organization, roles, permissions."
+					}
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/health",
+						"description": "API health check (no auth).",
+						"auth": { "type": "noauth" }
+					}
+				}
+			]
+		},
+		{
+			"name": "Organizations",
+			"item": [
+				{ "name": "Get My Organization", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/me" } },
+				{ "name": "Update My Organization", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/organizations/me", "body": { "mode": "raw", "raw": "{\"name\": \"Updated Name\"}" } } },
+				{ "name": "List Organizations", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations?status=APPROVED&type=SERVICE_PROVIDER" } },
+				{ "name": "Get Organization by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1" } },
+				{ "name": "Approve Organization", "request": { "method": "POST", "url": "{{baseUrl}}/api/organizations/3/approve", "body": { "mode": "raw", "raw": "{\"decision\": \"APPROVED\", \"reason\": \"Approved\"}" } } },
+				{ "name": "Get Organization Documents", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1/documents" } },
+				{ "name": "Get Approval History", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1/approval-history" } }
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{ "name": "List Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/users" } },
+				{ "name": "Get User by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/users/1" } },
+				{ "name": "Create User", "request": { "method": "POST", "url": "{{baseUrl}}/api/users", "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"New User\",\n  \"phone\": \"+201000000001\"\n}" } } }
+			]
+		},
+		{
+			"name": "Branches",
+			"item": [
+				{ "name": "List Branches", "request": { "method": "GET", "url": "{{baseUrl}}/api/branches" } },
+				{ "name": "Get Branch by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/branches/1" } },
+				{ "name": "Create Branch", "request": { "method": "POST", "url": "{{baseUrl}}/api/branches", "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"Main Branch\",\n  \"nameAr\": \"الفرع الرئيسي\",\n  \"address\": \"Cairo\",\n  \"areaId\": 1\n}" } } },
+				{ "name": "Update Branch", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/branches/1", "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"Updated\"\n}" } } },
+				{ "name": "Delete Branch", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/branches/1" } }
+			]
+		},
+		{
+			"name": "Branch Requests",
+			"item": [
+				{ "name": "Submit Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests", "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"New Branch\",\n  \"nameAr\": \"فرع جديد\",\n  \"address\": \"Address\",\n  \"areaId\": 1\n}" } } },
+				{ "name": "List Branch Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/branch-requests" } },
+				{ "name": "Get Branch Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/branch-requests/1" } },
+				{ "name": "Approve Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests/1/approve" } },
+				{ "name": "Reject Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests/1/reject", "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" } } }
+			]
+		},
+		{
+			"name": "Locations",
+			"item": [
+				{ "name": "Get Location Tree", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/tree" } },
+				{ "name": "List Countries", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/countries" } },
+				{ "name": "Get Governorates", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/countries/1/governorates" } },
+				{ "name": "Get Cities", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/governorates/1/cities" } },
+				{ "name": "Get Areas", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/cities/1/areas" } }
+			]
+		},
+		{
+			"name": "Requests (Service)",
+			"item": [
+				{ "name": "List Service Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/requests" } },
+				{ "name": "Create Service Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/requests", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Maintenance Request\",\n  \"description\": \"Description\",\n  \"branchId\": 1\n}" } } },
+				{ "name": "Get Service Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/requests/1" } },
+				{ "name": "Cancel Service Request", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/requests/1/cancel" } }
+			]
+		},
+		{
+			"name": "Quotations",
+			"item": [
+				{ "name": "List Quotations", "request": { "method": "GET", "url": "{{baseUrl}}/api/quotations" } },
+				{ "name": "Get Quotation by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/quotations/1" } },
+				{ "name": "Submit Quotation", "request": { "method": "POST", "url": "{{baseUrl}}/api/quotations", "body": { "mode": "raw", "raw": "{\n  \"serviceRequestId\": 1,\n  \"amount\": 1000,\n  \"validUntil\": \"2026-12-31\"\n}" } } },
+				{ "name": "Withdraw Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/withdraw" } },
+				{ "name": "Approve Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/approve" } },
+				{ "name": "Reject Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/reject", "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" } } }
+			]
+		},
+		{
+			"name": "Job Orders",
+			"item": [
+				{ "name": "List Job Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders" } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/review-queue" } },
+				{ "name": "Get Job Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1" } },
+				{ "name": "Update Job Order Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/job-orders/1/status", "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" } } },
+				{ "name": "Get Payment", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/payment" } },
+				{ "name": "List Assignments", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/assignments" } },
+				{ "name": "List Visits", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/visits" } }
+			]
+		},
+		{
+			"name": "Internal Tasks",
+			"item": [
+				{ "name": "Create Internal Task", "request": { "method": "POST", "url": "{{baseUrl}}/api/internal-tasks", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Task\",\n  \"branchId\": 1,\n  \"assignedUserId\": 1\n}" } } },
+				{ "name": "List Internal Tasks", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks" } },
+				{ "name": "Get My Tasks", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/my" } },
+				{ "name": "Get Assignable Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/assignable-users" } },
+				{ "name": "Get Tasks Stats", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/stats" } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/review-queue" } },
+				{ "name": "Get Task by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/1" } },
+				{ "name": "Review Task", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/review", "body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVE\"\n}" } } },
+				{ "name": "Update Task Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/status", "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" } } },
+				{ "name": "Close Task", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/close" } }
+			]
+		},
+		{
+			"name": "Internal Work Orders",
+			"item": [
+				{ "name": "Create Internal Work Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/internal/work-orders", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Internal WO\",\n  \"branchId\": 1\n}" } } },
+				{ "name": "List Internal Work Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders" } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders/review-queue" } },
+				{ "name": "Get Internal Work Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders/1" } },
+				{ "name": "Update Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated\"\n}" } } },
+				{ "name": "Review Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1/review", "body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVE\"\n}" } } },
+				{ "name": "Close Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1/close" } }
+			]
+		},
+		{
+			"name": "Work Orders (v2)",
+			"item": [
+				{ "name": "List Work Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/workorders" } },
+				{ "name": "Get Work Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/workorders/1" } }
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{ "name": "Get Counters", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/counters" } },
+				{ "name": "Get Summary", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/summary" } }
+			]
+		},
+		{
+			"name": "Warehouses",
+			"item": [
+				{ "name": "List Warehouses", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses" } },
+				{ "name": "Create Warehouse", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouses", "body": { "mode": "raw", "raw": "{\n  \"branchId\": 1,\n  \"name\": \"Main Warehouse\"\n}" } } },
+				{ "name": "Get Warehouse by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses/1" } },
+				{ "name": "List Warehouse Items", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses/1/items" } },
+				{ "name": "Create Warehouse Item", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouses/1/items", "body": { "mode": "raw", "raw": "{\n  \"name\": \"Item\",\n  \"sku\": \"SKU001\",\n  \"minStock\": 0\n}" } } },
+				{ "name": "Update Warehouse Item", "request": { "method": "PUT", "url": "{{baseUrl}}/api/warehouses/1/items/1", "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated\"\n}" } } },
+				{ "name": "Update Stock", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouses/1/items/1/stock", "body": { "mode": "raw", "raw": "{\n  \"quantity\": 10\n}" } } },
+				{ "name": "Delete Warehouse Item", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/warehouses/1/items/1" } }
+			]
+		},
+		{
+			"name": "Warehouse Orders",
+			"item": [
+				{ "name": "Create Warehouse Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouse-orders", "body": { "mode": "raw", "raw": "{\n  \"warehouseId\": 1,\n  \"branchId\": 1\n}" } } },
+				{ "name": "List Warehouse Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouse-orders" } },
+				{ "name": "Get Warehouse Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouse-orders/1" } },
+				{ "name": "Update Items", "request": { "method": "PUT", "url": "{{baseUrl}}/api/warehouse-orders/1/items", "body": { "mode": "raw", "raw": "[]" } } },
+				{ "name": "Submit", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/submit" } },
+				{ "name": "Review", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/review" } },
+				{ "name": "Approve", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/approve" } },
+				{ "name": "Reject", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/reject", "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" } } },
+				{ "name": "Issue", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/issue" } },
+				{ "name": "Deliver", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/deliver" } },
+				{ "name": "Close", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/close" } },
+				{ "name": "Cancel", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/cancel" } }
+			]
+		},
+		{
+			"name": "Station",
+			"item": [
+				{ "name": "Create Maintenance Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/maintenance-requests", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Maintenance\",\n  \"branchId\": 1\n}" } } },
+				{ "name": "List Station Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/requests" } },
+				{ "name": "Get Station Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/requests/1" } },
+				{ "name": "Send to Providers", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/send-to-providers", "body": { "mode": "raw", "raw": "{\n  \"providerOrganizationIds\": [2]\n}" } } },
+				{ "name": "Select Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/select-quote", "body": { "mode": "raw", "raw": "{\n  \"quoteId\": 1\n}" } } },
+				{ "name": "Reject Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/reject-quote", "body": { "mode": "raw", "raw": "{\n  \"quoteId\": 1,\n  \"reason\": \"No\"\n}" } } },
+				{ "name": "List Linked Providers", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers" } },
+				{ "name": "List Available Providers", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers/available" } },
+				{ "name": "Get Provider Profile", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers/1/profile" } },
+				{ "name": "Add Linked Provider", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/linked-providers", "body": { "mode": "raw", "raw": "{\n  \"providerOrganizationId\": 2\n}" } } },
+				{ "name": "Remove Linked Provider", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/station/linked-providers/1" } }
+			]
+		},
+		{
+			"name": "Provider",
+			"item": [
+				{ "name": "List RFQs", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/rfqs" } },
+				{ "name": "Get RFQ by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/rfqs/1" } },
+				{ "name": "Create Quote for RFQ", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/rfqs/1/quotes", "body": { "mode": "raw", "raw": "{\n  \"amount\": 1000,\n  \"validUntil\": \"2026-12-31\"\n}" } } },
+				{ "name": "Revise Quote", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/provider/quotes/1", "body": { "mode": "raw", "raw": "{\n  \"amount\": 1200\n}" } } },
+				{ "name": "Withdraw Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/quotes/1/withdraw" } },
+				{ "name": "List Job Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/job-orders" } },
+				{ "name": "Get Job Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/job-orders/1" } },
+				{ "name": "Assign Operator", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/job-orders/1/assign-operator", "body": { "mode": "raw", "raw": "{\n  \"userId\": 1\n}" } } },
+				{ "name": "Update Job Order Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/provider/job-orders/1/status", "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" } } }
+			]
+		},
+		{
+			"name": "Team",
+			"item": [
+				{ "name": "Accept Invitation", "request": { "auth": { "type": "noauth" }, "method": "POST", "url": "{{baseUrl}}/api/team/accept", "body": { "mode": "raw", "raw": "{\n  \"token\": \"invitation-token\"\n}" } } },
+				{ "name": "Invite Employee", "request": { "method": "POST", "url": "{{baseUrl}}/api/team/invite", "body": { "mode": "raw", "raw": "{\n  \"email\": \"new@example.com\",\n  \"fullName\": \"New User\",\n  \"roleId\": 1\n}" } } },
+				{ "name": "List Invitations", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/invitations" } },
+				{ "name": "List Team Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/users" } },
+				{ "name": "Get Job Grades", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/job-grades" } },
+				{ "name": "Update User Role", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/users/1/role", "body": { "mode": "raw", "raw": "{\n  \"roleId\": 2\n}" } } },
+				{ "name": "Deactivate User", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/users/1/deactivate" } },
+				{ "name": "Cancel Invitation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/invitations/1/cancel" } }
+			]
+		},
+		{
+			"name": "Roles",
+			"item": [
+				{ "name": "List Roles", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles" } },
+				{ "name": "List Permissions for Org Type", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles/permissions" } },
+				{ "name": "Get Role by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles/1" } },
+				{ "name": "Create Role", "request": { "method": "POST", "url": "{{baseUrl}}/api/roles", "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Role\",\n  \"organizationType\": \"SERVICE_PROVIDER\",\n  \"permissionIds\": [1, 2]\n}" } } },
+				{ "name": "Update Role", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/roles/1", "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated\"\n}" } } }
+			]
+		},
+		{
+			"name": "Audit",
+			"item": [
+				{ "name": "List Audit Logs", "request": { "method": "GET", "url": "{{baseUrl}}/api/audit" } }
+			]
+		},
+		{
+			"name": "Service Categories",
+			"item": [
+				{ "name": "List Service Categories", "request": { "method": "GET", "url": "{{baseUrl}}/api/service-categories" } },
+				{ "name": "Get by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/service-categories/1" } }
+			]
+		},
+		{
+			"name": "Inspections",
+			"item": [
+				{ "name": "List Inspections", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspections" } },
+				{ "name": "Get Inspection by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspections/1" } },
+				{ "name": "Create Inspection", "request": { "method": "POST", "url": "{{baseUrl}}/api/inspections", "body": { "mode": "raw", "raw": "{}" } } }
+			]
+		},
+		{
+			"name": "Operators",
+			"item": [
+				{ "name": "List Operators", "request": { "method": "GET", "url": "{{baseUrl}}/api/operators" } },
+				{ "name": "Get Operator by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/operators/1" } }
+			]
+		}
+	]
+}

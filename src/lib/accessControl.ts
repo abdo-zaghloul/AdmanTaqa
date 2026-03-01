@@ -129,6 +129,38 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
   "fuel-retail/:id/edit": {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
+  // Station (Fuel Station): internal work orders, external requests
+  "internal-work-orders": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "internal-work-orders/review-queue": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "internal-work-orders/:id": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "station-requests": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "station-requests/create": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "station-requests/:id": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  // Provider (Service Provider): RFQs, job orders
+  "provider-rfqs": {
+    orgTypes: ["SERVICE_PROVIDER"],
+  },
+  "provider-rfqs/:id": {
+    orgTypes: ["SERVICE_PROVIDER"],
+  },
+  "provider-job-orders": {
+    orgTypes: ["SERVICE_PROVIDER"],
+  },
+  "provider-job-orders/:id": {
+    orgTypes: ["SERVICE_PROVIDER"],
+  },
 };
 
 export const normalizePathKey = (path: string) => path.replace(/^\/+/, "");

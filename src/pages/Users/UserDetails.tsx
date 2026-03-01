@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import useGetUserById from "@/hooks/Users/useGetUserById";
+import { getRoleDisplayLabel } from "@/types/user";
 import EditUserDialog from "./component/EditUserDialog";
 import DeleteUserDialog from "./component/DeleteUserDialog";
 
@@ -82,7 +83,7 @@ export default function UserDetails() {
                             <p className="text-muted-foreground flex items-center gap-2">
                                 <span className="font-mono text-xs font-bold text-slate-500">{user.id}</span>
                                 <span className="text-slate-300">•</span>
-                                {getRoleBadge(user.role)}
+                                {getRoleBadge(getRoleDisplayLabel(user))}
                             </p>
                         </div>
                     </div>
@@ -140,7 +141,7 @@ export default function UserDetails() {
                                             <Shield className="h-3 w-3" />
                                             Access Level
                                         </p>
-                                        <div>{getRoleBadge(user.role)}</div>
+                                        <div>{getRoleBadge(getRoleDisplayLabel(user))}</div>
                                     </div>
                                 </div>
                             </div>

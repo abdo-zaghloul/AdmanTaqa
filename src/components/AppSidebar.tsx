@@ -87,6 +87,10 @@ const navGroups: NavGroup[] = [
       { label: "Service Categories", path: "/service-categories", icon: Tags },
       { label: "Job Orders", path: "/job-orders", icon: Briefcase },
       { label: "Work Orders", path: "/work-orders", icon: Briefcase },
+      { label: "Internal Work Orders", path: "/internal-work-orders", icon: Briefcase },
+      { label: "External Requests", path: "/station-requests", icon: Briefcase },
+      { label: "RFQs", path: "/provider-rfqs", icon: Briefcase },
+      { label: "Provider Job Orders", path: "/provider-job-orders", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       
       { label: "Inspections", path: "/inspections", icon: SearchCheck },

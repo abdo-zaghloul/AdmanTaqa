@@ -14,6 +14,7 @@ import CreateUserDialog from "./component/CreateUserDialog";
 import type { UserRow } from "./component/UsersTableCardContent";
 import useGetUsers from "@/hooks/Users/useGetUsers";
 import type { ApiUser } from "@/types/user";
+import { getRoleDisplayLabel } from "@/types/user";
 
 function toUserRow(u: ApiUser): UserRow {
   return {
@@ -21,7 +22,7 @@ function toUserRow(u: ApiUser): UserRow {
     fullName: u.fullName,
     email: u.email,
     phone: u.phone ?? "",
-    role: u.role,
+    role: getRoleDisplayLabel(u) || undefined,
     orgName: u.organization?.name,
     status: u.isActive === false ? "INACTIVE" : "ACTIVE",
     isActive: u.isActive !== false,

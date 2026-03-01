@@ -49,7 +49,16 @@ import BranchRequestDetails from "./pages/BranchRequests/BranchRequestDetails";
 import WorkOrders from "./pages/WorkOrders/WorkOrders";
 import WorkOrderDetails from "./pages/WorkOrders/WorkOrderDetails";
 import WorkOrdersReviewQueue from "./pages/WorkOrders/WorkOrdersReviewQueue";
-// import ServiceOfferings from "./pages/ServiceRequests/ServiceOfferings";
+import InternalWorkOrders from "./pages/Station/InternalWorkOrders";
+import InternalWorkOrderDetail from "./pages/Station/InternalWorkOrderDetail";
+import InternalWorkOrdersReviewQueue from "./pages/Station/InternalWorkOrdersReviewQueue";
+import StationRequests from "./pages/Station/StationRequests";
+import StationRequestDetail from "./pages/Station/StationRequestDetail";
+import CreateMaintenanceRequest from "./pages/Station/CreateMaintenanceRequest";
+import ProviderRfqs from "./pages/Provider/ProviderRfqs";
+import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
+import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
+import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 
 export const router = createHashRouter([
   {
@@ -358,6 +367,86 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="onboarding/:id">
             <OnboardingDetails />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "internal-work-orders",
+        element: (
+          <RouteAccessGuard pathKey="internal-work-orders">
+            <InternalWorkOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "internal-work-orders/review-queue",
+        element: (
+          <RouteAccessGuard pathKey="internal-work-orders/review-queue">
+            <InternalWorkOrdersReviewQueue />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "internal-work-orders/:id",
+        element: (
+          <RouteAccessGuard pathKey="internal-work-orders/:id">
+            <InternalWorkOrderDetail />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "station-requests",
+        element: (
+          <RouteAccessGuard pathKey="station-requests">
+            <StationRequests />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "station-requests/create",
+        element: (
+          <RouteAccessGuard pathKey="station-requests/create">
+            <CreateMaintenanceRequest />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "station-requests/:id",
+        element: (
+          <RouteAccessGuard pathKey="station-requests/:id">
+            <StationRequestDetail />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "provider-rfqs",
+        element: (
+          <RouteAccessGuard pathKey="provider-rfqs">
+            <ProviderRfqs />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "provider-rfqs/:id",
+        element: (
+          <RouteAccessGuard pathKey="provider-rfqs/:id">
+            <ProviderRfqDetail />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "provider-job-orders",
+        element: (
+          <RouteAccessGuard pathKey="provider-job-orders">
+            <ProviderJobOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "provider-job-orders/:id",
+        element: (
+          <RouteAccessGuard pathKey="provider-job-orders/:id">
+            <ProviderJobOrderDetail />
           </RouteAccessGuard>
         ),
       },
