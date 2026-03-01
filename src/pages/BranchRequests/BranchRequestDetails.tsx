@@ -54,20 +54,16 @@ export default function BranchRequestDetails() {
     );
   };
 
-  if (isLoading) {
-    return <div className="p-8 text-sm text-muted-foreground">Loading request...</div>;
-  }
-
-  if (isError || !request) {
-    return (
-      <div className="p-8 text-sm text-destructive">
-        {error instanceof Error ? error.message : "Request not found."}
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8">
+      {isLoading ? (
+        <div className="p-8 text-sm text-muted-foreground">Loading request...</div>
+      ) : isError || !request ? (
+        <div className="p-8 text-sm text-destructive">
+          {error instanceof Error ? error.message : "Request not found."}
+        </div>
+      ) : (
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Branch Request Details</h1>
@@ -146,6 +142,8 @@ export default function BranchRequestDetails() {
         isPending={rejectMutation.isPending}
         onSubmit={onReject}
       />
+    </div>
+      )}
     </div>
   );
 }

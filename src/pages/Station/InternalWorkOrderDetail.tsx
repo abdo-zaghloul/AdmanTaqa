@@ -34,30 +34,24 @@ export default function InternalWorkOrderDetail() {
     });
   };
 
-  if (isLoading || !id) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[200px] text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!order) {
-    return (
-      <div className="p-4 md:p-8">
-        <Button variant="ghost" onClick={() => navigate("/internal-work-orders")} className="mb-4">
-          <ChevronLeft className="h-4 w-4 mr-2" /> Back
-        </Button>
-        <p className="text-destructive">Internal work order not found.</p>
-      </div>
-    );
-  }
-
-  const canReview = order.status === "UNDER_REVIEW";
-  const canClose = order.status !== "CLOSED";
+  const canReview = order?.status === "UNDER_REVIEW";
+  const canClose = order?.status !== "CLOSED";
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8">
+      {isLoading || !id ? (
+        <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+          Loading...
+        </div>
+      ) : !order ? (
+        <>
+          <Button variant="ghost" onClick={() => navigate("/internal-work-orders")} className="mb-4">
+            <ChevronLeft className="h-4 w-4 mr-2" /> Back
+          </Button>
+          <p className="text-destructive">Internal work order not found.</p>
+        </>
+      ) : (
+    <div className="space-y-6">
       <Button variant="ghost" asChild>
         <Link to="/internal-work-orders" className="gap-2">
           <ChevronLeft className="h-4 w-4" /> Back
@@ -110,6 +104,8 @@ export default function InternalWorkOrderDetail() {
           {order.description && <p className="text-sm">{order.description}</p>}
         </CardContent>
       </Card>
+    </div>
+      )}
     </div>
   );
 }

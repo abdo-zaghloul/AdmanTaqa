@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import AppSidebar from './AppSidebar';
+import ErrorBoundary from './ErrorBoundary';
 
 export default function Layout() {
   return (
@@ -23,7 +24,9 @@ export default function Layout() {
             </div>
           </header>
           <main className="flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto">
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </main>
         </SidebarInset>
       </div>

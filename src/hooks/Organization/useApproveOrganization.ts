@@ -29,6 +29,7 @@ export default function useApproveOrganization() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["organization", id] });
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["fuel-stations"] });
     },
   });
 }

@@ -19,23 +19,17 @@ export default function RoleDetails() {
     const navigate = useNavigate();
     const { data: role, isLoading, isError, error } = useGetRoleById(id);
 
-    if (isLoading) {
-        return (
-            <div className="p-8 text-sm text-muted-foreground">Loading role details...</div>
-        );
-    }
-
-    if (isError || !role) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
-                <p>{error instanceof Error ? error.message : "Role not found"}</p>
-                <Button variant="link" onClick={() => navigate('/roles')}>Return to Roles</Button>
-            </div>
-        );
-    }
-
     return (
-        <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-right duration-500 max-w-5xl mx-auto">
+        <div className="p-4 md:p-8 max-w-5xl mx-auto">
+            {isLoading ? (
+                <div className="p-8 text-sm text-muted-foreground">Loading role details...</div>
+            ) : isError || !role ? (
+                <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                    <p>{error instanceof Error ? error.message : "Role not found"}</p>
+                    <Button variant="link" onClick={() => navigate('/roles')}>Return to Roles</Button>
+                </div>
+            ) : (
+        <div className="space-y-6 animate-in slide-in-from-right duration-500">
             {/* Header */}
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate('/roles')}>
@@ -121,6 +115,8 @@ export default function RoleDetails() {
                     </Card>
                 </div>
             </div>
+        </div>
+            )}
         </div>
     );
 }

@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
   // Authority
 import OrganizationDetails from "./pages/Authority/Organizations/OrganizationDetails";
 import Organizations from "./pages/Authority/Organizations/Organizations";
+import FuelStations from "./pages/Authority/FuelStations/FuelStations";
  
 
 import Locations from "./pages/Locations/Locations";
@@ -32,6 +33,7 @@ import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
 import NotFound from "./pages/NotFound/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteAccessGuard from "./components/RouteAccessGuard";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
 // import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
 import EditRole from "./pages/Roles/EditRole";
 
@@ -76,6 +78,7 @@ export const router = createHashRouter([
         <Layout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
@@ -127,6 +130,22 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="fuel-retail/:id/edit">
             <EditFuelRetail />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "fuel-stations",
+        element: (
+          <RouteAccessGuard pathKey="fuel-stations">
+            <FuelStations />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "fuel-stations/:id",
+        element: (
+          <RouteAccessGuard pathKey="fuel-stations/:id">
+            <OrganizationDetails />
           </RouteAccessGuard>
         ),
       },

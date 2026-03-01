@@ -29,6 +29,7 @@ function getErrorMessage(err: unknown): string | null {
 
 export function useRegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -46,6 +47,7 @@ export function useRegisterForm() {
 
   const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
+    setApiError(null);
     try {
       const body: RegisterBody = {
         organizationName: data.organizationName,
@@ -61,10 +63,14 @@ export function useRegisterForm() {
         toast.success("Registration successful. Welcome aboard!");
         navigate("/", { replace: true });
       } else {
-        toast.error(response.message || "Registration failed");
+        const msg = response.message || "Registration failed";
+        setApiError(msg);
+        toast.error(msg);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err) || "An error occurred during registration");
+      const msg = getErrorMessage(err) || "An error occurred during registration";
+      setApiError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -74,5 +80,6 @@ export function useRegisterForm() {
     ...form,
     handleSubmit: form.handleSubmit(onSubmit),
     isLoading,
+    apiError,
   };
 }

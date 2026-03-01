@@ -10,33 +10,6 @@ export default function OnboardingDetails() {
   const navigate = useNavigate();
   const { data: item, isLoading: loading, isError } = useGetOnboardingById(id);
 
-  if (loading) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[40vh]">
-        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (isError || !item) {
-    return (
-      <div className="p-4 md:p-8 space-y-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/onboarding")} className="rounded-full">
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <Card className="border-dashed">
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-            <p>Onboarding item not found.</p>
-            <Button variant="outline" className="mt-4" onClick={() => navigate("/onboarding")}>
-              Back to list
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return "—";
     try {
@@ -50,7 +23,28 @@ export default function OnboardingDetails() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
+    <div className="p-4 md:p-8">
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+        </div>
+      ) : isError || !item ? (
+        <div className="space-y-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/onboarding")} className="rounded-full">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Card className="border-dashed">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Onboarding item not found.</p>
+              <Button variant="outline" className="mt-4" onClick={() => navigate("/onboarding")}>
+                Back to list
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -179,6 +173,8 @@ export default function OnboardingDetails() {
           </Card>
         </div>
       </div>
+    </div>
+      )}
     </div>
   );
 }

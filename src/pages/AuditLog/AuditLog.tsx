@@ -2,10 +2,14 @@ import { useState } from "react";
 import { Activity } from "lucide-react";
 import TableAuditLog from "./Component/TableAuditLog";
 import useGetAuditLogs from "@/hooks/Audit/useGetAuditLogs";
- 
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 export default function AuditLog() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data, isLoading, isError, error } = useGetAuditLogs(1, 50);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const { data, isLoading, isError, error } = useGetAuditLogs(page, limit);
 
   const logs = (data?.items ?? []).map((log) => ({
     action: log.action,
@@ -53,9 +57,16 @@ export default function AuditLog() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         logs={filteredLogs}
-        total={data?.total}
-        page={data?.page}
-        limit={data?.limit}
+        total={data?.total ?? 0}
+        page={data?.page ?? page}
+        limit={data?.limit ?? limit}
+        totalPages={data?.total != null && data.total > 0 ? Math.max(1, Math.ceil(data.total / (data?.limit ?? limit))) : 1}
+        onPageChange={setPage}
+        onLimitChange={(newLimit) => {
+          setLimit(newLimit);
+          setPage(1);
+        }}
+        pageSizeOptions={PAGE_SIZE_OPTIONS}
       />
       )}
     </div>

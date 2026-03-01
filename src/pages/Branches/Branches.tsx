@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Plus } from "lucide-react";
+import { getApiErrorMessage } from "@/lib/utils";
 import BranchesTableHeader from "./Component/BranchesTableHeader";
 import TableBranches from "./Component/TableBranches";
 import useGetBranches from "@/hooks/Branches/useGetBranches";
@@ -69,7 +70,7 @@ export default function Branches() {
       {isLoading && <BranchesLoading />}
       {isError && (
         <BranchesError
-          message={error instanceof Error ? error.message : "Failed to load branches."}
+          message={getApiErrorMessage(error, "Failed to load branches.")}
         />
       )}
       {!isLoading && !isError && (

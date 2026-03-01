@@ -1,6 +1,7 @@
 import axios from "axios";
 
 const Url = "https://enrgy-be-development.up.railway.app/api/";
+// const Url = "http://localhost:3000/api/";
 
 const axiosInstance = axios.create({
   baseURL: Url,

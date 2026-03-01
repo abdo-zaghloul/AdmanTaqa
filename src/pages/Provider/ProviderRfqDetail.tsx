@@ -44,29 +44,23 @@ export default function ProviderRfqDetail() {
     );
   };
 
-  if (isLoading || !id) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[200px] text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!rfq) {
-    return (
-      <div className="p-4 md:p-8">
-        <Button variant="ghost" asChild>
-          <Link to="/provider-rfqs">Back</Link>
-        </Button>
-        <p className="text-destructive">RFQ not found.</p>
-      </div>
-    );
-  }
-
-  const quotes = rfq.quotes ?? [];
+  const quotes = rfq?.quotes ?? [];
 
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8">
+      {isLoading || !id ? (
+        <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+          Loading...
+        </div>
+      ) : !rfq ? (
+        <>
+          <Button variant="ghost" asChild>
+            <Link to="/provider-rfqs">Back</Link>
+          </Button>
+          <p className="text-destructive">RFQ not found.</p>
+        </>
+      ) : (
+    <div className="space-y-6">
       <Button variant="ghost" asChild>
         <Link to="/provider-rfqs" className="gap-2">
           <ChevronLeft className="h-4 w-4" /> Back
@@ -137,6 +131,8 @@ export default function ProviderRfqDetail() {
           )}
         </CardContent>
       </Card>
+    </div>
+      )}
     </div>
   );
 }

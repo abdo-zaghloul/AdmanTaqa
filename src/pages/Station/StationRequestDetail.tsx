@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { ChevronLeft, Send, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
 import useAvailableProviders from "@/hooks/Station/useAvailableProviders";
@@ -84,27 +84,21 @@ export default function StationRequestDetail() {
     );
   };
 
-  if (isLoading || !id) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[200px] text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!request) {
-    return (
-      <div className="p-4 md:p-8">
-        <Button variant="ghost" asChild>
-          <Link to="/station-requests">Back</Link>
-        </Button>
-        <p className="text-destructive">Request not found.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8">
+      {isLoading || !id ? (
+        <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+          Loading...
+        </div>
+      ) : !request ? (
+        <>
+          <Button variant="ghost" asChild>
+            <Link to="/station-requests">Back</Link>
+          </Button>
+          <p className="text-destructive">Request not found.</p>
+        </>
+      ) : (
+    <div className="space-y-6">
       <Button variant="ghost" asChild>
         <Link to="/station-requests" className="gap-2">
           <ChevronLeft className="h-4 w-4" /> Back
@@ -138,13 +132,88 @@ export default function StationRequestDetail() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{request.title ?? `Request #${request.id}`}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Status: <Badge variant="secondary">{request.status}</Badge>
-          </p>
+          <CardTitle>{request.title ?? request.formData?.description ?? `Request #${request.id}`}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Badge variant="secondary">{request.status}</Badge>
+            {request.formData?.priority && (
+              <span className="capitalize">Priority: {request.formData.priority}</span>
+            )}
+            {request.createdAt && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {new Date(request.createdAt).toLocaleString()}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {request.description && <p className="text-sm">{request.description}</p>}
+          {(request.description ?? request.formData?.description) && (
+            <p className="text-sm">{request.description ?? (request.formData?.description as string)}</p>
+          )}
+
+          {request.Branch && (
+            <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Branch</p>
+              <div className="flex flex-wrap gap-4 text-sm">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  {request.Branch.nameEn ?? request.Branch.nameAr ?? `Branch #${request.Branch.id}`}
+                </span>
+                {request.Branch.address && (
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {request.Branch.address}
+                    {request.Branch.street && ` · ${request.Branch.street}`}
+                  </span>
+                )}
+                {request.Branch.managerName && (
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5" />
+                    {request.Branch.managerName}
+                    {request.Branch.managerPhone && ` · ${request.Branch.managerPhone}`}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {quotes.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">عروض الأسعار / Quotes</p>
+              <ul className="space-y-2">
+                {quotes.map((q) => {
+                  const isRejected = q.status === "REJECTED";
+                  const isWithdrawn = q.status === "WITHDRAWN";
+                  const isInactive = isRejected || isWithdrawn;
+                  return (
+                    <li
+                      key={q.id}
+                      className={`flex items-center justify-between rounded-lg border p-3 text-sm ${
+                        isInactive ? "opacity-75 bg-muted/50 border-muted" : ""
+                      }`}
+                    >
+                      <span>
+                        Quote #{q.id}
+                        {q.amount != null && ` · ${q.amount}`}
+                        {q.providerOrganizationId != null && ` · Org ${q.providerOrganizationId}`}
+                      </span>
+                      <Badge
+                        variant={isRejected ? "destructive" : isWithdrawn ? "secondary" : "default"}
+                        className="shrink-0"
+                      >
+                        {q.status ?? "—"}
+                      </Badge>
+                    </li>
+                  );
+                })}
+              </ul>
+              {(quotes.some((q) => q.status === "REJECTED" || q.status === "WITHDRAWN") && (
+                <p className="text-xs text-muted-foreground">
+                  العروض الملغاة أو المرفوضة لا يمكن اختيارها.
+                </p>
+              ))}
+            </div>
+          )}
 
           {!isCancelled && (
             <>
@@ -225,6 +294,8 @@ export default function StationRequestDetail() {
           )}
         </CardContent>
       </Card>
+    </div>
+      )}
     </div>
   );
 }

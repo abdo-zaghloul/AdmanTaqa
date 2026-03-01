@@ -8,7 +8,7 @@ import {
   Tags,
   FileOutput,
   Briefcase,
-  SearchCheck,
+  // SearchCheck,
   History,
   LogOut,
   UserCog,
@@ -62,9 +62,9 @@ const navGroups: NavGroup[] = [
         icon: Building2,
         isDropdown: true,
         children: [
-          // { label: "service providers (service providers)", path: "/service-providers", icon: Building2 },
-          { label: "organizations (authority)", path: "/organizations", icon: Building2 },
-          { label: "Fuel (fuel-retail)", path: "/fuel-retail", icon: Building2 }
+          { label: "Organizations", path: "/organizations", icon: Building2 },
+          { label: "Fuel Stations", path: "/fuel-stations", icon: Building2 },
+          { label: "Fuel (fuel-retail)", path: "/fuel-retail", icon: Building2 },
         ]
       },
       { 
@@ -93,7 +93,7 @@ const navGroups: NavGroup[] = [
       { label: "Provider Job Orders", path: "/provider-job-orders", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       
-      { label: "Inspections", path: "/inspections", icon: SearchCheck },
+      // { label: "Inspections", path: "/inspections", icon: SearchCheck },
       { label: "Audit Log", path: "/audit-log", icon: History },
     ],
   }, 

@@ -42,27 +42,21 @@ export default function ProviderJobOrderDetail() {
     );
   };
 
-  if (isLoading || !id) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[200px] text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!order) {
-    return (
-      <div className="p-4 md:p-8">
-        <Button variant="ghost" asChild>
-          <Link to="/provider-job-orders">Back</Link>
-        </Button>
-        <p className="text-destructive">Job order not found.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-8 space-y-6">
+    <div className="p-4 md:p-8">
+      {isLoading || !id ? (
+        <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+          Loading...
+        </div>
+      ) : !order ? (
+        <>
+          <Button variant="ghost" asChild>
+            <Link to="/provider-job-orders">Back</Link>
+          </Button>
+          <p className="text-destructive">Job order not found.</p>
+        </>
+      ) : (
+    <div className="space-y-6">
       <Button variant="ghost" asChild>
         <Link to="/provider-job-orders" className="gap-2">
           <ChevronLeft className="h-4 w-4" /> Back
@@ -143,6 +137,8 @@ export default function ProviderJobOrderDetail() {
           )}
         </CardContent>
       </Card>
+    </div>
+      )}
     </div>
   );
 }

@@ -69,23 +69,17 @@ export default function EditRole() {
         );
     };
 
-    if (isLoading) {
-        return (
-            <div className="p-8 text-sm text-muted-foreground">Loading role...</div>
-        );
-    }
-
-    if (isError || !role) {
-        return (
-            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
-                <p>{error instanceof Error ? error.message : "Role not found"}</p>
-                <Button variant="link" onClick={() => navigate('/roles')}>Return to Roles</Button>
-            </div>
-        );
-    }
-
     return (
-        <div className="p-4 md:p-8 space-y-6 animate-in slide-in-from-right duration-500 max-w-4xl mx-auto">
+        <div className="p-4 md:p-8 max-w-4xl mx-auto">
+            {isLoading ? (
+                <div className="p-8 text-sm text-muted-foreground">Loading role...</div>
+            ) : isError || !role ? (
+                <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                    <p>{error instanceof Error ? error.message : "Role not found"}</p>
+                    <Button variant="link" onClick={() => navigate('/roles')}>Return to Roles</Button>
+                </div>
+            ) : (
+        <div className="space-y-6 animate-in slide-in-from-right duration-500">
             <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" onClick={() => navigate('/roles')}>
                     <ChevronLeft className="h-4 w-4" />
@@ -171,6 +165,8 @@ export default function EditRole() {
                     </form>
                 </CardContent>
             </Card>
+        </div>
+            )}
         </div>
     );
 }

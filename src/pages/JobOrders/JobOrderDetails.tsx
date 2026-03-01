@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,80 +18,12 @@ import {
     History,
     MapPin
 } from "lucide-react";
-
-// Mock Data
-const MOCK_JOB_ORDERS = [
-    {
-        id: "JO-5501",
-        title: "Pump Replacement",
-        provider: "Maintenance Masters",
-        branch: "North Riyadh",
-        startDate: "2024-02-10",
-        endDate: "2024-02-12",
-        status: "IN_PROGRESS",
-        jobType: "Installation",
-        priority: "HIGH",
-        assignedTeam: "Technical Team A",
-        description: "Complete replacement of main fuel pump unit including removal of old pump, installation of new unit, and full system calibration. Expected downtime: 2 days.",
-        requestedBy: "Operations Manager - North Riyadh",
-        estimatedCost: 15000,
-        createdAt: "2024-02-08T09:00:00Z",
-    },
-    {
-        id: "JO-5502",
-        title: "Safety Valve Calibration",
-        provider: "EcoEnergy Services",
-        branch: "Jeddah Port",
-        startDate: "2024-02-15",
-        endDate: "2024-02-15",
-        status: "PLANNED",
-        jobType: "Maintenance",
-        priority: "MEDIUM",
-        assignedTeam: "Calibration Specialists",
-        description: "Routine calibration of all safety valves as per regulatory compliance requirements.",
-        requestedBy: "Safety Officer - Jeddah",
-        estimatedCost: 5000,
-        createdAt: "2024-02-07T14:30:00Z",
-    },
-    {
-        id: "JO-5503",
-        title: "Electrical Rewiring",
-        provider: "Local Tech Squad",
-        branch: "Mecca East",
-        startDate: "2024-02-08",
-        endDate: "2024-02-09",
-        status: "COMPLETED",
-        jobType: "Repair",
-        priority: "URGENT",
-        assignedTeam: "Electrical Division",
-        description: "Emergency rewiring of station control panel due to electrical fault detection.",
-        requestedBy: "Station Manager - Mecca",
-        estimatedCost: 8500,
-        createdAt: "2024-02-06T11:00:00Z",
-    },
-    {
-        id: "JO-5504",
-        title: "Underground Tank Inspection",
-        provider: "EcoEnergy Services",
-        branch: "Dammam South",
-        startDate: "2024-02-20",
-        endDate: "2024-02-22",
-        status: "PENDING",
-        jobType: "Inspection",
-        priority: "MEDIUM",
-        assignedTeam: "Inspection Team B",
-        description: "Annual underground tank inspection including leak detection and structural integrity assessment.",
-        requestedBy: "Compliance Manager - Dammam",
-        estimatedCost: 12000,
-        createdAt: "2024-02-05T10:00:00Z",
-    },
-];
+import useGetJobOrderById from "@/hooks/JobOrders/useGetJobOrderById";
 
 export default function JobOrderDetails() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-
-    const job = MOCK_JOB_ORDERS.find(j => j.id === id) || MOCK_JOB_ORDERS[0];
+    const { data: job, isLoading, isError, error } = useGetJobOrderById(id);
 
     const handleUpdateStatus = (newStatus: string) => {
         toast.success(`Job order status updated to ${newStatus.replace('_', ' ')}.`);
@@ -131,7 +63,31 @@ export default function JobOrderDetails() {
     };
 
     return (
-        <div className="p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-top duration-500">
+        <div className="p-4 md:p-8">
+            {isLoading || !id ? (
+                <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">Loading...</div>
+            ) : isError ? (
+                <div className="space-y-4">
+                    <Button variant="ghost" size="sm" onClick={() => navigate("/job-orders")} className="gap-2">
+                        <ChevronLeft className="h-4 w-4" /> Back to Job Orders
+                    </Button>
+                    <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
+                        {(error as Error)?.message ?? "Failed to load job order."}
+                    </div>
+                </div>
+            ) : !job ? (
+                <div className="space-y-4">
+                    <Button variant="ghost" size="sm" onClick={() => navigate("/job-orders")} className="gap-2">
+                        <ChevronLeft className="h-4 w-4" /> Back to Job Orders
+                    </Button>
+                    <div className="rounded-lg border border-muted bg-muted/30 p-6 text-center text-muted-foreground">
+                        <p className="font-medium">Job order not found.</p>
+                        <p className="text-sm mt-1">The job order may have been removed or you may not have permission to view it.</p>
+                        <Link to="/job-orders" className="inline-block mt-4 text-primary hover:underline">Return to Job Orders</Link>
+                    </div>
+                </div>
+            ) : (
+            <div className="space-y-6 animate-in fade-in slide-in-from-top duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/job-orders')} className="rounded-full shadow-sm border border-transparent hover:border-slate-200">
@@ -231,7 +187,7 @@ export default function JobOrderDetails() {
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Start Date</p>
-                                                <p className="text-sm font-bold">{new Date(job.startDate).toLocaleDateString()}</p>
+                                                <p className="text-sm font-bold">{job.startDate ? new Date(job.startDate).toLocaleDateString() : "—"}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
@@ -240,7 +196,7 @@ export default function JobOrderDetails() {
                                             </div>
                                             <div>
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Expected End Date</p>
-                                                <p className="text-sm font-bold">{new Date(job.endDate).toLocaleDateString()}</p>
+                                                <p className="text-sm font-bold">{job.endDate ? new Date(job.endDate).toLocaleDateString() : "—"}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-start gap-3">
@@ -255,10 +211,12 @@ export default function JobOrderDetails() {
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Cost Estimate</p>
-                                    <p className="text-2xl font-black text-primary">{job.estimatedCost.toLocaleString()} SAR</p>
-                                </div>
+                                {job.estimatedCost != null && (
+                                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">Cost Estimate</p>
+                                        <p className="text-2xl font-black text-primary">{job.estimatedCost.toLocaleString()} SAR</p>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -274,12 +232,12 @@ export default function JobOrderDetails() {
                             <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-0 before:h-full before:w-px before:bg-slate-100">
                                 <div className="relative before:absolute before:-left-8 before:top-1.5 before:h-3 before:w-3 before:rounded-full before:bg-primary before:border-4 before:border-white shadow-none">
                                     <p className="text-xs font-bold text-slate-900 leading-none mb-1">Job Order Created</p>
-                                    <p className="text-[10px] text-slate-400 font-medium">{new Date(job.createdAt).toLocaleString()}</p>
+                                    <p className="text-[10px] text-slate-400 font-medium">{job.createdAt ? new Date(job.createdAt).toLocaleString() : "—"}</p>
                                     <p className="text-[10px] text-slate-500 mt-1">Requested by: {job.requestedBy}</p>
                                 </div>
                                 {job.status === 'PLANNED' && (
                                     <div className="relative before:absolute before:-left-8 before:top-1.5 before:h-3 before:w-3 before:rounded-full before:bg-amber-400 before:border-4 before:border-white shadow-none">
-                                        <p className="text-xs font-bold text-amber-700 leading-none mb-1">Scheduled for {new Date(job.startDate).toLocaleDateString()}</p>
+                                        <p className="text-xs font-bold text-amber-700 leading-none mb-1">Scheduled for {job.startDate ? new Date(job.startDate).toLocaleDateString() : "—"}</p>
                                         <p className="text-[10px] text-slate-400 font-medium">Assigned to {job.assignedTeam}</p>
                                     </div>
                                 )}
@@ -292,7 +250,7 @@ export default function JobOrderDetails() {
                                 {job.status === 'COMPLETED' && (
                                     <div className="relative before:absolute before:-left-8 before:top-1.5 before:h-3 before:w-3 before:rounded-full before:bg-green-500 before:border-4 before:border-white shadow-none">
                                         <p className="text-xs font-bold text-green-700 leading-none mb-1">Job Completed</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Successfully finished on {new Date(job.endDate).toLocaleDateString()}</p>
+                                        <p className="text-[10px] text-slate-400 font-medium">Successfully finished on {job.endDate ? new Date(job.endDate).toLocaleDateString() : "—"}</p>
                                     </div>
                                 )}
                                 {(job.status === 'PLANNED' || job.status === 'PENDING') && (
@@ -322,16 +280,20 @@ export default function JobOrderDetails() {
                                 <span className="text-xs text-muted-foreground">Priority</span>
                                 <span className="text-xs font-bold">{getPriorityBadge(job.priority)}</span>
                             </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-muted-foreground">Duration</span>
-                                <span className="text-xs font-bold">
-                                    {Math.ceil((new Date(job.endDate).getTime() - new Date(job.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-                                </span>
-                            </div>
+                            {job.startDate && job.endDate && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted-foreground">Duration</span>
+                                    <span className="text-xs font-bold">
+                                        {Math.ceil((new Date(job.endDate).getTime() - new Date(job.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                                    </span>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
             </div>
+            </div>
+            )}
         </div>
     );
 }

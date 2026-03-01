@@ -22,7 +22,7 @@ import type { MaintenanceMode, MaintenancePriority } from "@/types/station";
 export default function CreateMaintenanceRequest() {
   const navigate = useNavigate();
   const { data: branches = [] } = useGetBranches();
-  const { data: availableProviders = [] } = useAvailableProviders();
+  const { data: availableProviders = [], isLoading: providersLoading } = useAvailableProviders();
   const createMutation = useCreateMaintenanceRequest();
 
   const [branchId, setBranchId] = useState<string>("");
@@ -41,13 +41,13 @@ export default function CreateMaintenanceRequest() {
       return;
     }
     if (maintenanceMode === "EXTERNAL" && providerIds.length === 0) {
-      toast.error("Select at least one provider for external request.");
+      toast.error("يجب اختيار مزود واحد على الأقل");
       return;
     }
 
     createMutation.mutate(
       {
-        branchId: bid,
+        branchId: bid!,
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
@@ -61,9 +61,9 @@ export default function CreateMaintenanceRequest() {
       {
         onSuccess: (data) => {
           toast.success("Maintenance request created.");
-          if (data?.internalWorkOrder?.id) {
+          if (maintenanceMode === "INTERNAL" && data?.internalWorkOrder?.id) {
             navigate(`/internal-work-orders/${data.internalWorkOrder.id}`);
-          } else if (data?.externalRequest?.id) {
+          } else if (maintenanceMode === "EXTERNAL" && data?.externalRequest?.id) {
             navigate(`/station-requests/${data.externalRequest.id}`);
           } else {
             navigate("/station-requests");
@@ -175,10 +175,14 @@ export default function CreateMaintenanceRequest() {
             )}
             {maintenanceMode === "EXTERNAL" && (
               <div className="space-y-2">
-                <Label>Send to providers (select at least one)</Label>
+                <Label>إرسال لمزودين (اختر واحداً على الأقل)</Label>
                 <div className="flex flex-wrap gap-2 border rounded-lg p-3">
-                  {availableProviders.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No available providers. Link providers first.</p>
+                  {providersLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading providers...</p>
+                  ) : availableProviders.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      محطتك غير مرتبطة بأي مزود. يرجى ربط مزودين أولاً من إعدادات النظام.
+                    </p>
                   ) : (
                     availableProviders.map((p) => (
                       <label key={p.id} className="flex items-center gap-2 cursor-pointer">

@@ -7,6 +7,9 @@ import type {
   StationRequestsListResponse,
   LinkedProviderItem,
   ConfirmSentBody,
+  LinkedProviderForRequest,
+  CreateRequestPayload,
+  CreateRequestResponse,
 } from "@/types/station";
 
 export async function createMaintenanceRequest(
@@ -38,13 +41,39 @@ export async function fetchStationRequests(params?: {
   return { items, total, page, limit };
 }
 
+/** Raw service request from GET /api/requests/:id */
+interface ServiceRequestApiResponse {
+  id: number;
+  branchId?: number | null;
+  requestedByUserId?: number | null;
+  formData?: { description?: string; priority?: string; [key: string]: unknown };
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  Branch?: StationRequestDetail["Branch"];
+  quotes?: StationRequestItem["quotes"];
+  jobOrders?: StationRequestDetail["jobOrders"];
+  cancellationReason?: string | null;
+  selectedQuoteId?: number | null;
+}
+
+/** GET /api/station/requests/:id — station request detail (internal-external-orders guide) */
 export async function fetchStationRequestById(
   id: number | string
 ): Promise<StationRequestDetail | null> {
-  const response = await axiosInstance.get<{ success?: boolean; data?: StationRequestDetail }>(
+  const response = await axiosInstance.get<{ success?: boolean; data?: ServiceRequestApiResponse }>(
     `station/requests/${id}`
   );
-  return response.data?.data ?? null;
+  const raw = response.data?.data;
+  if (!raw) return null;
+  const description = (raw.formData?.description as string) ?? (raw as { title?: string }).title ?? "";
+  return {
+    ...raw,
+    title: (raw as { title?: string }).title ?? (description || `Request #${raw.id}`),
+    description: description || null,
+    formData: raw.formData,
+    Branch: raw.Branch,
+  };
 }
 
 export async function sendStationRequestToProviders(
@@ -86,6 +115,27 @@ export async function fetchLinkedProviders(): Promise<LinkedProviderItem[]> {
   );
   const data = response.data?.data;
   return Array.isArray(data) ? data : [];
+}
+
+/** GET /api/requests/linked-providers — for "Send to providers" when creating external request (maintenance-request-frontend-guide) */
+export async function fetchLinkedProvidersForRequest(): Promise<LinkedProviderForRequest[]> {
+  const response = await axiosInstance.get<{
+    success?: boolean;
+    data?: LinkedProviderForRequest[];
+  }>("requests/linked-providers");
+  const data = response.data?.data;
+  return Array.isArray(data) ? data : [];
+}
+
+/** POST /api/requests — create service/maintenance request (maintenance-request-frontend-guide) */
+export async function createRequest(
+  payload: CreateRequestPayload
+): Promise<CreateRequestResponse["data"]> {
+  const response = await axiosInstance.post<CreateRequestResponse>("requests", payload);
+  if (!response.data?.success && response.data?.data == null) {
+    throw new Error(response.data?.message ?? "Failed to create request.");
+  }
+  return response.data.data;
 }
 
 export async function fetchAvailableProviders(): Promise<LinkedProviderItem[]> {

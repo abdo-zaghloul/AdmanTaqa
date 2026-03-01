@@ -8,8 +8,16 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Database, Globe } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Database, Globe, ChevronLeft, ChevronRight } from "lucide-react";
 
 export type AuditLogRow = {
   action: string;
@@ -26,6 +34,10 @@ type TableAuditLogProps = {
   total?: number;
   page?: number;
   limit?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  pageSizeOptions?: number[];
 };
 
 function getActionBadge(action: string) {
@@ -51,10 +63,17 @@ export default function TableAuditLog({
   searchQuery,
   onSearchChange,
   logs,
-  total,
-  page,
-  limit,
+  total = 0,
+  page = 1,
+  limit = 20,
+  totalPages = 1,
+  onPageChange,
+  onLimitChange,
+  pageSizeOptions = [10, 20, 50, 100],
 }: TableAuditLogProps) {
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
+
   return (
     <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
       <CardHeader className="pb-3 border-b bg-slate-50/30">
@@ -69,9 +88,27 @@ export default function TableAuditLog({
                 onChange={(e) => onSearchChange(e.target.value)}
               />
             </div>
-            <div className="text-xs text-muted-foreground">
-              Total: {total ?? logs.length} | Page: {page ?? 1} | Limit:{" "}
-              {limit ?? logs.length}
+            <div className="flex items-center gap-3 flex-wrap">
+              {onLimitChange && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">Per page</span>
+                  <Select value={String(limit)} onValueChange={(v) => onLimitChange(Number(v))}>
+                    <SelectTrigger className="w-[72px] h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageSizeOptions.map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <span className="text-xs text-muted-foreground">
+                {total} total · Page {page} of {totalPages}
+              </span>
             </div>
           </div>
         </div>
@@ -130,6 +167,35 @@ export default function TableAuditLog({
             </TableBody>
           </Table>
         </div>
+        {onPageChange && totalPages > 1 && (
+          <div className="flex items-center justify-between gap-4 px-4 py-3 border-t bg-muted/20">
+            <p className="text-xs text-muted-foreground">
+              Showing page {page} of {totalPages} ({total} records)
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                onClick={() => onPageChange(page - 1)}
+                disabled={!hasPrev}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1"
+                onClick={() => onPageChange(page + 1)}
+                disabled={!hasNext}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

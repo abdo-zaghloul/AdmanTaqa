@@ -58,6 +58,22 @@ export interface StationRequestItem {
   quotes?: ProviderQuoteSummary[];
   selectedQuoteId?: number | null;
   cancellationReason?: string | null;
+  formData?: { description?: string; priority?: string; [key: string]: unknown };
+  Branch?: StationRequestBranch;
+}
+
+export interface StationRequestBranch {
+  id: number;
+  nameEn?: string;
+  nameAr?: string;
+  address?: string | null;
+  street?: string | null;
+  managerName?: string | null;
+  managerPhone?: string | null;
+  managerEmail?: string | null;
+  licenseNumber?: string | null;
+  status?: string;
+  isActive?: boolean;
 }
 
 export interface ProviderQuoteSummary {
@@ -97,4 +113,34 @@ export interface ConfirmSentBody {
   receiptFileUrl?: string;
   amount?: number;
   method?: string;
+}
+
+/** Linked provider for "Send to providers" (GET /api/requests/linked-providers) */
+export interface LinkedProviderForRequest {
+  id: number;
+  name: string;
+}
+
+/** Body for POST /api/requests (maintenance-request-frontend-guide) */
+export interface CreateRequestPayload {
+  branchId: number;
+  formData?: {
+    description?: string;
+    priority?: string;
+    [key: string]: unknown;
+  };
+  areaId?: number;
+  cityId?: number;
+  providerOrganizationIds?: number[];
+}
+
+/** Response from POST /api/requests */
+export interface CreateRequestResponse {
+  success?: boolean;
+  data?: {
+    id?: number;
+    internalWorkOrderId?: number;
+    [key: string]: unknown;
+  };
+  message?: string;
 }

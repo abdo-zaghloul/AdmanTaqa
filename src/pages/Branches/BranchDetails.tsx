@@ -58,27 +58,29 @@ export default function BranchDetails() {
 
   const handleBack = () => navigate("/branches");
 
-  if (isLoading) return <DetailsLoading />;
-  if (isError)
-    return (
-      <DetailsError
-        message={error instanceof Error ? error.message : "Failed to load branch."}
-        onBack={handleBack}
-      />
-    );
-  if (!branch) return <DetailsNotFound onBack={handleBack} />;
-
-  const name = branch.nameEn || branch.nameAr || String(branch.id);
-  const location = branch.Area?.name ? `${branch.Area.name}${branch.address ? `, ${branch.address}` : ""}` : branch.address ?? "—";
-  const isActive = branch.status === "APPROVED" && branch.isActive;
+  const name = branch?.nameEn || branch?.nameAr || (branch ? String(branch.id) : "");
+  const location = branch?.Area?.name ? `${branch.Area.name}${branch.address ? `, ${branch.address}` : ""}` : (branch?.address ?? "—");
+  const isActive = branch ? branch.status === "APPROVED" && branch.isActive : false;
   const hasCoordinates =
+    branch != null &&
     branch.latitude != null &&
     branch.longitude != null &&
     !Number.isNaN(parseFloat(String(branch.latitude))) &&
     !Number.isNaN(parseFloat(String(branch.longitude)));
 
   return (
-    <div className="p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
+    <div className="p-4 md:p-8">
+      {isLoading ? (
+        <DetailsLoading />
+      ) : isError ? (
+        <DetailsError
+          message={error instanceof Error ? error.message : "Failed to load branch."}
+          onBack={handleBack}
+        />
+      ) : !branch ? (
+        <DetailsNotFound onBack={handleBack} />
+      ) : (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -236,6 +238,8 @@ export default function BranchDetails() {
           </Card>
         </div>
       </div>
+    </div>
+      )}
     </div>
   );
 }

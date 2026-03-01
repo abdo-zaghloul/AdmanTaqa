@@ -42,28 +42,23 @@ export default function UserDetails() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  if (isLoading || !id) {
-    return (
-      <div className="p-4 md:p-8 flex items-center justify-center min-h-[200px] text-muted-foreground">
-        Loading...
-      </div>
-    );
-  }
-  if (isError || !user) {
-    return (
-      <div className="p-4 md:p-8">
-        <Button variant="ghost" onClick={() => navigate("/users")} className="mb-4">
-          <ChevronLeft className="h-4 w-4 mr-2" /> Back
-        </Button>
-        <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
-          User not found.
-        </div>
-      </div>
-    );
-  }
-
   return (
-        <div className="p-4 md:p-8 space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
+    <div className="p-4 md:p-8">
+      {isLoading || !id ? (
+        <div className="flex items-center justify-center min-h-[200px] text-muted-foreground">
+          Loading...
+        </div>
+      ) : isError || !user ? (
+        <>
+          <Button variant="ghost" onClick={() => navigate("/users")} className="mb-4">
+            <ChevronLeft className="h-4 w-4 mr-2" /> Back
+          </Button>
+          <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
+            User not found.
+          </div>
+        </>
+      ) : (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="icon" onClick={() => navigate('/users')} className="rounded-full shadow-sm border border-transparent hover:border-slate-200">
@@ -172,5 +167,7 @@ export default function UserDetails() {
               user={{ id: user.id, fullName: user.fullName }}
             />
         </div>
-    );
+      )}
+    </div>
+  );
 }

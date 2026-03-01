@@ -25,7 +25,6 @@ import { Plus, Building2, User } from "lucide-react";
 import InspectionsTableHeader from "./Component/InspectionsTableHeader";
 import TableInspections from "./Component/TableInspections";
 
-// Mock Data
 const MOCK_INSPECTIONS = [
   {
     id: "INS-2024-501",
@@ -93,7 +92,6 @@ export default function Inspections() {
     setIsCreateModalOpen(false);
   };
 
-  // Filter inspections based on search query
   const filteredInspections = MOCK_INSPECTIONS.filter(
     (ins) =>
       ins.target.toLowerCase().includes(searchQuery.toLowerCase()) ||

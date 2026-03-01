@@ -18,6 +18,14 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["AUTHORITY"],
     anyPermissions: ["organizations:approve", "organizations:read"],
   },
+  "fuel-stations": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:approve", "organizations:read"],
+  },
+  "fuel-stations/:id": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:approve", "organizations:read"],
+  },
   registrations: {
     orgTypes: ["AUTHORITY"],
     anyPermissions: ["organizations:approve", "organizations:read"],
@@ -64,16 +72,16 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   branches: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/create": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/:id/edit": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["FUEL_STATION"],
   },
   locations: {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
@@ -89,11 +97,11 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["quotations:read", "quotations:submit"],
   },
   "job-orders": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION", "AUTHORITY"],
+    orgTypes: ["FUEL_STATION", "AUTHORITY"],
     anyPermissions: ["job-orders:read"],
   },
   "job-orders/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION", "AUTHORITY"],
+    orgTypes: ["FUEL_STATION", "AUTHORITY"],
     anyPermissions: ["job-orders:read"],
   },
   "work-orders": {
@@ -109,13 +117,13 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["workorders.approve", "internal_tasks.review"],
   },
   "branch-requests": {
-    orgTypes: ["FUEL_STATION", "SERVICE_PROVIDER"],
+    orgTypes: ["FUEL_STATION"],
   },
   "branch-requests/create": {
     orgTypes: ["FUEL_STATION"],
   },
   "branch-requests/:id": {
-    orgTypes: ["FUEL_STATION", "SERVICE_PROVIDER", "AUTHORITY"],
+    orgTypes: ["FUEL_STATION", "AUTHORITY"],
   },
   "fuel-retail": {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],

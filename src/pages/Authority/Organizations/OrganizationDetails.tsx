@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +19,10 @@ import OrganizationActions from "./Component/OrganizationActions";
 export default function OrganizationDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const orgId = id ?? "";
+  const isFuelStationContext = location.pathname.startsWith("/fuel-stations/");
+  const backPath = isFuelStationContext ? "/fuel-stations" : "/organizations";
 
   const { data: org, isLoading: orgLoading, isError: orgError } = useGetOrganizationById(orgId);
   const {
@@ -81,7 +84,7 @@ export default function OrganizationDetails() {
   if (orgError || !org) {
     return (
       <div className="p-4 md:p-8">
-        <Button variant="ghost" onClick={() => navigate("/organizations")} className="mb-4">
+        <Button variant="ghost" onClick={() => navigate(backPath)} className="mb-4">
           <ChevronLeft className="h-4 w-4 mr-2" /> Back
         </Button>
         <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
@@ -98,7 +101,7 @@ export default function OrganizationDetails() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate("/organizations")}
+            onClick={() => navigate(backPath)}
             className="rounded-full hover:bg-white shadow-sm border border-transparent hover:border-slate-200"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -125,7 +128,7 @@ export default function OrganizationDetails() {
             orgId={org.id}
             orgName={org.name}
             status={org.status}
-            onSuccess={() => navigate("/organizations")}
+            onSuccess={() => navigate(backPath)}
           />
           {org.status !== "PENDING" && (
             <Button variant="outline" className="gap-2 shadow-sm">

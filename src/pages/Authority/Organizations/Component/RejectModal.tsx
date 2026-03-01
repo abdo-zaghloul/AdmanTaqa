@@ -19,6 +19,7 @@ export type RejectModalProps = {
   onSubmit: (reason?: string) => void;
 };
 
+/** API requires reason when decision is REJECTED. */
 export default function RejectModal({
   open,
   onOpenChange,
@@ -34,9 +35,13 @@ export default function RejectModal({
   };
 
   const handleSubmit = () => {
-    onSubmit(reason.trim() || undefined);
+    const trimmed = reason.trim();
+    if (!trimmed) return;
+    onSubmit(trimmed);
     setReason("");
   };
+
+  const canSubmit = reason.trim().length > 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -44,13 +49,13 @@ export default function RejectModal({
         <DialogHeader>
           <DialogTitle>Reject Organization</DialogTitle>
           <DialogDescription>
-            Optionally provide a reason for rejecting &quot;{orgName}&quot;. The
+            Provide a reason for rejecting &quot;{orgName}&quot; (required). The
             reason may be shown to the organization.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="org-reject-reason">Reason (optional)</Label>
+            <Label htmlFor="org-reject-reason">Reason (required)</Label>
             <Textarea
               id="org-reject-reason"
               placeholder="e.g. Incomplete documents, missing information..."
@@ -71,7 +76,7 @@ export default function RejectModal({
           <Button
             variant="destructive"
             onClick={handleSubmit}
-            disabled={isPending}
+            disabled={isPending || !canSubmit}
           >
             {isPending ? "Rejecting..." : "Reject"}
           </Button>
