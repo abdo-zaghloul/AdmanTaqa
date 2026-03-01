@@ -24,6 +24,7 @@ function getErrorMessage(err: unknown): string | null {
 
 export function useLoginForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,6 +36,7 @@ export function useLoginForm() {
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
+    setApiError(null);
     try {
       const response = await authService.login(data);
       if (response.success && response.data) {
@@ -61,10 +63,14 @@ export function useLoginForm() {
         const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
         navigate(from || "/", { replace: true });
       } else {
-        toast.error(response.message || "Login failed");
+        const msg = response.message || "Login failed";
+        setApiError(msg);
+        toast.error(msg);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err) || "An error occurred during login");
+      const msg = getErrorMessage(err) || "An error occurred during login";
+      setApiError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -74,5 +80,6 @@ export function useLoginForm() {
     ...form,
     handleSubmit: form.handleSubmit(onSubmit),
     isLoading,
+    apiError,
   };
 }

@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 
 export default function Login() {
-    const { register, handleSubmit, formState: { errors }, isLoading } = useLoginForm()
+    const { register, handleSubmit, formState: { errors }, isLoading, apiError } = useLoginForm();
 
     return (
         <div className="flex min-h-screen bg-white">
@@ -132,6 +132,11 @@ export default function Login() {
                             </div>
                         </div>
 
+                        {apiError && (
+                            <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-medium text-red-700">
+                                {apiError}
+                            </div>
+                        )}
                         <Button
                             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xl shadow-slate-200 group relative overflow-hidden active:scale-[0.98] transition-all"
                             type="submit"

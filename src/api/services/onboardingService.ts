@@ -1,4 +1,4 @@
-import axiosInstance from "../config";
+import axiosInstance from "@/api/config";
 import type { OnboardingItem, OnboardingCreateBody, OnboardingUpdateBody } from "@/types/onboarding";
 
 /** List onboarding items. Public: active only. Authenticated with ?all=true: all items. */
