@@ -71,7 +71,6 @@ export default function TableJobOrders({ orders }: TableJobOrdersProps) {
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="font-bold text-foreground">Order ID</TableHead>
             <TableHead className="font-bold text-foreground">Title</TableHead>
             <TableHead className="font-bold text-foreground">Service Provider</TableHead>
             <TableHead className="font-bold text-foreground">Dates</TableHead>
@@ -82,7 +81,7 @@ export default function TableJobOrders({ orders }: TableJobOrdersProps) {
         <TableBody>
           {orders.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                 No job orders found.
               </TableCell>
             </TableRow>
@@ -92,7 +91,6 @@ export default function TableJobOrders({ orders }: TableJobOrdersProps) {
                 key={order.id}
                 className="hover:bg-muted/20 transition-all border-b last:border-0 border-muted/20"
               >
-                <TableCell className="font-mono text-xs font-bold text-primary/70">{order.id}</TableCell>
                 <TableCell className="font-semibold text-sm">{order.title}</TableCell>
                 <TableCell>
                   <div className="flex flex-col">

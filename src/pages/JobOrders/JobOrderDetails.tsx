@@ -12,7 +12,7 @@ import {
     PauseCircle,
     XCircle,
     FileText,
-    User,
+    // User,
     Hammer,
     Clock,
     History,
@@ -197,7 +197,7 @@ export default function JobOrderDetails() {
                                                 </div>
                                             </div>
                                         )}
-                                        <div className="flex items-start gap-3">
+                                        {/* <div className="flex items-start gap-3">
                                             <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
                                                 <User className="h-4 w-4" />
                                             </div>
@@ -205,7 +205,7 @@ export default function JobOrderDetails() {
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Assigned Team</p>
                                                 <p className="text-sm font-bold">{job.assignedTeam}</p>
                                             </div>
-                                        </div>
+                                        </div> */}
                                     </div>
                                     <div className="space-y-4">
                                         <div className="flex items-start gap-3">
@@ -265,7 +265,7 @@ export default function JobOrderDetails() {
                                 {job.status === 'PLANNED' && (
                                     <div className="relative before:absolute before:-left-8 before:top-1.5 before:h-3 before:w-3 before:rounded-full before:bg-amber-400 before:border-4 before:border-white shadow-none">
                                         <p className="text-xs font-bold text-amber-700 leading-none mb-1">Scheduled for {job.startDate ? new Date(job.startDate).toLocaleDateString() : "—"}</p>
-                                        <p className="text-[10px] text-slate-400 font-medium">Assigned to {job.assignedTeam}</p>
+                                        {/* <p className="text-[10px] text-slate-400 font-medium">Assigned to {job.assignedTeam}</p> */}
                                     </div>
                                 )}
                                 {job.status === 'IN_PROGRESS' && (

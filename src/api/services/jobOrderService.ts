@@ -76,10 +76,10 @@ export function mapItemToDetailView(item: JobOrderApiItem): JobOrderDetailView {
         ? item.ServiceRequest.formData.priority
         : "MEDIUM";
   const priority = priorityRaw.toUpperCase();
-  const assignedTeam =
-    typeof executionDetails?.assignedTeam === "string"
-      ? executionDetails.assignedTeam
-      : "—";
+  // const assignedTeam =
+  //   typeof executionDetails?.assignedTeam === "string"
+  //     ? executionDetails.assignedTeam
+  //     : "—";
   const estimatedCost =
     typeof executionDetails?.estimatedCost === "number"
       ? executionDetails.estimatedCost
@@ -101,7 +101,6 @@ export function mapItemToDetailView(item: JobOrderApiItem): JobOrderDetailView {
     createdAt: item.createdAt ?? "",
     jobType,
     priority,
-    assignedTeam,
     estimatedCost,
     fuelStationName,
     area,

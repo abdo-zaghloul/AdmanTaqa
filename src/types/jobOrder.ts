@@ -95,7 +95,7 @@ export interface JobOrderDetailView {
   createdAt: string;
   jobType: string;
   priority: string;
-  assignedTeam: string;
+  // assignedTeam: string;
   estimatedCost: number | null;
   /** Fuel station / requestor organization name */
   fuelStationName?: string;
