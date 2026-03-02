@@ -4,11 +4,17 @@ import useGetOrganizations from "@/hooks/Organization/useGetOrganizations";
 
 export default function Organizations() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data, isLoading, isError, error } = useGetOrganizations({ page: 1, limit: 20 });
+  const { data, isLoading, isError, error } = useGetOrganizations({
+    page: 1,
+    limit: 20,
+    type: "SERVICE_PROVIDER",
+  });
 
   const filteredOrgs = useMemo(() => {
     const list = (data?.data?.items ?? []).filter(
-      (org) => org.status === "PENDING" || org.status === "REJECTED"
+      (org) =>
+        org.type === "SERVICE_PROVIDER" &&
+        (org.status === "PENDING" || org.status === "REJECTED")
     );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
@@ -25,7 +31,7 @@ export default function Organizations() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Organizations</h1>
           <p className="text-muted-foreground">
-            Manage and monitor all service providers and fuel stations.
+            Manage and monitor service providers only.
           </p>
         </div>
       </div>

@@ -56,9 +56,11 @@ export default function CreateServiceOfferingDialog({
 
   const { data: categoriesResponse } = useGetServiceCategories();
   const categories = categoriesResponse ?? [];
-  // console.log(categories);/
+  const approvedCategories = useMemo(
+    () => categories.filter((c) => c.status === "APPROVED"),
+    [categories]
+  );
   const { data: countriesResponse } = useGetCountries();
-  console.log(countriesResponse);
   const countries = countriesResponse?.data ?? [];
   const selectedCountryId = countryId ? Number(countryId) : null;
   const { data: governoratesResponse } = useGetGovernorates(selectedCountryId);
@@ -128,22 +130,38 @@ export default function CreateServiceOfferingDialog({
         <form className="space-y-4" onSubmit={handleCreate}>
       
           <Select
-            value={form.serviceCategoryId}
+            value={
+              approvedCategories.some((c) => String(c.id) === form.serviceCategoryId)
+                ? form.serviceCategoryId
+                : ""
+            }
             onValueChange={(v) =>
               setForm((p) => ({ ...p, serviceCategoryId: v }))
             }
+            disabled={approvedCategories.length === 0}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select service category" />
             </SelectTrigger>
             <SelectContent>
-               {categories.map((cat) => (
-                <SelectItem key={cat.id} value={String(cat.id)}>
-                  {cat.nameEn}
-                </SelectItem>
-              ))}
+              {approvedCategories.length === 0 ? (
+                <div className="py-2 px-2 text-sm text-muted-foreground">
+                  No approved service categories available.
+                </div>
+              ) : (
+                approvedCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={String(cat.id)}>
+                    {cat.nameEn ?? cat.nameAr ?? cat.name ?? `Category ${cat.id}`}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
+          {approvedCategories.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No approved service categories available. Only approved categories can be used for offerings.
+            </p>
+          )}
           <Select
             value={countryId}
             onValueChange={(v) => {

@@ -51,25 +51,25 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["audit:read"],
   },
   users: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   "users/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   "users/:id/edit": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   roles: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   "roles/create": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   "roles/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   "roles/:id/edit": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: [ "FUEL_STATION"],
   },
   branches: {
     orgTypes: ["FUEL_STATION"],
@@ -84,7 +84,7 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["FUEL_STATION"],
   },
   locations: {
-    orgTypes: ["AUTHORITY", "SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY",  "FUEL_STATION"],
   },
   "service-Offering": {
     orgTypes: ["SERVICE_PROVIDER", "AUTHORITY"],
