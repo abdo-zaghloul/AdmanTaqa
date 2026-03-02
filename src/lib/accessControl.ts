@@ -84,7 +84,7 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["FUEL_STATION"],
   },
   locations: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY", "SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "service-Offering": {
     orgTypes: ["SERVICE_PROVIDER", "AUTHORITY"],
@@ -195,3 +195,4 @@ export const canAccessByRule = (
   }
   return true;
 };
+
