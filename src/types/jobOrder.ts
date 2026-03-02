@@ -9,34 +9,60 @@ export interface JobOrderApiItem {
   serviceRequestId?: number;
   assignedBranchId?: number;
   status: string;
+  activatedAt?: string | null;
+  expectedEndDate?: string | null;
+  jobType?: string | null;
+  cancellationReason?: string | null;
   executionDetails?: {
     startDate?: string;
     endDate?: string;
+    scheduledDate?: string;
     notes?: string;
     [key: string]: unknown;
   };
   createdAt?: string;
   updatedAt?: string;
+  PaymentConfirmation?: unknown | null;
+  /** Assigned branch (provider's branch where work is done) */
+  Branch?: { id?: number; nameEn?: string; nameAr?: string };
+  JobAssignments?: unknown[];
   Quotation?: {
+    id?: number;
+    serviceProviderOrganizationId?: number;
     Organization?: { id?: number; name?: string };
     [key: string]: unknown;
   };
   ServiceRequest?: {
+    id?: number;
+    fuelStationOrganizationId?: number;
+    branchId?: number;
+    requestedByUserId?: number;
+    areaId?: number;
+    cityId?: number;
+    assetId?: number | null;
     Branch?: { id?: number; nameEn?: string; nameAr?: string };
+    Organization?: { id?: number; name?: string };
     User?: { id?: number; fullName?: string };
-    formData?: { description?: string; [key: string]: unknown };
+    RequestedByUser?: { id?: number; fullName?: string; email?: string };
+    Area?: { id?: number; name?: string };
+    City?: { id?: number; name?: string };
+    Asset?: unknown | null;
+    formData?: { description?: string; priority?: string; [key: string]: unknown };
     [key: string]: unknown;
   };
 }
 
+/** API may return data as array or as { items, total, page, limit } */
 export interface JobOrderListResponse {
   success?: boolean;
-  data?: {
-    items: JobOrderApiItem[];
-    total: number;
-    page: number;
-    limit: number;
-  };
+  data?:
+    | JobOrderApiItem[]
+    | {
+        items: JobOrderApiItem[];
+        total: number;
+        page: number;
+        limit: number;
+      };
 }
 
 export interface JobOrderDetailResponse {
@@ -71,4 +97,10 @@ export interface JobOrderDetailView {
   priority: string;
   assignedTeam: string;
   estimatedCost: number | null;
+  /** Fuel station / requestor organization name */
+  fuelStationName?: string;
+  /** Area name (e.g. from ServiceRequest.Area) */
+  area?: string;
+  /** City name (e.g. from ServiceRequest.City) */
+  city?: string;
 }

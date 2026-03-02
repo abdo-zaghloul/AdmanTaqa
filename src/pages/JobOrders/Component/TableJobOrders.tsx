@@ -40,6 +40,7 @@ function getStatusBadge(status: string) {
     IN_PROGRESS: "bg-blue-50 text-blue-700 border-blue-200",
     PLANNED: "bg-purple-50 text-purple-700 border-purple-200",
     PENDING: "bg-amber-50 text-amber-700 border-amber-200",
+    CREATED: "bg-slate-50 text-slate-700 border-slate-200",
   };
 
   const icons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -47,6 +48,7 @@ function getStatusBadge(status: string) {
     IN_PROGRESS: PlayCircle,
     PLANNED: Calendar,
     PENDING: PauseCircle,
+    CREATED: ArrowRightCircle,
   };
 
   const StatusIcon = icons[status] || ArrowRightCircle;

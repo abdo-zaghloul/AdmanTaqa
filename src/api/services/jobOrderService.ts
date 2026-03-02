@@ -13,11 +13,14 @@ function mapItemToRow(item: JobOrderApiItem): JobOrderRow {
     `Job Order #${item.id}`;
   const provider = item.Quotation?.Organization?.name ?? "—";
   const branch =
+    item.Branch?.nameEn ??
+    item.Branch?.nameAr ??
     item.ServiceRequest?.Branch?.nameEn ??
     item.ServiceRequest?.Branch?.nameAr ??
     "—";
   const startDate =
     item.executionDetails?.startDate ??
+    item.executionDetails?.scheduledDate ??
     (item.createdAt ? item.createdAt.slice(0, 10) : "—");
   const endDate = item.executionDetails?.endDate ?? "—";
 
@@ -38,27 +41,41 @@ export function mapItemToDetailView(item: JobOrderApiItem): JobOrderDetailView {
     `Job Order #${item.id}`;
   const provider = item.Quotation?.Organization?.name ?? "—";
   const branch =
+    item.Branch?.nameEn ??
+    item.Branch?.nameAr ??
     item.ServiceRequest?.Branch?.nameEn ??
     item.ServiceRequest?.Branch?.nameAr ??
     "—";
   const startDate =
     item.executionDetails?.startDate ??
+    item.executionDetails?.scheduledDate ??
     (item.createdAt ? item.createdAt.slice(0, 10) : "");
-  const endDate = item.executionDetails?.endDate ?? "";
+  const endDate =
+    (item.expectedEndDate && item.expectedEndDate !== null
+      ? item.expectedEndDate
+      : item.executionDetails?.endDate) ?? "";
   const description =
     typeof item.ServiceRequest?.formData?.description === "string"
       ? item.ServiceRequest.formData.description
       : "";
-  const requestedBy = item.ServiceRequest?.User?.fullName ?? "—";
+  const requestedBy =
+    item.ServiceRequest?.RequestedByUser?.fullName ??
+    item.ServiceRequest?.User?.fullName ??
+    "—";
   const executionDetails = item.executionDetails as Record<string, unknown> | undefined;
   const jobType =
-    typeof executionDetails?.jobType === "string"
-      ? executionDetails.jobType
-      : "—";
-  const priority =
+    typeof item.jobType === "string" && item.jobType
+      ? item.jobType
+      : typeof executionDetails?.jobType === "string"
+        ? executionDetails.jobType
+        : "—";
+  const priorityRaw =
     typeof executionDetails?.priority === "string"
       ? executionDetails.priority
-      : "MEDIUM";
+      : typeof item.ServiceRequest?.formData?.priority === "string"
+        ? item.ServiceRequest.formData.priority
+        : "MEDIUM";
+  const priority = priorityRaw.toUpperCase();
   const assignedTeam =
     typeof executionDetails?.assignedTeam === "string"
       ? executionDetails.assignedTeam
@@ -67,6 +84,9 @@ export function mapItemToDetailView(item: JobOrderApiItem): JobOrderDetailView {
     typeof executionDetails?.estimatedCost === "number"
       ? executionDetails.estimatedCost
       : null;
+  const fuelStationName = item.ServiceRequest?.Organization?.name ?? undefined;
+  const area = item.ServiceRequest?.Area?.name ?? undefined;
+  const city = item.ServiceRequest?.City?.name ?? undefined;
 
   return {
     id: String(item.id),
@@ -83,6 +103,9 @@ export function mapItemToDetailView(item: JobOrderApiItem): JobOrderDetailView {
     priority,
     assignedTeam,
     estimatedCost,
+    fuelStationName,
+    area,
+    city,
   };
 }
 
@@ -104,14 +127,17 @@ export async function fetchJobOrders(
   });
 
   const data = res.data?.data;
-  const rawItems: JobOrderApiItem[] = data?.items ?? [];
+  const rawItems: JobOrderApiItem[] = Array.isArray(data)
+    ? data
+    : (data && typeof data === "object" && "items" in data ? (data as { items: JobOrderApiItem[] }).items : []);
   const items = rawItems.map(mapItemToRow);
+  const paginated = data && typeof data === "object" && "total" in data ? (data as { total: number; page: number; limit: number }) : null;
 
   return {
     items,
-    total: data?.total ?? items.length,
-    page: data?.page ?? params?.page ?? 1,
-    limit: data?.limit ?? params?.limit ?? 20,
+    total: paginated?.total ?? items.length,
+    page: paginated?.page ?? params?.page ?? 1,
+    limit: paginated?.limit ?? params?.limit ?? 20,
   };
 }
 

@@ -36,30 +36,35 @@ export default function JobOrderDetails() {
             PLANNED: "bg-amber-50 text-amber-700 border-amber-200",
             PENDING: "bg-slate-50 text-slate-700 border-slate-200",
             CANCELLED: "bg-red-50 text-red-700 border-red-200",
+            CREATED: "bg-slate-50 text-slate-700 border-slate-200",
         };
-        const icons: Record<string, any> = {
+        const icons: Record<string, React.ReactNode> = {
             COMPLETED: <CheckCircle2 className="h-3 w-3" />,
             IN_PROGRESS: <PlayCircle className="h-3 w-3" />,
             PLANNED: <Calendar className="h-3 w-3" />,
             PENDING: <Clock className="h-3 w-3" />,
             CANCELLED: <XCircle className="h-3 w-3" />,
+            CREATED: <Clock className="h-3 w-3" />,
         };
+        const style = styles[status] ?? "bg-gray-50 text-gray-700 border-gray-200";
+        const icon = icons[status] ?? <Clock className="h-3 w-3" />;
         return (
-            <Badge className={`${styles[status]} border shadow-none font-bold uppercase text-[10px] gap-1.5`}>
-                {icons[status]}
+            <Badge className={`${style} border shadow-none font-bold uppercase text-[10px] gap-1.5`}>
+                {icon}
                 {status.replace('_', ' ')}
             </Badge>
         );
     };
 
     const getPriorityBadge = (priority: string) => {
-        const variants: any = {
+        const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
             URGENT: "destructive",
             HIGH: "default",
             MEDIUM: "secondary",
             LOW: "outline",
         };
-        return <Badge variant={variants[priority]} className="font-bold shadow-none uppercase text-[10px] tracking-widest">{priority}</Badge>;
+        const variant = variants[priority.toUpperCase()] ?? "secondary";
+        return <Badge variant={variant} className="font-bold shadow-none uppercase text-[10px] tracking-widest">{priority}</Badge>;
     };
 
     return (
@@ -166,10 +171,32 @@ export default function JobOrderDetails() {
                                                 <MapPin className="h-4 w-4" />
                                             </div>
                                             <div>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Branch Location</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Branch</p>
                                                 <p className="text-sm font-bold">{job.branch}</p>
                                             </div>
                                         </div>
+                                        {job.fuelStationName && (
+                                            <div className="flex items-start gap-3">
+                                                <div className="h-8 w-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                                                    <Building2 className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Fuel Station</p>
+                                                    <p className="text-sm font-bold">{job.fuelStationName}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {(job.area || job.city) && (
+                                            <div className="flex items-start gap-3">
+                                                <div className="h-8 w-8 rounded-lg bg-sky-50 flex items-center justify-center text-sky-600 flex-shrink-0">
+                                                    <MapPin className="h-4 w-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Area / City</p>
+                                                    <p className="text-sm font-bold">{[job.area, job.city].filter(Boolean).join(" · ") || "—"}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="flex items-start gap-3">
                                             <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 flex-shrink-0">
                                                 <User className="h-4 w-4" />
