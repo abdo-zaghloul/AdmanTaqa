@@ -37,10 +37,6 @@ import RouteErrorBoundary from "./components/RouteErrorBoundary";
 // import ServiceRequestDetails from "./pages/ServiceRequests/ServiceRequestDetails";
 import EditRole from "./pages/Roles/EditRole";
 
-import FuelRetailDetails from './pages/fuelRetail/FuelRetailDetails';
-import RegisterFuelRetail from './pages/fuelRetail/RegisterFuelRetail';
-import EditFuelRetail from './pages/fuelRetail/EditFuelRetail';
-import FuelRetail from "./pages/fuelRetail/fuelRetail";
 // import ServiceProviders from "./pages/ServiceRequests/ServiceRequests";
 // import ServiceRequests from "./pages/ServiceRequests/ServiceOfferings";
 import ServiceCategories from "./pages/ServiceCategories/ServiceCategories";
@@ -102,38 +98,6 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="organizations">
             <Organizations />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "fuel-retail",
-        element: (
-          <RouteAccessGuard pathKey="fuel-retail">
-            <FuelRetail />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "fuel-retail/:id",
-        element: (
-          <RouteAccessGuard pathKey="fuel-retail/:id">
-            <FuelRetailDetails />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "fuel-retail/register",
-        element: (
-          <RouteAccessGuard pathKey="fuel-retail/register">
-            <RegisterFuelRetail />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "fuel-retail/:id/edit",
-        element: (
-          <RouteAccessGuard pathKey="fuel-retail/:id/edit">
-            <EditFuelRetail />
           </RouteAccessGuard>
         ),
       },

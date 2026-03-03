@@ -6,13 +6,13 @@ export default function useRejectQuote() {
   return useMutation({
     mutationFn: ({
       requestId,
-      quoteId,
-      reason,
+      providerQuoteId,
+      rejectionReason,
     }: {
       requestId: number | string;
-      quoteId: number;
-      reason: string;
-    }) => rejectStationRequestQuote(requestId, { quoteId, reason }),
+      providerQuoteId: number;
+      rejectionReason: string;
+    }) => rejectStationRequestQuote(requestId, { providerQuoteId, rejectionReason }),
     onSuccess: (_, { requestId }) => {
       queryClient.invalidateQueries({ queryKey: ["station-request", requestId] });
       queryClient.invalidateQueries({ queryKey: ["station-requests"] });

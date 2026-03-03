@@ -172,17 +172,19 @@ export async function fetchProviderJobOrderAttachments(
   return Array.isArray(data) ? data : [];
 }
 
-/** POST /api/provider/job-orders/:id/attachments — upload attachment */
+/** POST /api/provider/job-orders/:id/attachments — upload attachment (multipart/form-data). Backend may expect a body object; we send file + optional description so parsed body is not undefined. */
 export async function uploadProviderJobOrderAttachment(
   jobOrderId: number | string,
-  file: File
+  file: File,
+  options?: { description?: string }
 ): Promise<{ id?: number; url?: string }> {
   const formData = new FormData();
   formData.append("file", file);
+  if (options?.description != null) formData.append("description", options.description);
+  else formData.append("description", "");
   const response = await axiosInstance.post<{ success?: boolean; data?: { id?: number; url?: string } }>(
     `provider/job-orders/${jobOrderId}/attachments`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
+    formData
   );
   return response.data?.data ?? {};
 }

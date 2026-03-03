@@ -1,15 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ChevronLeft, Building2, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import useLinkedProviders from "@/hooks/Station/useLinkedProviders";
@@ -23,24 +15,14 @@ export default function LinkedProviders() {
   const addMutation = useAddLinkedProvider();
   const removeMutation = useRemoveLinkedProvider();
 
-  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
-
   const linkedOrgIds = new Set(linked.map((p) => p.organizationId));
   const canAdd = available.filter((p) => !linkedOrgIds.has(p.organizationId));
 
-  const handleAdd = () => {
-    const orgId = Number(selectedOrgId);
-    if (!orgId || Number.isNaN(orgId)) {
-      toast.error("Select a provider to add.");
-      return;
-    }
+  const handleAdd = (orgId: number) => {
     addMutation.mutate(
       { providerOrganizationId: orgId },
       {
-        onSuccess: () => {
-          toast.success("Provider linked.");
-          setSelectedOrgId("");
-        },
+        onSuccess: () => toast.success("Provider linked."),
         onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to add."),
       }
     );
@@ -59,14 +41,14 @@ export default function LinkedProviders() {
       <Button variant="ghost" size="sm" asChild className="gap-2">
         <Link to="/station-requests">
           <ChevronLeft className="h-4 w-4" />
-          Back to External Requests
+          Back to Station Requests
         </Link>
       </Button>
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Linked Service Providers</h1>
         <p className="text-muted-foreground">
-          Manage service providers linked to your station for sending maintenance requests.
+          Manage service providers linked to your station. Linked providers are shown below; choose one to remove or add from available providers.
         </p>
       </div>
 
@@ -74,55 +56,18 @@ export default function LinkedProviders() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
-            Add provider
+            Linked providers ({linked.length})
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Only approved providers not already linked appear below.
+            Providers already linked to your station. You can remove them below.
           </p>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2 items-end">
-          <div className="min-w-[200px]">
-            <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose provider" />
-              </SelectTrigger>
-              <SelectContent>
-                {canAdd.length === 0 ? (
-                  <SelectItem value="_none" disabled>
-                    No available providers
-                  </SelectItem>
-                ) : (
-                  canAdd.map((p) => (
-                    <SelectItem key={p.organizationId} value={String(p.organizationId)}>
-                      {p.organizationName ?? `Organization #${p.organizationId}`}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button
-            size="sm"
-            className="gap-1"
-            onClick={handleAdd}
-            disabled={addMutation.isPending || !selectedOrgId || selectedOrgId === "_none"}
-          >
-            <UserPlus className="h-4 w-4" />
-            Add
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Linked providers ({linked.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Loading...</p>
           ) : linked.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No linked providers. Add one above to send requests to them.
+              No linked providers. Add one from the &quot;Available providers&quot; section below.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -151,6 +96,55 @@ export default function LinkedProviders() {
                   >
                     <Trash2 className="h-4 w-4" />
                     Remove
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Available providers to add
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Choose a provider from the list and click Add to link them to your station.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {canAdd.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No available providers to add (all are already linked).
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {canAdd.map((p) => (
+                <li
+                  key={p.organizationId}
+                  className="flex items-center justify-between rounded-lg border p-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">
+                      {p.organizationName ?? `Organization #${p.organizationId}`}
+                    </span>
+                    {p.status && (
+                      <Badge variant="secondary" className="text-xs">
+                        {p.status}
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => handleAdd(p.organizationId)}
+                    disabled={addMutation.isPending}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Add
                   </Button>
                 </li>
               ))}

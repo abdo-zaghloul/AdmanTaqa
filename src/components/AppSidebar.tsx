@@ -68,7 +68,6 @@ const navGroups: NavGroup[] = [
         children: [
           { label: "Organizations", path: "/organizations", icon: Building2 },
           { label: "Fuel Stations", path: "/fuel-stations", icon: Building2 },
-          { label: "Fuel (fuel-retail)", path: "/fuel-retail", icon: Building2 },
         ]
       },
       { 

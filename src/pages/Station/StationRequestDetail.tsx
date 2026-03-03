@@ -10,25 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Send, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
+import { ChevronLeft, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
-import useAvailableProviders from "@/hooks/Station/useAvailableProviders";
-import useSendToProviders from "@/hooks/Station/useSendToProviders";
 import useSelectQuote from "@/hooks/Station/useSelectQuote";
 import useRejectQuote from "@/hooks/Station/useRejectQuote";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
 import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
-import { STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS } from "@/types/station";
-import type { StationRequestStatusSendToProviders } from "@/types/station";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function StationRequestDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: request, isLoading } = useStationRequestById(id ?? null);
-  const { data: availableProviders = [] } = useAvailableProviders();
-  const sendMutation = useSendToProviders();
   const selectQuoteMutation = useSelectQuote();
   const rejectQuoteMutation = useRejectQuote();
   const confirmSentMutation = useConfirmPaymentSent();
@@ -36,9 +30,12 @@ export default function StationRequestDetail() {
 
   const [selectedQuoteId, setSelectedQuoteId] = useState<string>("");
   const receiptFileInputRef = useRef<HTMLInputElement>(null);
-  const [providerIds, setProviderIds] = useState<number[]>([]);
   const [rejectQuoteId, setRejectQuoteId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [receiptFileUrl, setReceiptFileUrl] = useState<string>("");
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("BANK_TRANSFER");
 
   const isCancelled = request?.status === "CANCELLED";
   const quotes = request?.quotes ?? [];
@@ -46,40 +43,18 @@ export default function StationRequestDetail() {
     (q) => q.status !== "REJECTED" && q.status !== "WITHDRAWN"
   );
   const jobOrders = request?.jobOrders ?? [];
-  const paymentRejected = jobOrders.some(
-    (jo) => jo.paymentRecord?.status === "REJECTED"
-  );
-  const rejectionReason = jobOrders.find(
-    (jo) => jo.paymentRecord?.status === "REJECTED"
-  )?.paymentRecord?.rejectionReason;
-  const awaitingPaymentJob = jobOrders.find(
-    (jo) => jo.status === "AWAITING_PAYMENT"
-  );
-
-  const canSendToProviders =
-    request?.status != null &&
-    STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS.includes(
-      request.status as StationRequestStatusSendToProviders
-    );
-
-  const handleSendToProviders = () => {
-    if (!id || providerIds.length === 0) {
-      toast.error("Select at least one provider.");
-      return;
-    }
-    sendMutation.mutate(
-      { requestId: id, providerOrganizationIds: providerIds },
-      {
-        onSuccess: () => toast.success("Sent to providers."),
-        onError: (e) => {
-          const msg =
-            (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            (e instanceof Error ? e.message : "Send failed.");
-          toast.error(msg);
-        },
-      }
-    );
-  };
+  const externalJobOrder = request?.ExternalJobOrder;
+  const paymentRejected =
+    jobOrders.some((jo) => jo.paymentRecord?.status === "REJECTED") ||
+    externalJobOrder?.paymentRecord?.status === "REJECTED";
+  const rejectionReason =
+    jobOrders.find((jo) => jo.paymentRecord?.status === "REJECTED")?.paymentRecord?.rejectionReason ??
+    externalJobOrder?.paymentRecord?.rejectionReason;
+  const awaitingPaymentJob =
+    jobOrders.find((jo) => jo.status === "AWAITING_PAYMENT") ??
+    (externalJobOrder?.status === "AWAITING_PAYMENT" ? externalJobOrder : undefined);
+  const stationAlreadyConfirmedSent =
+    awaitingPaymentJob?.paymentRecord?.status === "STATION_CONFIRMED_SENT";
 
   const handleSelectQuote = () => {
     if (!id || !selectedQuoteId) {
@@ -95,12 +70,19 @@ export default function StationRequestDetail() {
     );
   };
 
-  const handleConfirmSent = (receiptFileUrl?: string) => {
+  const handleConfirmSent = (receiptFileUrlOverride?: string) => {
     if (!awaitingPaymentJob?.id) return;
+    const url = receiptFileUrlOverride ?? receiptFileUrl;
+    const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
+    if (url) body.receiptFileUrl = url;
+    if (referenceNumber.trim()) body.referenceNumber = referenceNumber.trim();
+    const num = amount.trim() ? Number(amount) : undefined;
+    if (num != null && !Number.isNaN(num)) body.amount = num;
+    if (paymentMethod) body.method = paymentMethod;
     confirmSentMutation.mutate(
       {
         jobOrderId: awaitingPaymentJob.id,
-        body: receiptFileUrl ? { receiptFileUrl } : undefined,
+        body: Object.keys(body).length > 0 ? body : undefined,
       },
       {
         onSuccess: () => toast.success("Payment send confirmed."),
@@ -117,7 +99,10 @@ export default function StationRequestDetail() {
       {
         onSuccess: (data) => {
           toast.success("Receipt uploaded.");
-          if (data?.receiptFileUrl) handleConfirmSent(data.receiptFileUrl);
+          if (data?.receiptFileUrl) {
+            setReceiptFileUrl(data.receiptFileUrl);
+            handleConfirmSent(data.receiptFileUrl);
+          }
           e.target.value = "";
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : "Upload failed."),
@@ -131,7 +116,7 @@ export default function StationRequestDetail() {
       return;
     }
     rejectQuoteMutation.mutate(
-      { requestId: id, quoteId: rejectQuoteId, reason: rejectReason.trim() },
+      { requestId: id, providerQuoteId: rejectQuoteId, rejectionReason: rejectReason.trim() },
       {
         onSuccess: () => {
           toast.success("Quote rejected.");
@@ -324,44 +309,6 @@ export default function StationRequestDetail() {
 
           {!isCancelled && (
             <>
-              {canSendToProviders && availableProviders.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Send to providers</p>
-                  <div className="flex flex-wrap gap-2">
-                    {availableProviders.map((p) => (
-                      <label key={p.id} className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={providerIds.includes(p.organizationId)}
-                          onChange={() =>
-                            setProviderIds((prev) =>
-                              prev.includes(p.organizationId)
-                                ? prev.filter((x) => x !== p.organizationId)
-                                : [...prev, p.organizationId]
-                            )
-                          }
-                        />
-                        {p.organizationName ?? `Org ${p.organizationId}`}
-                      </label>
-                    ))}
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleSendToProviders}
-                    disabled={sendMutation.isPending || providerIds.length === 0}
-                    className="gap-1"
-                  >
-                    <Send className="h-4 w-4" /> Send to selected
-                  </Button>
-                </div>
-              )}
-              {!canSendToProviders && request?.status === "QUOTING_OPEN" && (
-                <p className="text-sm text-muted-foreground rounded-md bg-muted/50 p-3">
-                  الطلب مُرسل للمزودين ومفتوح للعروض (QUOTING_OPEN). يمكنك اختيار عرض من القائمة أعلاه أو رفض عرض.
-                </p>
-              )}
-
               {selectableQuotes.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Select quote</p>
@@ -389,8 +336,15 @@ export default function StationRequestDetail() {
                 </div>
               )}
 
-              {awaitingPaymentJob && !paymentRejected && (
-                <div className="pt-2 border-t space-y-2">
+              {awaitingPaymentJob && !paymentRejected && stationAlreadyConfirmedSent && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Payment sent. Waiting for provider to confirm receipt.
+                  </p>
+                </div>
+              )}
+              {awaitingPaymentJob && !paymentRejected && !stationAlreadyConfirmedSent && (
+                <div className="pt-2 border-t space-y-3">
                   <p className="text-sm font-medium mb-2">Payment</p>
                   <div className="flex flex-wrap gap-2 items-center">
                     <input
@@ -417,6 +371,38 @@ export default function StationRequestDetail() {
                     >
                       <CheckCircle className="h-4 w-4" /> Confirm payment sent
                     </Button>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Reference number (optional)</Label>
+                      <Input
+                        value={referenceNumber}
+                        onChange={(e) => setReferenceNumber(e.target.value)}
+                        placeholder="Reference number"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Amount (optional)</Label>
+                      <Input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        placeholder="Amount"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Payment method</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="BANK_TRANSFER">Bank transfer</SelectItem>
+                          <SelectItem value="CASH">Cash</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}

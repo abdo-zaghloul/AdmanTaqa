@@ -15,6 +15,8 @@ export default function useConfirmPaymentSent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["station-requests"] });
       queryClient.invalidateQueries({ queryKey: ["station-request"] });
+      queryClient.invalidateQueries({ queryKey: ["station-job-order"] });
+      queryClient.invalidateQueries({ queryKey: ["station-job-orders"] });
     },
   });
 }

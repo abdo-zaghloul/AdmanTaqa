@@ -2,13 +2,26 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import useStationRequests from "@/hooks/Station/useStationRequests";
+import { STATION_REQUEST_STATUS_FILTER_OPTIONS } from "@/types/station";
 
 export default function StationRequests() {
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<string>("");
   const limit = 20;
-  const { data, isLoading } = useStationRequests({ page, limit });
+  const { data, isLoading } = useStationRequests({
+    page,
+    limit,
+    status: status || undefined,
+  });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 
@@ -18,7 +31,7 @@ export default function StationRequests() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">External Requests</h1>
           <p className="text-muted-foreground">
-            Maintenance requests sent to or to be sent to service providers.
+            GET /api/station/requests — list by status, page, limit.
           </p>
         </div>
         <Button asChild className="gap-2">
@@ -28,7 +41,25 @@ export default function StationRequests() {
           </Link>
         </Button>
       </div>
-      <Card className="p-4">
+      <Card className="p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Status</label>
+            <Select value={status || "all"} onValueChange={(v) => { setStatus(v === "all" ? "" : v); setPage(1); }}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATION_REQUEST_STATUS_FILTER_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <span className="text-sm text-muted-foreground">{total} total</span>
+        </div>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
         ) : items.length === 0 ? (

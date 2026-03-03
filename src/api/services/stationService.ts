@@ -43,7 +43,7 @@ export async function fetchStationRequests(params?: {
   return { items, total, page, limit };
 }
 
-/** Raw service request from GET /api/requests/:id */
+/** Raw service request from GET /api/station/requests/:id (may include ProviderQuotes) */
 interface ServiceRequestApiResponse {
   id: number;
   branchId?: number | null;
@@ -54,12 +54,14 @@ interface ServiceRequestApiResponse {
   updatedAt?: string;
   Branch?: StationRequestDetail["Branch"];
   quotes?: StationRequestItem["quotes"];
+  ProviderQuotes?: StationRequestItem["quotes"];
   jobOrders?: StationRequestDetail["jobOrders"];
+  ExternalJobOrder?: StationRequestDetail["ExternalJobOrder"];
   cancellationReason?: string | null;
   selectedQuoteId?: number | null;
 }
 
-/** GET /api/station/requests/:id — station request detail (internal-external-orders guide) */
+/** GET /api/station/requests/:id — request detail + all quotes from service providers */
 export async function fetchStationRequestById(
   id: number | string
 ): Promise<StationRequestDetail | null> {
@@ -69,12 +71,14 @@ export async function fetchStationRequestById(
   const raw = response.data?.data;
   if (!raw) return null;
   const description = (raw.formData?.description as string) ?? (raw as { title?: string }).title ?? "";
+  const quotes = raw.quotes ?? raw.ProviderQuotes ?? [];
   return {
     ...raw,
     title: (raw as { title?: string }).title ?? (description || `Request #${raw.id}`),
     description: description || null,
     formData: raw.formData,
     Branch: raw.Branch,
+    quotes,
   };
 }
 
@@ -101,9 +105,10 @@ export async function selectStationRequestQuote(
   return response.data;
 }
 
+/** POST /api/station/requests/:id/reject-quote — body: providerQuoteId, rejectionReason */
 export async function rejectStationRequestQuote(
   requestId: number | string,
-  body: { quoteId: number; reason: string }
+  body: { providerQuoteId: number; rejectionReason: string }
 ): Promise<unknown> {
   const response = await axiosInstance.post(
     `station/requests/${requestId}/reject-quote`,

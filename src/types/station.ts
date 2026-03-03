@@ -1,17 +1,31 @@
 /** Station (Fuel Station) — maintenance requests, external requests, linked providers */
 
 /**
- * Allowed statuses for "Send to providers" (from backend validation).
- * Backend error when not allowed: "Request cannot be sent to providers in status X. Allowed: SUBMITTED_BY_STATION, TRIAGED_BY_OPERATOR."
- * Update this array if the backend adds or changes allowed statuses.
+ * Allowed statuses for "Send to providers" / اختيار المزود من صفحة الطلب (e.g. station-requests/22).
+ * QUOTING_OPEN مضافة لتمكين اختيار/إرسال لمزودين إضافيين من نفس الصفحة.
  */
 export const STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS = [
   "SUBMITTED_BY_STATION",
   "TRIAGED_BY_OPERATOR",
+  "QUOTING_OPEN",
 ] as const;
 
 export type StationRequestStatusSendToProviders =
   (typeof STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS)[number];
+
+/** Status filter options for GET /api/station/requests?status=... */
+export const STATION_REQUEST_STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "SUBMITTED_BY_STATION", label: "Submitted by station" },
+  { value: "TRIAGED_BY_OPERATOR", label: "Triaged" },
+  { value: "QUOTING_OPEN", label: "Quoting open" },
+  { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "UNDER_REVIEW", label: "Under review" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "CLOSED", label: "Closed" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
 
 export type MaintenanceMode = "INTERNAL" | "EXTERNAL";
 export type MaintenancePriority = "LOW" | "MEDIUM" | "HIGH";
@@ -99,6 +113,8 @@ export interface ProviderQuoteSummary {
 
 export interface StationRequestDetail extends StationRequestItem {
   jobOrders?: ExternalJobOrderSummary[];
+  /** For external requests, backend may return a single ExternalJobOrder when a quote is selected */
+  ExternalJobOrder?: ExternalJobOrderSummary;
   paymentStatus?: string;
 }
 
@@ -108,14 +124,42 @@ export interface ExternalJobOrderSummary {
   paymentRecord?: { status?: string; rejectionReason?: string | null };
 }
 
+/** ExternalRequest nested in station job order list item */
+export interface StationJobOrderExternalRequest {
+  id: number;
+  formData?: { title?: string; priority?: string; description?: string; attachments?: unknown[] };
+  fuelStationOrganizationId?: number;
+  branchId?: number | null;
+  status?: string;
+  Branch?: { id: number; nameEn?: string; nameAr?: string };
+}
+
+/** ProviderQuote nested in station job order list item */
+export interface StationJobOrderProviderQuote {
+  id: number;
+  serviceProviderOrganizationId?: number;
+  Organization?: { id: number; name?: string };
+}
+
 /** Station job order list item (GET /api/station/job-orders) */
 export interface StationJobOrderListItem {
   id: number;
+  providerQuoteId?: number;
+  externalRequestId?: number;
+  assignedBranchId?: number | null;
   status?: string;
-  serviceRequestId?: number;
+  activatedAt?: string | null;
+  executionDetails?: string | null;
+  cancellationReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
-  ServiceRequest?: { id: number; formData?: { description?: string }; status?: string };
+  ExternalRequest?: StationJobOrderExternalRequest | null;
+  ProviderQuote?: StationJobOrderProviderQuote | null;
+  MaintenanceReports?: unknown[];
+  paymentRecord?: { status?: string; rejectionReason?: string | null };
+  /** Legacy */
+  serviceRequestId?: number;
+  ServiceRequest?: { id: number; formData?: { description?: string; title?: string }; status?: string };
 }
 
 export interface StationJobOrderListResponse {

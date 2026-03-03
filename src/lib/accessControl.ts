@@ -125,18 +125,6 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
   "branch-requests/:id": {
     orgTypes: ["FUEL_STATION", "AUTHORITY"],
   },
-  "fuel-retail": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
-  },
-  "fuel-retail/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
-  },
-  "fuel-retail/register": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
-  },
-  "fuel-retail/:id/edit": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
-  },
   // Station (Fuel Station): internal work orders, external requests
   "internal-work-orders": {
     orgTypes: ["FUEL_STATION"],

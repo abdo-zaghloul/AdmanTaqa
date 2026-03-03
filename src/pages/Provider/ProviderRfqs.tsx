@@ -2,7 +2,20 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import useProviderRfqs from "@/hooks/Provider/useProviderRfqs";
+import type { ProviderRfqItem } from "@/types/provider";
+
+function rfqTitle(rfq: ProviderRfqItem): string {
+  return rfq.formData?.title ?? rfq.title ?? `RFQ #${rfq.id}`;
+}
 
 export default function ProviderRfqs() {
   const [page, setPage] = useState(1);
@@ -23,22 +36,52 @@ export default function ProviderRfqs() {
         ) : items.length === 0 ? (
           <p className="text-sm text-muted-foreground">No RFQs.</p>
         ) : (
-          <ul className="space-y-2">
-            {items.map((rfq) => (
-              <li key={rfq.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div>
-                  <span className="font-medium">{rfq.title ?? `RFQ #${rfq.id}`}</span>
-                  <span className="ml-2 text-xs text-muted-foreground">{rfq.status}</span>
-                </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to={`/provider-rfqs/${rfq.id}`}>View</Link>
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Branch</TableHead>
+                <TableHead>Organization</TableHead>
+                <TableHead>Area</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((rfq) => (
+                <TableRow key={rfq.id}>
+                  <TableCell className="font-mono">{rfq.id}</TableCell>
+                  <TableCell className="font-medium">{rfqTitle(rfq)}</TableCell>
+                  <TableCell>{rfq.status ?? "—"}</TableCell>
+                  <TableCell>{rfq.formData?.priority ?? "—"}</TableCell>
+                  <TableCell>
+                    {rfq.Branch?.nameEn ?? rfq.Branch?.nameAr ?? (rfq.branchId != null ? `Branch ${rfq.branchId}` : "—")}
+                  </TableCell>
+                  <TableCell>{rfq.Organization?.name ?? "—"}</TableCell>
+                  <TableCell>{rfq.Area?.name ?? "—"}</TableCell>
+                  <TableCell>
+                    {rfq.createdAt
+                      ? new Date(rfq.createdAt).toLocaleString(undefined, {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/provider-rfqs/${rfq.id}`}>View</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
         {total > limit && (
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-4">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               Previous
             </Button>
@@ -50,6 +93,9 @@ export default function ProviderRfqs() {
             >
               Next
             </Button>
+            <span className="text-sm text-muted-foreground self-center">
+              {total} total
+            </span>
           </div>
         )}
       </Card>

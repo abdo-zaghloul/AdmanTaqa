@@ -5,12 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Pencil, LogOut } from "lucide-react";
+import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash } from "lucide-react";
 import { toast } from "sonner";
 import useProviderRfqById from "@/hooks/Provider/useProviderRfqById";
 import useCreateQuote from "@/hooks/Provider/useCreateQuote";
 import useReviseQuote from "@/hooks/Provider/useReviseQuote";
 import useWithdrawQuote from "@/hooks/Provider/useWithdrawQuote";
+
+function formatDate(s: string | undefined): string {
+  if (!s) return "—";
+  return new Date(s).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
 
 export default function ProviderRfqDetail() {
   const { id } = useParams<{ id: string }>();
@@ -51,7 +56,10 @@ export default function ProviderRfqDetail() {
     );
   };
 
-  const quotes = rfq?.quotes ?? [];
+  const title = rfq?.formData?.title ?? rfq?.title ?? `RFQ #${rfq?.id}`;
+  const description = rfq?.formData?.description ?? rfq?.description;
+  const priority = rfq?.formData?.priority;
+  const quotes = rfq?.ProviderQuotes ?? rfq?.quotes ?? [];
 
   const canReviseOrWithdraw = (q: { status?: string }) =>
     q.status !== "REJECTED" && q.status !== "WITHDRAWN" && q.status !== "ACCEPTED" && q.status !== "SELECTED";
@@ -117,15 +125,83 @@ export default function ProviderRfqDetail() {
           <ChevronLeft className="h-4 w-4" /> Back
         </Link>
       </Button>
+
+      {rfq.Branch && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="h-4 w-4" />
+              Branch
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-2">
+            <p className="font-medium">{rfq.Branch.nameEn ?? rfq.Branch.nameAr ?? `Branch #${rfq.Branch.id}`}</p>
+            {rfq.Branch.address && (
+              <p className="flex items-center gap-1.5 text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                {rfq.Branch.address}
+                {rfq.Branch.street && `, ${rfq.Branch.street}`}
+              </p>
+            )}
+            {(rfq.Branch.latitude || rfq.Branch.longitude) && (
+              <p className="text-muted-foreground text-xs">
+                {[rfq.Branch.latitude, rfq.Branch.longitude].filter(Boolean).join(", ")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {(rfq.Organization || rfq.Area || rfq.City) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Organization & location</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm space-y-2">
+            {rfq.Organization && (
+              <p><span className="text-muted-foreground">Organization:</span> {rfq.Organization.name ?? `#${rfq.Organization.id}`}</p>
+            )}
+            {rfq.Area && (
+              <p><span className="text-muted-foreground">Area:</span> {rfq.Area.name ?? `#${rfq.Area.id}`}</p>
+            )}
+            {rfq.City && (
+              <p><span className="text-muted-foreground">City:</span> {rfq.City.name ?? `#${rfq.City.id}`}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>{rfq.title ?? `RFQ #${rfq.id}`}</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Status: <Badge variant="secondary">{rfq.status}</Badge>
+          <CardTitle className="flex items-center gap-2">
+            <Hash className="h-5 w-5 text-muted-foreground" />
+            {title}
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <Badge variant="secondary">{rfq.status ?? "—"}</Badge>
+            {priority && <span className="text-muted-foreground">Priority: {priority}</span>}
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="h-3.5 w-3.5" />
+              Created {formatDate(rfq.createdAt)}
+            </span>
+            {rfq.updatedAt && rfq.updatedAt !== rfq.createdAt && (
+              <span className="text-muted-foreground">Updated {formatDate(rfq.updatedAt)}</span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            ID {rfq.id}
+            {rfq.branchId != null && ` · Branch ${rfq.branchId}`}
+            {rfq.fuelStationOrganizationId != null && ` · Station org ${rfq.fuelStationOrganizationId}`}
+            {rfq.areaId != null && ` · Area ${rfq.areaId}`}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {rfq.description && <p className="text-sm">{rfq.description}</p>}
+          {description && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Description</p>
+              <p className="text-sm mt-1">{description}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmitQuote} className="space-y-3 pt-4 border-t">
             <p className="text-sm font-medium">Submit quote</p>

@@ -1,5 +1,33 @@
 /** Provider (Service Provider) — RFQs, quotes, job orders, confirm received */
 
+/** formData from GET provider/rfqs list item */
+export interface ProviderRfqFormData {
+  title?: string;
+  priority?: string;
+  description?: string;
+  attachments?: unknown[];
+}
+
+export interface ProviderRfqBranch {
+  id: number;
+  nameEn?: string;
+  nameAr?: string;
+  street?: string;
+  address?: string;
+  latitude?: string;
+  longitude?: string;
+}
+
+export interface ProviderRfqOrganization {
+  id: number;
+  name?: string;
+}
+
+export interface ProviderRfqArea {
+  id: number;
+  name?: string;
+}
+
 export interface ProviderRfqItem {
   id: number;
   externalRequestId?: number;
@@ -7,12 +35,27 @@ export interface ProviderRfqItem {
   description?: string | null;
   status?: string;
   createdAt?: string;
+  updatedAt?: string;
   quotes?: ProviderQuoteItem[];
+  /** API list response fields */
+  fuelStationOrganizationId?: number;
+  branchId?: number | null;
+  requestedByUserId?: number | null;
+  areaId?: number | null;
+  cityId?: number | null;
+  assetId?: number | null;
+  formData?: ProviderRfqFormData;
+  Branch?: ProviderRfqBranch | null;
+  Asset?: unknown;
+  Organization?: ProviderRfqOrganization | null;
+  Area?: ProviderRfqArea | null;
+  City?: { id: number; name?: string } | null;
 }
 
+/** Detail API may return ProviderQuotes (capital P) */
 export interface ProviderRfqDetail extends ProviderRfqItem {
-  branchId?: number | null;
   stationOrganizationId?: number;
+  ProviderQuotes?: ProviderQuoteItem[];
 }
 
 export interface ProviderQuoteItem {

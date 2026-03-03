@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -60,7 +61,7 @@ console.log(items);
           setRejectTargetId(null);
         },
         onError: (err) =>
-          toast.error(err instanceof Error ? err.message : "Failed to reject request."),
+          toast.error(getApiErrorMessage(err, "Failed to reject request.")),
       }
     );
   };
