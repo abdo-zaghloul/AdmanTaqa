@@ -87,7 +87,7 @@ export default function StationRequestDetail() {
       return;
     }
     selectQuoteMutation.mutate(
-      { requestId: id, quoteId: Number(selectedQuoteId) },
+      { requestId: id, providerQuoteId: Number(selectedQuoteId) },
       {
         onSuccess: () => toast.success("Quote selected."),
         onError: (e) => toast.error(e instanceof Error ? e.message : "Select quote failed."),

@@ -89,9 +89,10 @@ export async function sendStationRequestToProviders(
   return response.data;
 }
 
+/** POST /api/station/requests/:id/select-quote — Body: { "providerQuoteId": <id> } (per work-order-flow doc). هنا يُنشأ Job Order. */
 export async function selectStationRequestQuote(
   requestId: number | string,
-  body: { quoteId: number }
+  body: { providerQuoteId: number }
 ): Promise<unknown> {
   const response = await axiosInstance.post(
     `station/requests/${requestId}/select-quote`,

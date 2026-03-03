@@ -6,11 +6,11 @@ export default function useSelectQuote() {
   return useMutation({
     mutationFn: ({
       requestId,
-      quoteId,
+      providerQuoteId,
     }: {
       requestId: number | string;
-      quoteId: number;
-    }) => selectStationRequestQuote(requestId, { quoteId }),
+      providerQuoteId: number;
+    }) => selectStationRequestQuote(requestId, { providerQuoteId }),
     onSuccess: (_, { requestId }) => {
       queryClient.invalidateQueries({ queryKey: ["station-request", requestId] });
       queryClient.invalidateQueries({ queryKey: ["station-requests"] });
