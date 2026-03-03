@@ -14,6 +14,19 @@ export interface QuotationItem {
   createdAt: string;
   updatedAt?: string;
   QuotationPricing?: QuotationPricing | null;
+  /** From API: ServiceRequest with Branch, Organization */
+  ServiceRequest?: {
+    id?: number;
+    status?: string;
+    branchId?: number;
+    fuelStationOrganizationId?: number;
+    Branch?: { id?: number; nameEn?: string; nameAr?: string };
+    Organization?: { id?: number; name?: string };
+  };
+  /** Provider organization (service provider) */
+  Organization?: { id?: number; name?: string };
+  /** User who submitted the quotation */
+  User?: { id?: number; fullName?: string; email?: string };
 }
 
 export interface QuotationsListData {

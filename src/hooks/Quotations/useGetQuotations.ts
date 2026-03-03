@@ -12,9 +12,14 @@ const toQuotation = (raw: unknown): QuotationItem | null => {
   if (typeof row.id !== "number" || typeof row.serviceRequestId !== "number") {
     return null;
   }
+  const sr = row.ServiceRequest as Record<string, unknown> | undefined;
+  const branch = sr?.Branch as { id?: number; nameEn?: string; nameAr?: string } | undefined;
+  const srOrg = sr?.Organization as { id?: number; name?: string } | undefined;
+  const org = row.Organization as { id?: number; name?: string } | undefined;
+  const user = row.User as { id?: number; fullName?: string; email?: string } | undefined;
   return {
-    id: row.id,
-    serviceRequestId: row.serviceRequestId,
+    id: row.id as number,
+    serviceRequestId: row.serviceRequestId as number,
     serviceProviderOrganizationId:
       typeof row.serviceProviderOrganizationId === "number"
         ? row.serviceProviderOrganizationId
@@ -28,6 +33,29 @@ const toQuotation = (raw: unknown): QuotationItem | null => {
       row.QuotationPricing && typeof row.QuotationPricing === "object"
         ? (row.QuotationPricing as QuotationItem["QuotationPricing"])
         : null,
+    ServiceRequest: sr
+      ? {
+          id: typeof sr.id === "number" ? sr.id : undefined,
+          status: typeof sr.status === "string" ? sr.status : undefined,
+          branchId: typeof sr.branchId === "number" ? sr.branchId : undefined,
+          fuelStationOrganizationId:
+            typeof sr.fuelStationOrganizationId === "number"
+              ? sr.fuelStationOrganizationId
+              : undefined,
+          Branch: branch
+            ? {
+                id: branch.id,
+                nameEn: branch.nameEn,
+                nameAr: branch.nameAr,
+              }
+            : undefined,
+          Organization: srOrg ? { id: srOrg.id, name: srOrg.name } : undefined,
+        }
+      : undefined,
+    Organization: org ? { id: org.id, name: org.name } : undefined,
+    User: user
+      ? { id: user.id, fullName: user.fullName, email: user.email }
+      : undefined,
   };
 };
 

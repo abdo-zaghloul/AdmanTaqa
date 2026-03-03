@@ -80,6 +80,14 @@ export default function Quotations() {
     pricing: item.QuotationPricing ?? null,
     status: item.status,
     submittedAt: item.createdAt,
+    providerName: item.Organization?.name ?? null,
+    branchName:
+      item.ServiceRequest?.Branch?.nameEn ??
+      item.ServiceRequest?.Branch?.nameAr ??
+      null,
+    fuelStationName: item.ServiceRequest?.Organization?.name ?? null,
+    submittedBy: item.User?.fullName ?? null,
+    requestStatus: item.ServiceRequest?.status ?? null,
   }));
 
   return (
