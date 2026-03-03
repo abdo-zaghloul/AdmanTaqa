@@ -45,6 +45,7 @@ export default function Roles() {
             name: role.name,
             description: role.description ?? "",
             permissions: role.permissions ?? [],
+            permissionsList: role.permissionsList ?? [],
             userCount: role.userCount ?? 0,
             type: role.type ?? "ORGANIZATION",
           }))}

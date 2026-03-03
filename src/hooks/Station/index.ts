@@ -7,7 +7,10 @@ export { default as useAvailableProviders } from "./useAvailableProviders";
 export { default as useLinkedProvidersForRequest } from "./useLinkedProvidersForRequest";
 export { default as useSendToProviders } from "./useSendToProviders";
 export { default as useLinkedProviders } from "./useLinkedProviders";
+export { default as useAddLinkedProvider } from "./useAddLinkedProvider";
+export { default as useRemoveLinkedProvider } from "./useRemoveLinkedProvider";
 export { default as useSelectQuote } from "./useSelectQuote";
+export { default as useRejectQuote } from "./useRejectQuote";
 export { default as useConfirmPaymentSent } from "./useConfirmPaymentSent";
 
 export { default as useInternalWorkOrders } from "./useInternalWorkOrders";

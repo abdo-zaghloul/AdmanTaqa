@@ -61,10 +61,10 @@ export default function RoleDetails() {
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
-                            {role.permissions.map((perm) => (
-                                <Badge key={perm} variant="outline" className="px-3 py-1 flex items-center gap-1">
+                            {(role.permissionsList?.length ? role.permissionsList : role.permissions.map((code) => ({ id: 0, code, name: code }))).map((perm) => (
+                                <Badge key={perm.id || perm.code} variant="outline" className="px-3 py-1 flex items-center gap-1" title={perm.code}>
                                     <Lock className="h-3 w-3" />
-                                    {perm}
+                                    {perm.name ?? perm.code}
                                 </Badge>
                             ))}
                         </div>

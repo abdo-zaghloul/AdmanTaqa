@@ -13,12 +13,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 //   DialogTrigger,
 // } from "@/components/ui/dialog";
 import { ShieldCheck, ShieldAlert, Users, Lock, Pencil } from "lucide-react";
+import type { PermissionItem } from "@/types/role";
 
 export type RoleRow = {
   id: string;
   name: string;
   description: string;
   permissions: string[];
+  permissionsList: PermissionItem[];
   userCount: number;
   type: string;
 };
@@ -83,21 +85,24 @@ export default function RoleCardsGrid({ roles }: RoleCardsGridProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 <Lock className="h-2.5 w-2.5" />
-                Permissions ({role.permissions.length})
+                Permissions ({role.permissionsList.length || role.permissions.length})
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {role.permissions.slice(0, 3).map((perm) => (
-                  <Badge
-                    key={perm}
-                    variant="outline"
-                    className="bg-background/50 text-[10px] font-normal py-0"
-                  >
-                    {perm}
-                  </Badge>
-                ))}
-                {role.permissions.length > 3 && (
+              <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                {(role.permissionsList.length ? role.permissionsList : role.permissions.map((code) => ({ id: 0, code, name: code })))
+                  .slice(0, 8)
+                  .map((perm) => (
+                    <Badge
+                      key={perm.id || perm.code}
+                      variant="outline"
+                      className="bg-background/50 text-[10px] font-normal py-0"
+                      title={perm.code}
+                    >
+                      {perm.name ?? perm.code}
+                    </Badge>
+                  ))}
+                {(role.permissionsList.length || role.permissions.length) > 8 && (
                   <span className="text-[10px] text-muted-foreground px-1">
-                    +{role.permissions.length - 3} more
+                    +{(role.permissionsList.length || role.permissions.length) - 8} more
                   </span>
                 )}
               </div>

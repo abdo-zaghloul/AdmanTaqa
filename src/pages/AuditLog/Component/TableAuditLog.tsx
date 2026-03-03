@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Database, Globe, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Database, Globe, ChevronLeft, ChevronRight, User, Building2 } from "lucide-react";
 
 export type AuditLogRow = {
   action: string;
@@ -25,6 +25,9 @@ export type AuditLogRow = {
   resourceId: string;
   ip: string | null;
   createdAt: string;
+  userName: string | null;
+  userEmail: string | null;
+  organizationName: string | null;
 };
 
 type TableAuditLogProps = {
@@ -82,7 +85,7 @@ export default function TableAuditLog({
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by action, resource, or IP..."
+                placeholder="Search by user, organization, action, resource, or IP..."
                 className="pl-10 bg-background/50 border-muted-foreground/10"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
@@ -118,8 +121,10 @@ export default function TableAuditLog({
           <Table>
             <TableHeader className="bg-muted/20">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-[180px] font-bold text-foreground">Timestamp</TableHead>
-                <TableHead className="w-[200px] font-bold text-foreground">Action</TableHead>
+                <TableHead className="w-[160px] font-bold text-foreground">Timestamp</TableHead>
+                <TableHead className="font-bold text-foreground">User</TableHead>
+                <TableHead className="font-bold text-foreground">Organization</TableHead>
+                <TableHead className="w-[180px] font-bold text-foreground">Action</TableHead>
                 <TableHead className="font-bold text-foreground">Resource / Target</TableHead>
                 <TableHead className="font-bold text-foreground">IP</TableHead>
               </TableRow>
@@ -127,7 +132,7 @@ export default function TableAuditLog({
             <TableBody>
               {logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     No audit logs found matching your filters
                   </TableCell>
                 </TableRow>
@@ -145,6 +150,23 @@ export default function TableAuditLog({
                         </span>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs font-medium flex items-center gap-1.5">
+                          <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          {log.userName ?? "—"}
+                        </span>
+                        {log.userEmail && (
+                          <span className="text-[11px] text-muted-foreground">{log.userEmail}</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs font-medium flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        {log.organizationName ?? "—"}
+                      </span>
+                    </TableCell>
                     <TableCell>{getActionBadge(log.action)}</TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-0.5">
@@ -152,7 +174,7 @@ export default function TableAuditLog({
                           <Database className="h-2.5 w-2.5" />
                           {log.resourceType}
                         </span>
-                        <span className="text-xs font-mono font-bold text-primary/80">{log.resourceId}</span>
+                        <span className="text-xs text-muted-foreground">{log.resourceId}</span>
                       </div>
                     </TableCell>
                     <TableCell>

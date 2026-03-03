@@ -1,5 +1,18 @@
 /** Station (Fuel Station) — maintenance requests, external requests, linked providers */
 
+/**
+ * Allowed statuses for "Send to providers" (from backend validation).
+ * Backend error when not allowed: "Request cannot be sent to providers in status X. Allowed: SUBMITTED_BY_STATION, TRIAGED_BY_OPERATOR."
+ * Update this array if the backend adds or changes allowed statuses.
+ */
+export const STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS = [
+  "SUBMITTED_BY_STATION",
+  "TRIAGED_BY_OPERATOR",
+] as const;
+
+export type StationRequestStatusSendToProviders =
+  (typeof STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS)[number];
+
 export type MaintenanceMode = "INTERNAL" | "EXTERNAL";
 export type MaintenancePriority = "LOW" | "MEDIUM" | "HIGH";
 
@@ -93,6 +106,30 @@ export interface ExternalJobOrderSummary {
   id: number;
   status?: string;
   paymentRecord?: { status?: string; rejectionReason?: string | null };
+}
+
+/** Station job order list item (GET /api/station/job-orders) */
+export interface StationJobOrderListItem {
+  id: number;
+  status?: string;
+  serviceRequestId?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  ServiceRequest?: { id: number; formData?: { description?: string }; status?: string };
+}
+
+export interface StationJobOrderListResponse {
+  success?: boolean;
+  data?: StationJobOrderListItem[] | { items?: StationJobOrderListItem[]; total?: number; page?: number; limit?: number };
+  message?: string;
+}
+
+/** Maintenance report (GET station/job-orders/:id/reports) */
+export interface StationJobOrderReportItem {
+  id: number;
+  status?: string;
+  title?: string;
+  createdAt?: string;
 }
 
 export interface StationRequestsListResponse {

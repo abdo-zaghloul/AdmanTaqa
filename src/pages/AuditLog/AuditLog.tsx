@@ -17,6 +17,9 @@ export default function AuditLog() {
     resourceId: log.resourceId,
     ip: log.ip,
     createdAt: log.createdAt,
+    userName: log.User?.fullName ?? null,
+    userEmail: log.User?.email ?? null,
+    organizationName: log.Organization?.name ?? null,
   }));
 
   const filteredLogs = logs.filter((log) => {
@@ -24,8 +27,11 @@ export default function AuditLog() {
     const matchesSearch =
       log.action.toLowerCase().includes(q) ||
       log.resourceType.toLowerCase().includes(q) ||
-      log.resourceId.toLowerCase().includes(q) ||
-      String(log.ip ?? "").toLowerCase().includes(q);
+      (log.resourceId && log.resourceId.toLowerCase().includes(q)) ||
+      String(log.ip ?? "").toLowerCase().includes(q) ||
+      String(log.userName ?? "").toLowerCase().includes(q) ||
+      String(log.userEmail ?? "").toLowerCase().includes(q) ||
+      String(log.organizationName ?? "").toLowerCase().includes(q);
     return matchesSearch;
   });
 

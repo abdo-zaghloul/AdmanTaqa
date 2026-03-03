@@ -7,7 +7,11 @@ export interface AuditLogItem {
   resourceType: string;
   resourceId: string;
   ip: string | null;
+  details?: unknown;
   createdAt: string;
+  User?: { id: number; fullName?: string; email?: string } | null;
+  Organization?: { id: number; name?: string } | null;
+  Branch?: { id: number; nameEn?: string; nameAr?: string } | null;
 }
 
 export interface AuditListData {

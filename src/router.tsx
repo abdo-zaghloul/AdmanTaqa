@@ -57,9 +57,13 @@ import InternalWorkOrdersReviewQueue from "./pages/Station/InternalWorkOrdersRev
 import StationRequests from "./pages/Station/StationRequests";
 import StationRequestDetail from "./pages/Station/StationRequestDetail";
 import CreateMaintenanceRequest from "./pages/Station/CreateMaintenanceRequest";
+import LinkedProviders from "./pages/Station/LinkedProviders";
+import StationJobOrders from "./pages/Station/StationJobOrders";
+import StationJobOrderDetail from "./pages/Station/StationJobOrderDetail";
 import ProviderRfqs from "./pages/Provider/ProviderRfqs";
 import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
+import ProviderJobOrdersReviewQueue from "./pages/Provider/ProviderJobOrdersReviewQueue";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 
 export const router = createHashRouter([
@@ -422,6 +426,14 @@ export const router = createHashRouter([
         ),
       },
       {
+        path: "linked-providers",
+        element: (
+          <RouteAccessGuard pathKey="linked-providers">
+            <LinkedProviders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
         path: "station-requests/create",
         element: (
           <RouteAccessGuard pathKey="station-requests/create">
@@ -434,6 +446,22 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="station-requests/:id">
             <StationRequestDetail />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "station-job-orders",
+        element: (
+          <RouteAccessGuard pathKey="station-job-orders">
+            <StationJobOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "station-job-orders/:id",
+        element: (
+          <RouteAccessGuard pathKey="station-job-orders/:id">
+            <StationJobOrderDetail />
           </RouteAccessGuard>
         ),
       },
@@ -458,6 +486,14 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="provider-job-orders">
             <ProviderJobOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "provider-job-orders/review-queue",
+        element: (
+          <RouteAccessGuard pathKey="provider-job-orders/review-queue">
+            <ProviderJobOrdersReviewQueue />
           </RouteAccessGuard>
         ),
       },

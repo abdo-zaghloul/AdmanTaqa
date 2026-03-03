@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import useGetBranches from "@/hooks/Branches/useGetBranches";
 import useAvailableProviders from "@/hooks/Station/useAvailableProviders";
@@ -175,35 +175,68 @@ export default function CreateMaintenanceRequest() {
             )}
             {maintenanceMode === "EXTERNAL" && (
               <div className="space-y-2">
-                <Label>إرسال لمزودين (اختر واحداً على الأقل)</Label>
-                <div className="flex flex-wrap gap-2 border rounded-lg p-3">
+                <Label className="flex items-center gap-2">
+                  إرسال لمزودين (اختر واحداً على الأقل)
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  المزودون الظاهرون هم من تم ربطهم بمحطتك من صفحة Linked Providers.
+                </p>
+                <div className="flex flex-wrap gap-2 border rounded-lg p-3 bg-muted/30">
                   {providersLoading ? (
-                    <p className="text-sm text-muted-foreground">Loading providers...</p>
+                    <p className="text-sm text-muted-foreground">جاري تحميل المزودين...</p>
                   ) : availableProviders.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      محطتك غير مرتبطة بأي مزود. يرجى ربط مزودين أولاً من إعدادات النظام.
-                    </p>
+                    <div className="flex flex-col gap-2 w-full">
+                      <p className="text-sm text-muted-foreground">
+                        محطتك غير مرتبطة بأي مزود بعد. يرجى ربط مزود خدمة واحد على الأقل ثم العودة لإنشاء الطلب.
+                      </p>
+                      <Button type="button" variant="outline" size="sm" className="gap-2 w-fit" asChild>
+                        <Link to="/linked-providers">
+                          <UserPlus className="h-4 w-4" />
+                          الذهاب لربط مزودين
+                        </Link>
+                      </Button>
+                    </div>
                   ) : (
-                    availableProviders.map((p) => (
-                      <label key={p.id} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={providerIds.includes(p.organizationId)}
-                          onChange={() => toggleProvider(p.organizationId)}
-                        />
-                        <span className="text-sm">{p.organizationName ?? `Org ${p.organizationId}`}</span>
-                      </label>
-                    ))
+                    <>
+                      {availableProviders.map((p) => (
+                        <label
+                          key={p.id}
+                          className="flex items-center gap-2 cursor-pointer rounded-md border border-transparent hover:border-primary/30 px-3 py-2 hover:bg-muted/50 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={providerIds.includes(p.organizationId)}
+                            onChange={() => toggleProvider(p.organizationId)}
+                            className="h-4 w-4 rounded border-primary"
+                          />
+                          <span className="text-sm font-medium">
+                            {p.organizationName ?? `منظمة #${p.organizationId}`}
+                          </span>
+                        </label>
+                      ))}
+                      <p className="text-xs text-muted-foreground w-full mt-1">
+                        اختر مزوداً واحداً على الأقل لإرسال طلب العرض له.{" "}
+                        <Link to="/linked-providers" className="text-primary hover:underline text-xs">
+                          ربط مزود جديد
+                        </Link>
+                      </p>
+                    </>
                   )}
                 </div>
               </div>
             )}
             <div className="flex gap-2 pt-4">
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create Request"}
+              <Button
+                type="submit"
+                disabled={
+                  createMutation.isPending ||
+                  (maintenanceMode === "EXTERNAL" && (availableProviders.length === 0 || providerIds.length === 0))
+                }
+              >
+                {createMutation.isPending ? "جاري الإنشاء..." : "إنشاء الطلب"}
               </Button>
               <Button type="button" variant="outline" asChild>
-                <Link to="/station-requests">Cancel</Link>
+                <Link to="/station-requests">إلغاء</Link>
               </Button>
             </div>
           </form>

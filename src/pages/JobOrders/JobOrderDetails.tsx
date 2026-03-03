@@ -2,21 +2,18 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import {
     ChevronLeft,
     Building2,
     Calendar,
     CheckCircle2,
     PlayCircle,
-    PauseCircle,
     XCircle,
     FileText,
-    // User,
-    Hammer,
     Clock,
-    History,
-    MapPin
+    MapPin,
+    Hammer,
+    History as HistoryIcon,
 } from "lucide-react";
 import useGetJobOrderById from "@/hooks/JobOrders/useGetJobOrderById";
 
@@ -25,10 +22,7 @@ export default function JobOrderDetails() {
     const navigate = useNavigate();
     const { data: job, isLoading, isError, error } = useGetJobOrderById(id);
 
-    const handleUpdateStatus = (newStatus: string) => {
-        toast.success(`Job order status updated to ${newStatus.replace('_', ' ')}.`);
-    };
-
+    /** Status updates are done by Service Provider on their own job order page; Fuel Station / Authority view is read-only. */
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
             COMPLETED: "bg-green-50 text-green-700 border-green-200",
@@ -109,33 +103,6 @@ export default function JobOrderDetails() {
                             {getStatusBadge(job.status)}
                         </p>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {job.status === 'PLANNED' && (
-                        <Button variant="outline" className="gap-2" onClick={() => handleUpdateStatus('IN_PROGRESS')}>
-                            <PlayCircle className="h-4 w-4" />
-                            Start Work
-                        </Button>
-                    )}
-                    {job.status === 'IN_PROGRESS' && (
-                        <>
-                            <Button variant="outline" className="gap-2" onClick={() => handleUpdateStatus('PENDING')}>
-                                <PauseCircle className="h-4 w-4" />
-                                Pause
-                            </Button>
-                            <Button className="gap-2 bg-green-600 hover:bg-green-700" onClick={() => handleUpdateStatus('COMPLETED')}>
-                                <CheckCircle2 className="h-4 w-4" />
-                                Mark Complete
-                            </Button>
-                        </>
-                    )}
-                    {job.status === 'PENDING' && (
-                        <Button variant="outline" className="gap-2" onClick={() => handleUpdateStatus('IN_PROGRESS')}>
-                            <PlayCircle className="h-4 w-4" />
-                            Resume
-                        </Button>
-                    )}
                 </div>
             </div>
 
@@ -251,7 +218,7 @@ export default function JobOrderDetails() {
                     <Card className="border-none shadow-sm shadow-slate-200/50">
                         <CardHeader className="border-b bg-slate-50/50 py-4">
                             <CardTitle className="text-lg flex items-center gap-2">
-                                <History className="h-5 w-5 text-primary" />
+                                <HistoryIcon className="h-5 w-5 text-primary" />
                                 Activity Timeline
                             </CardTitle>
                         </CardHeader>

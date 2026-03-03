@@ -1,0 +1,390 @@
+{
+	"info": {
+		"_postman_id": "enrgy-be-api-001",
+		"name": "enrgy_BE API",
+		"description": "API collection for enrgy-BE (TAQA Gas/Energy maintenance platform).\n\n**Setup:**\n1. Set `baseUrl` (e.g. `http://localhost:4000`).\n2. Run **Auth > Login** with email/password; the access token is saved automatically.\n3. All other requests use `Authorization: Bearer {{accessToken}}`.\n\n**Standard error cases (apply to most routes):**\n- **400** Bad Request: Business rule violation, invalid state, duplicate resource.\n- **401** Unauthorized: Missing or invalid token; account inactive.\n- **403** Forbidden: Insufficient permissions or wrong org type (e.g. Authority-only, Fuel Station-only).\n- **404** Not Found: Resource by ID not found or not accessible.\n- **422** Unprocessable Entity: Validation errors (Zod) — invalid body or query.\n- **500** Internal Server Error: Unexpected server error.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:4000" },
+		{ "key": "accessToken", "value": "" }
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"organizationName\": \"My Company\",\n  \"organizationType\": \"SERVICE_PROVIDER\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Admin User\",\n  \"phone\": \"+201000000000\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/register",
+						"description": "## Summary\nRegister a new organization (SERVICE_PROVIDER or FUEL_STATION) with the first user. Organization starts as PENDING until Authority approves.\n\n## Auth\nNo auth required.\n\n## Request\n- **Method:** POST\n- **Body:** organizationName, organizationType (SERVICE_PROVIDER | FUEL_STATION), email, password, fullName, phone (optional)\n\n## Success\n- **201:** `{ success: true, data: { user, organization, accessToken, refreshToken, expiresIn }, message }`\n\n## Error cases\n- **400** Bad Request: Email already registered.\n- **422** Unprocessable Entity: Validation errors (Zod) — invalid or missing body fields.\n- **500** Internal Server Error: Server error."
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const json = pm.response.json();",
+									"if (json.success && json.data && json.data.accessToken) {",
+									"  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@techserve.com\",\n  \"password\": \"Password123!\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/login",
+						"description": "## Summary\nLogin with email and password. Returns access and refresh tokens. Use the test script to save accessToken to the collection variable.\n\n## Auth\nNo auth required.\n\n## Request\n- **Method:** POST\n- **Body:** email, password\n\n## Success\n- **200:** `{ success: true, data: { user, organization, accessToken, refreshToken, expiresIn } }`\n\n## Error cases\n- **401** Unauthorized: Invalid email or password; or account is inactive.\n- **422** Unprocessable Entity: Validation errors (Zod) — invalid body.\n- **500** Internal Server Error: Server error."
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": "{{baseUrl}}/api/auth/refresh",
+						"description": "## Summary\nExchange a valid refresh token for a new access token and refresh token.\n\n## Auth\nNo auth required.\n\n## Request\n- **Method:** POST\n- **Body:** refreshToken\n\n## Success\n- **200:** `{ success: true, data: { accessToken, refreshToken, expiresIn } }`\n\n## Error cases\n- **401** Unauthorized: Invalid or expired refresh token; user not found.\n- **422** Unprocessable Entity: Validation errors (Zod).\n- **500** Internal Server Error: Server error."
+						"auth": { "type": "noauth" }
+					}
+				},
+				{
+					"name": "Me",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/auth/me",
+						"description": "## Summary\nGet current authenticated user profile with organization, roles, and permissions (scope).\n\n## Auth\nBearer token required.\n\n## Request\n- **Method:** GET\n- **Headers:** Authorization: Bearer {{accessToken}}\n\n## Success\n- **200:** `{ user, organization, roles, permissions, scope }`\n\n## Error cases\n- **401** Unauthorized: Missing or invalid token; user or organization not found.\n- **500** Internal Server Error: Server error."
+					}
+				}
+			]
+		},
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/health",
+						"description": "## Summary\nSimple health check endpoint. No authentication required.\n\n## Auth\nNo auth required.\n\n## Request\n- **Method:** GET\n- **URL:** /api/health (note: app may mount at /api; if 404 try baseUrl/health)\n\n## Success\n- **200:** `{ success: true, message: 'OK' }`\n\n## Error cases\n- **404** Not Found: If health is mounted at a different path.\n- **500** Internal Server Error: Server error.",
+						"auth": { "type": "noauth" }
+					}
+				}
+			]
+		},
+		{
+			"name": "Organizations",
+			"item": [
+				{ "name": "Get My Organization", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/me", "description": "## Summary\nGet the current user's organization.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** Organization object.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error." } },
+				{ "name": "Update My Organization", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/organizations/me", "body": { "mode": "raw", "raw": "{\"name\": \"Updated Name\"}" }, "description": "## Summary\nUpdate the current user's organization (e.g. name).\n\n## Auth\nBearer token required.\n\n## Request\n- **Body:** name (optional), other allowed fields.\n\n## Success\n- **200:** Updated organization.\n\n## Error cases\n- **400/422** Validation. **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error." } },
+				{
+					"name": "List Organizations",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/organizations",
+						"description": "## Summary\nList all organizations. Authority only; requires organizations.read.\n\n## Auth\nBearer token required (Authority).\n\n## Request\n- **Query:** type (AUTHORITY | SERVICE_PROVIDER | FUEL_STATION), status (PENDING | APPROVED | REJECTED), page, limit\n\n## Success\n- **200:** Paginated list of organizations.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden (not Authority or missing permission). **422** Validation. **500** Server error."
+					}
+				},
+				{
+					"name": "List Fuel Stations",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/organizations/fuel-stations",
+						"description": "## Summary\nList fuel stations only. Authority only; requires organizations.read.\n\n## Auth\nBearer token required (Authority).\n\n## Request\n- **Query:** status (optional), page, limit. Response: { items, total, page, limit }.\n\n## Success\n- **200:** `{ items, total, page, limit }`.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **422** Validation. **500** Server error."
+					}
+				},
+				{ "name": "Get Organization by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1", "description": "## Summary\nGet organization by ID. Caller must be in same org or Authority.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** Organization object.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error." } },
+				{
+					"name": "Approve Organization",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/api/organizations/3/approve",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVED\"\n}" },
+						"description": "## Summary\nApprove a PENDING organization. Authority only; requires organizations.approve.\n\n## Auth\nBearer token required (Authority).\n\n## Request\n- **Body:** decision: \"APPROVED\". Replace :id with organization id.\n\n## Success\n- **200:** Updated organization (status APPROVED).\n\n## Error cases\n- **400** Bad Request: Organization not PENDING or invalid state. **401** Unauthorized. **403** Forbidden. **404** Not Found. **422** Validation. **500** Server error."
+					}
+				},
+				{
+					"name": "Reject Organization",
+					"request": {
+						"method": "POST",
+						"url": "{{baseUrl}}/api/organizations/3/approve",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": { "mode": "raw", "raw": "{\n  \"decision\": \"REJECTED\",\n  \"reason\": \"سبب الرفض (إجباري)\"\n}" },
+						"description": "## Summary\nReject a PENDING organization. Authority only; reason is required.\n\n## Auth\nBearer token required (Authority).\n\n## Request\n- **Body:** decision: \"REJECTED\", reason: string (required). Replace :id with organization id.\n\n## Success\n- **200:** Updated organization (status REJECTED).\n\n## Error cases\n- **400** Bad Request: Organization not PENDING; missing reason. **401** Unauthorized. **403** Forbidden. **404** Not Found. **422** Validation. **500** Server error."
+					}
+				},
+				{ "name": "Get Organization Documents", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1/documents", "description": "## Summary\nList documents for an organization. Owner or Authority.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** List of documents.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error." } },
+				{ "name": "Get Approval History", "request": { "method": "GET", "url": "{{baseUrl}}/api/organizations/1/approval-history", "description": "## Summary\nGet approval/rejection history for an organization.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** Approval history records.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error." } }
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/users",
+						"description": "## Summary\nList users in the current organization (or by organizationId for Authority). Requires users.read.\n\n## Auth\nBearer token required.\n\n## Request\n- **Query:** organizationId (optional, Authority only), page, limit\n\n## Success\n- **200:** List of users; each includes roles: [{ id, name }].\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden (missing users.read). **422** Validation. **500** Server error."
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"url": "{{baseUrl}}/api/users/1",
+						"description": "## Summary\nGet user by ID. Caller must be in same organization or Authority. Requires users.read.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** User object with roles: [{ id, name }].\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **404** Not Found. **500** Server error."
+					}
+				},
+				{ "name": "Create User", "request": { "method": "POST", "url": "{{baseUrl}}/api/users", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"New User\",\n  \"phone\": \"+201000000001\"\n}" }, "description": "## Summary\nCreate a new user in the current organization. Requires approved org and users.create.\n\n## Auth\nBearer token required.\n\n## Request\n- **Body:** email, password, fullName, phone (optional)\n\n## Success\n- **201:** Created user (password excluded).\n\n## Error cases\n- **400** Bad Request: Email already in use; org not approved. **401** Unauthorized. **403** Forbidden. **422** Validation. **500** Server error." } }
+			]
+		},
+		{
+			"name": "Branches",
+			"item": [
+				{ "name": "List Branches", "request": { "method": "GET", "url": "{{baseUrl}}/api/branches", "description": "## Summary\nList branches of the current organization. Requires approved org and branches.read.\n\n## Auth\nBearer token required.\n\n## Success\n- **200:** List of branches.\n\n## Error cases\n- **401** Unauthorized. **403** Forbidden. **500** Server error." } },
+				{ "name": "Get Branch by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/branches/1", "description": "## Summary\nGet branch by ID (same org).\n\n## Success\n- **200:** Branch object. **404** Not Found. **401/403/500**." } },
+				{ "name": "Create Branch", "request": { "method": "POST", "url": "{{baseUrl}}/api/branches", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"Main Branch\",\n  \"nameAr\": \"الفرع الرئيسي\",\n  \"address\": \"Cairo\",\n  \"areaId\": 1\n}" }, "description": "## Summary\nCreate a branch. Requires branches.create.\n\n## Request\n- **Body:** nameEn, nameAr, address, areaId.\n\n## Success\n- **201:** Created branch. **400/422** Validation. **401/403/500**." } },
+				{ "name": "Update Branch", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/branches/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"Updated\"\n}" }, "description": "## Summary\nUpdate branch. Requires branches.update.\n\n## Success\n- **200:** Updated branch. **404** Not Found. **401/403/422/500**." } },
+				{ "name": "Delete Branch", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/branches/1", "description": "## Summary\nDelete branch. Requires branches.update.\n\n## Success\n- **200/204:** Deleted. **404** Not Found. **400** If branch in use. **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Branch Requests",
+			"item": [
+				{ "name": "Submit Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"nameEn\": \"New Branch\",\n  \"nameAr\": \"فرع جديد\",\n  \"address\": \"Address\",\n  \"areaId\": 1\n}" }, "description": "## Summary\nSubmit a branch request for Authority approval. Requires branch_requests.create and approved org.\n\n## Success\n- **201:** Created request. **401/403/422/500**." } },
+				{ "name": "List Branch Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/branch-requests", "description": "## Summary\nList branch requests (own org or Authority). Query: status, page, limit. **401/403/422/500**." } },
+				{ "name": "Get Branch Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/branch-requests/1", "description": "## Summary\nGet branch request by ID. **200** Request. **404** Not Found. **401/403/500**." } },
+				{ "name": "Approve Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests/1/approve", "description": "## Summary\nApprove a branch request. Authority only; branch_requests.approve. **200** Approved. **400** Invalid state. **401/403/404/500**." } },
+				{ "name": "Reject Branch Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/branch-requests/1/reject", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" }, "description": "## Summary\nReject a branch request. Authority only; body: reason. **200** Rejected. **400/422** Missing reason. **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Locations",
+			"item": [
+				{ "name": "Get Location Tree", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/tree", "description": "## Summary\nGet full location hierarchy (countries → governorates → cities → areas). Public, no auth.\n\n## Success\n- **200:** Tree. **500** Server error." } },
+				{ "name": "List Countries", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/countries", "description": "## Summary\nList countries. Public.\n\n## Success\n- **200:** List of countries. **500**." } },
+				{ "name": "Get Governorates", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/countries/1/governorates", "description": "## Summary\nGet governorates by countryId. Query params as per schema. **200** List. **404/422/500**." } },
+				{ "name": "Get Cities", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/governorates/1/cities", "description": "## Summary\nGet cities by governorateId. **200** List. **404/422/500**." } },
+				{ "name": "Get Areas", "request": { "method": "GET", "url": "{{baseUrl}}/api/locations/cities/1/areas", "description": "## Summary\nGet areas by cityId. **200** List. **404/422/500**." } }
+			]
+		},
+		{
+			"name": "Requests (Service)",
+			"item": [
+				{ "name": "List Service Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/requests", "description": "## Summary\nList service requests (legacy). For new flow use GET /api/station/requests. Requires requests.read.\n\n## Success\n- **200:** List. **401/403/500**." } },
+				{ "name": "Create Service Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/requests", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Maintenance Request\",\n  \"description\": \"Description\",\n  \"branchId\": 1\n}" }, "description": "## Summary\nCreate legacy service request. Prefer POST /api/station/maintenance-requests. Requires requests.create.\n\n## Success\n- **201:** Created. **400/422**. **401/403/500**." } },
+				{ "name": "Get Service Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/requests/1", "description": "## Summary\nGet service request by ID. **200** Request. **404** Not Found. **401/403/500**." } },
+				{ "name": "Cancel Service Request", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/requests/1/cancel", "description": "## Summary\nCancel a service request. Requires requests.update. **200** Cancelled. **400** Invalid state. **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Quotations",
+			"item": [
+				{ "name": "List Quotations", "request": { "method": "GET", "url": "{{baseUrl}}/api/quotations", "description": "## Summary\nList quotations for the org. Requires quotations.read and approved org.\n\n## Success\n- **200:** List. **401/403/500**." } },
+				{ "name": "Get Quotation by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/quotations/1", "description": "## Summary\nGet quotation by ID. **200** Quotation. **404** Not Found. **401/403/500**." } },
+				{ "name": "Submit Quotation", "request": { "method": "POST", "url": "{{baseUrl}}/api/quotations", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"serviceRequestId\": 1,\n  \"amount\": 1000,\n  \"validUntil\": \"2026-12-31\"\n}" }, "description": "## Summary\nSubmit a quotation. Requires valid provider documents and quotations.submit. **201** Created. **400** Invalid request/state. **401/403/422/500**." } },
+				{ "name": "Withdraw Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/withdraw", "description": "## Summary\nWithdraw a quotation. **200** Withdrawn. **400** Invalid state. **401/403/404/500**." } },
+				{ "name": "Approve Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/approve", "description": "## Summary\nApprove a quotation (station). Requires proposals.approve. **200** Approved. **400** Invalid state. **401/403/404/500**." } },
+				{ "name": "Reject Quotation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/quotations/1/reject", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" }, "description": "## Summary\nReject a quotation. Body: reason. **200** Rejected. **400/422** Missing reason. **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Job Orders",
+			"item": [
+				{ "name": "List Job Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders?status=&paymentStatus=&page=1&limit=20", "description": "## Summary\nList job orders. Query: status, paymentStatus, page, limit. Requires job_orders.read.\n\n## Success\n- **200:** List (or paginated data with items). **401/403/422/500**." } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/review-queue?page=1&limit=20", "description": "## Summary\nGet job orders awaiting payment confirmation (SP). JobOrder.status=AWAITING_PAYMENT and PaymentConfirmation.status=FS_CONFIRMED. Requires payments.confirm_received, job_orders.read.\n\n## Success\n- **200:** Review queue. **401/403/422/500**." } },
+				{ "name": "Get Job Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1", "description": "## Summary\nGet job order by ID (includes ServiceRequest, PaymentConfirmation, User details). Requires job_orders.read.\n\n## Success\n- **200:** Job order. **404** Not Found. **401/403/500**." } },
+				{ "name": "Update Job Order Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/job-orders/1/status", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\",\n  \"reason\": null\n}" }, "description": "## Summary\nUpdate job order status. Body: status (IN_PROGRESS, WAITING_PARTS, UNDER_REVIEW, COMPLETED, CANCELLED). reason required if status=CANCELLED. Requires job_orders.update. **200** Updated. **400** Invalid status. **401/403/404/422/500**." } },
+				{ "name": "Get Payment", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/payment", "description": "## Summary\nGet payment confirmation for a job order. Requires payments.read, job_orders.read. **200** Payment. **404** **401/403/500**." } },
+				{ "name": "Submit Payment Proof", "request": { "method": "POST", "url": "{{baseUrl}}/api/job-orders/1/payment/submissions", "body": { "mode": "formdata", "formdata": [{ "key": "method", "value": "BANK_TRANSFER", "type": "text" }, { "key": "amount", "value": "1000", "type": "text" }, { "key": "referenceNumber", "value": "REF-001", "type": "text" }, { "key": "receipt", "type": "file", "src": [] }] }, "description": "## Summary\nSubmit payment proof (receipt file and/or reference). At least referenceNumber or receipt file required. Requires payments.submit. **201** Created. **400/422** **401/403/404/500**." } },
+				{ "name": "Confirm Payment Sent", "request": { "method": "POST", "url": "{{baseUrl}}/api/job-orders/1/payment/confirm-sent", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"confirm\": true,\n  \"note\": null\n}" }, "description": "## Summary\nFuel Station confirms payment sent. Body: confirm (boolean), note optional. If reject: rejectionReason required. Requires payments.confirm_sent. **200** **400/422** **401/403/404/500**." } },
+				{ "name": "Confirm Payment Received", "request": { "method": "POST", "url": "{{baseUrl}}/api/job-orders/1/payment/confirm-received", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"confirm\": true,\n  \"note\": null\n}" }, "description": "## Summary\nService Provider confirms payment received. On confirm: JobOrder becomes ACTIVE. Body: confirm, note optional; if reject: rejectionReason required. Requires payments.confirm_received. **200** **400/422** **401/403/404/500**." } },
+				{ "name": "List Assignments", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/assignments", "description": "## Summary\nList operator assignments for job order. Requires job_orders.read. **200** List. **404** **401/403/500**." } },
+				{ "name": "Create Assignment", "request": { "method": "POST", "url": "{{baseUrl}}/api/job-orders/1/assignments", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"operatorId\": 1,\n  \"arrivalTime\": null,\n  \"status\": null\n}" }, "description": "## Summary\nCreate operator assignment. Job order must be ACTIVE (payment confirmed). Body: operatorId (required), arrivalTime (ISO), status optional. Requires job_orders.update, requireJobOrderActive. **201** Created. **400/422** **401/403/404/500**." } },
+				{ "name": "Update Assignment", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/job-orders/1/assignments/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"arrivalTime\": null,\n  \"status\": \"COMPLETED\"\n}" }, "description": "## Summary\nUpdate assignment. Body: arrivalTime (ISO), status optional. Replace last 1 with assignmentId. Requires job_orders.update. **200** **400/422** **401/403/404/500**." } },
+				{ "name": "List Visits", "request": { "method": "GET", "url": "{{baseUrl}}/api/job-orders/1/visits", "description": "## Summary\nList visits for job order. Requires job_orders.read. **200** List. **404** **401/403/500**." } },
+				{ "name": "Create Visit", "request": { "method": "POST", "url": "{{baseUrl}}/api/job-orders/1/visits", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"visitDate\": \"2026-03-15\",\n  \"status\": \"SCHEDULED\",\n  \"notes\": null\n}" }, "description": "## Summary\nCreate visit. Job order must be ACTIVE. Body: visitDate (YYYY-MM-DD), status (required), notes optional. Requires job_orders.update. **201** Created. **400/422** **401/403/404/500**." } },
+				{ "name": "Update Visit", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/job-orders/1/visits/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"visitDate\": \"2026-03-15\",\n  \"status\": \"COMPLETED\",\n  \"notes\": null\n}" }, "description": "## Summary\nUpdate visit. Body: visitDate, status, notes optional. Replace last 1 with visitId. Requires job_orders.update. **200** **400/422** **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Internal Tasks",
+			"item": [
+				{ "name": "Create Internal Task", "request": { "method": "POST", "url": "{{baseUrl}}/api/internal-tasks", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Task\",\n  \"branchId\": 1,\n  \"assignedUserId\": 1\n}" }, "description": "## Summary\nCreate internal task. Requires internal_tasks.assign. **201** Created. **400/422** **401/403/500**." } },
+				{ "name": "List Internal Tasks", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks", "description": "## Summary\nList internal tasks. Query: status, branchId, page, limit. **200** List. **401/403/422/500**." } },
+				{ "name": "Get My Tasks", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/my", "description": "## Summary\nGet tasks assigned to current user. **200** List. **401/403/422/500**." } },
+				{ "name": "Get Assignable Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/assignable-users", "description": "## Summary\nList users that can be assigned to tasks. **200** List. **401/403/500**." } },
+				{ "name": "Get Tasks Stats", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/stats", "description": "## Summary\nGet task statistics. Query: branchId. **200** Stats. **401/403/422/500**." } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/review-queue", "description": "## Summary\nGet tasks pending review. Requires internal_tasks.review. **200** List. **401/403/500**." } },
+				{ "name": "Get Task by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal-tasks/1", "description": "## Summary\nGet internal task by ID. **200** Task. **404** **401/403/500**." } },
+				{ "name": "Review Task", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/review", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVE\"\n}" }, "description": "## Summary\nApprove/reject task. Body: decision (APPROVE/REJECT), note optional. **200** Updated. **400/422** **401/403/404/500**." } },
+				{ "name": "Update Task Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/status", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" }, "description": "## Summary\nUpdate task status. **200** Updated. **400/422** **401/403/404/500**." } },
+				{ "name": "Close Task", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal-tasks/1/close", "description": "## Summary\nClose internal task. Requires internal_tasks.close. **200** Closed. **400** Invalid state. **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Internal Work Orders",
+			"item": [
+				{ "name": "Create Internal Work Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/internal/work-orders", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Internal WO\",\n  \"branchId\": 1\n}" }, "description": "## Summary\nCreate internal work order (Fuel Station only). **201** Created. **403** Not FS. **401/422/500**." } },
+				{ "name": "List Internal Work Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders", "description": "## Summary\nList internal work orders. Query: status, branchId, page, limit. **200** List. **403** Not FS. **401/422/500**." } },
+				{ "name": "Get Review Queue", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders/review-queue", "description": "## Summary\nGet internal WOs pending review. **200** List. **403** **401/422/500**." } },
+				{ "name": "Get Internal Work Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/internal/work-orders/1", "description": "## Summary\nGet internal work order by ID. **200** WO. **404** **403** **401/500**." } },
+				{ "name": "Update Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Updated\"\n}" }, "description": "## Summary\nUpdate internal WO. **200** Updated. **400/422/404** **403** **401/500**." } },
+				{ "name": "Review Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1/review", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"decision\": \"APPROVE\"\n}" }, "description": "## Summary\nReview (approve/reject) internal WO. **200** **400/422/404** **403** **401/500**." } },
+				{ "name": "Close Internal Work Order", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/internal/work-orders/1/close", "description": "## Summary\nClose internal work order. **200** **400** Invalid state. **403/404** **401/500**." } }
+			]
+		},
+		{
+			"name": "Work Orders (v2)",
+			"item": [
+				{ "name": "List Work Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/workorders", "description": "## Summary\nList work orders (v2, Fuel Station). Query: status, branchId, page, limit. **200** List. **403** Not FS. **401/422/500**." } },
+				{ "name": "Get Work Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/workorders/1", "description": "## Summary\nGet work order by ID (v2). **200** WO. **404** **403** **401/500**." } }
+			]
+		},
+		{
+			"name": "Dashboard",
+			"item": [
+				{ "name": "Get Counters", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/counters", "description": "## Summary\nGet dashboard counters (tasks, work orders, job orders, requests, quotations). Requires one of internal_tasks.read, workorders.read, job_orders.read, requests.read, quotations.read.\n\n## Success\n- **200:** Counters. **401/403/500**." } },
+				{ "name": "Get Summary", "request": { "method": "GET", "url": "{{baseUrl}}/api/dashboard/summary", "description": "## Summary\nGet dashboard summary. Requires internal_tasks.read. **200** Summary. **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Warehouses",
+			"item": [
+				{ "name": "List Warehouses", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses", "description": "## Summary\nList warehouses. Requires warehouse.read. **200** List. **401/403/500**." } },
+				{ "name": "Create Warehouse", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouses", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"branchId\": 1,\n  \"name\": \"Main Warehouse\"\n}" }, "description": "## Summary\nCreate warehouse. Requires warehouse.manage. **201** Created. **400/422** **401/403/500**." } },
+				{ "name": "Get Warehouse by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses/1", "description": "## Summary\nGet warehouse by ID. **200** Warehouse. **404** **401/403/500**." } },
+				{ "name": "List Warehouse Items", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouses/1/items", "description": "## Summary\nList items in warehouse. Query: page, limit. **200** List. **404** **401/403/422/500**." } },
+				{ "name": "Create Warehouse Item", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouses/1/items", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Item\",\n  \"sku\": \"SKU001\",\n  \"minStock\": 0\n}" }, "description": "## Summary\nCreate warehouse item. **201** Created. **400/422/404** **401/403/500**." } },
+				{ "name": "Update Warehouse Item", "request": { "method": "PUT", "url": "{{baseUrl}}/api/warehouses/1/items/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated\"\n}" }, "description": "## Summary\nUpdate warehouse item. **200** Updated. **404/422** **401/403/500**." } },
+				{ "name": "Update Stock", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouses/1/items/1/stock", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quantity\": 10\n}" }, "description": "## Summary\nUpdate item stock quantity. **200** Updated. **400/404/422** **401/403/500**." } },
+				{ "name": "Delete Warehouse Item", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/warehouses/1/items/1", "description": "## Summary\nDelete warehouse item. **200/204** **404** **400** If in use. **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Warehouse Orders",
+			"item": [
+				{ "name": "Create Warehouse Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/warehouse-orders", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"warehouseId\": 1,\n  \"branchId\": 1\n}" }, "description": "## Summary\nCreate warehouse order (DRAFT). **201** Created. **400/422** **401/403/500**." } },
+				{ "name": "List Warehouse Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouse-orders", "description": "## Summary\nList warehouse orders. Query: status, page, limit. **200** List. **401/403/422/500**." } },
+				{ "name": "Get Warehouse Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/warehouse-orders/1", "description": "## Summary\nGet warehouse order by ID. **200** Order. **404** **401/403/500**." } },
+				{ "name": "Update Items", "request": { "method": "PUT", "url": "{{baseUrl}}/api/warehouse-orders/1/items", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "[]" }, "description": "## Summary\nUpdate order items (DRAFT only). Body: array of item entries. **200** **400** Not DRAFT. **401/403/404/422/500**." } },
+				{ "name": "Submit", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/submit", "description": "## Summary\nSubmit order (DRAFT → SUBMITTED). **200** **400** Invalid state. **401/403/404/500**." } },
+				{ "name": "Review", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/review", "description": "## Summary\nMark as under review (SUBMITTED → UNDER_REVIEW). **200** **400** **401/403/404/500**." } },
+				{ "name": "Approve", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/approve", "description": "## Summary\nApprove order (UNDER_REVIEW → APPROVED). **200** **400** **401/403/404/500**." } },
+				{ "name": "Reject", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/reject", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Rejected\"\n}" }, "description": "## Summary\nReject order. Body: reason. **200** **400/422** **401/403/404/500**." } },
+				{ "name": "Issue", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/issue", "description": "## Summary\nIssue order (APPROVED → ISSUED). **200** **400** **401/403/404/500**." } },
+				{ "name": "Deliver", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/deliver", "description": "## Summary\nDeliver (ISSUED → DELIVERED). **200** **400** **401/403/404/500**." } },
+				{ "name": "Close", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/close", "description": "## Summary\nClose (DELIVERED → CLOSED). **200** **400** **401/403/404/500**." } },
+				{ "name": "Cancel", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/warehouse-orders/1/cancel", "description": "## Summary\nCancel order (non-terminal → CANCELLED). **200** **400** **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Station",
+			"item": [
+				{ "name": "Create Maintenance Request", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/maintenance-requests", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"Maintenance\",\n  \"branchId\": 1\n}" }, "description": "## Summary\nCreate maintenance request (INTERNAL or EXTERNAL). Body: title, branchId, maintenanceMode (INTERNAL/EXTERNAL), description, assetId, etc. **201** Created. **400/422** **401/403/500**." } },
+				{ "name": "List Station Requests", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/requests", "description": "## Summary\nList station requests (external + legacy). Query: source, status, page, limit. **200** List. **401/403/422/500**." } },
+				{ "name": "Get Station Request by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/requests/1", "description": "## Summary\nGet station request by ID. Query: source (optional). **200** Request. **404** **401/403/500**." } },
+				{ "name": "Send to Providers", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/send-to-providers", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"providerOrganizationIds\": [2]\n}" }, "description": "## Summary\nSend RFQ to providers. Body: providerOrganizationIds and/or governorateId, serviceCategoryId. **200** Sent. **400** Invalid request state. **401/403/404/422/500**." } },
+				{ "name": "Select Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/select-quote", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quoteId\": 1\n}" }, "description": "## Summary\nSelect quote for request (creates job order). **200** **400** Invalid state/quote. **401/403/404/422/500**." } },
+				{ "name": "Reject Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/requests/1/reject-quote", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quoteId\": 1,\n  \"reason\": \"No\"\n}" }, "description": "## Summary\nReject a quote. Body: quoteId, reason. **200** **400/422** **401/403/404/500**." } },
+				{ "name": "List Linked Providers", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers", "description": "## Summary\nList linked service providers. **200** List. **401/403/500**." } },
+				{ "name": "List Available Providers", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers/available", "description": "## Summary\nList available providers to link. Query: search. **200** List. **401/403/422/500**." } },
+				{ "name": "Get Provider Profile", "request": { "method": "GET", "url": "{{baseUrl}}/api/station/linked-providers/1/profile", "description": "## Summary\nGet linked provider profile by ID. **200** Profile. **404** **401/403/500**." } },
+				{ "name": "Add Linked Provider", "request": { "method": "POST", "url": "{{baseUrl}}/api/station/linked-providers", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"providerOrganizationId\": 2\n}" }, "description": "## Summary\nLink a provider. Body: providerOrganizationId. **201** **400** Already linked. **401/403/404/422/500**." } },
+				{ "name": "Remove Linked Provider", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/station/linked-providers/1", "description": "## Summary\nRemove linked provider. **200/204** **404** **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Provider",
+			"item": [
+				{ "name": "List RFQs", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/rfqs", "description": "## Summary\nList RFQs for provider. Query: status, page, limit. **200** List. **401/403/422/500**." } },
+				{ "name": "Get RFQ by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/rfqs/1", "description": "## Summary\nGet RFQ by ID. **200** RFQ. **404** **401/403/500**." } },
+				{ "name": "Create Quote for RFQ", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/rfqs/1/quotes", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"amount\": 1000,\n  \"validUntil\": \"2026-12-31\"\n}" }, "description": "## Summary\nCreate quote for RFQ. Requires valid provider documents. **201** Created. **400** Invalid RFQ state. **401/403/404/422/500**." } },
+				{ "name": "Revise Quote", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/provider/quotes/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"amount\": 1200\n}" }, "description": "## Summary\nRevise quote. **200** Updated. **400/422** **401/403/404/500**." } },
+				{ "name": "Withdraw Quote", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/quotes/1/withdraw", "description": "## Summary\nWithdraw quote. **200** **400** Invalid state. **401/403/404/500**." } },
+				{ "name": "List Job Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/job-orders", "description": "## Summary\nList provider job orders. Query: status, page, limit. **200** List. **401/403/422/500**." } },
+				{ "name": "Get Job Order by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/provider/job-orders/1", "description": "## Summary\nGet provider job order by ID. **200** Job order. **404** **401/403/500**." } },
+				{ "name": "Assign Operator", "request": { "method": "POST", "url": "{{baseUrl}}/api/provider/job-orders/1/assign-operator", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"userId\": 1\n}" }, "description": "## Summary\nAssign operator to job order. Requires valid docs. **200/201** **400** Invalid state. **401/403/404/422/500**." } },
+				{ "name": "Update Job Order Status", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/provider/job-orders/1/status", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"IN_PROGRESS\"\n}" }, "description": "## Summary\nUpdate job order status. **200** **400/422** **401/403/404/500**." } }
+			]
+		},
+		{
+			"name": "Team",
+			"item": [
+				{ "name": "Accept Invitation", "request": { "auth": { "type": "noauth" }, "method": "POST", "url": "{{baseUrl}}/api/team/accept", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"token\": \"invitation-token\"\n}" }, "description": "## Summary\nAccept team invitation by token. No auth. **200** Accepted. **400** Invalid/expired token. **422** **500**." } },
+				{ "name": "Invite Employee", "request": { "method": "POST", "url": "{{baseUrl}}/api/team/invite", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"new@example.com\",\n  \"fullName\": \"New User\",\n  \"roleId\": 1\n}" }, "description": "## Summary\nInvite user to team. Body: email, fullName, roleId. **201** Invitation sent. **400** Email already exists. **401/403/422/500**." } },
+				{ "name": "List Invitations", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/invitations", "description": "## Summary\nList pending invitations. **200** List. **401/403/500**." } },
+				{ "name": "List Team Users", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/users", "description": "## Summary\nList team users. **200** List. **401/403/500**." } },
+				{ "name": "Get Job Grades", "request": { "method": "GET", "url": "{{baseUrl}}/api/team/job-grades", "description": "## Summary\nGet job grades (for roles). **200** List. **401/403/500**." } },
+				{ "name": "Update User Role", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/users/1/role", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"roleId\": 2\n}" }, "description": "## Summary\nUpdate user role. **200** **400/404/422** **401/403/500**." } },
+				{ "name": "Deactivate User", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/users/1/deactivate", "description": "## Summary\nDeactivate team user. **200** **400/404** **401/403/500**." } },
+				{ "name": "Cancel Invitation", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/team/invitations/1/cancel", "description": "## Summary\nCancel pending invitation. **200** **400/404** **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Roles",
+			"item": [
+				{ "name": "List Roles", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles", "description": "## Summary\nList roles (org-scoped or Authority). **200** List. **401/403/500**." } },
+				{ "name": "List Permissions for Org Type", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles/permissions", "description": "## Summary\nList permissions available for org type. **200** List. **401/403/500**." } },
+				{ "name": "Get Role by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/roles/1", "description": "## Summary\nGet role by ID with permissions. **200** Role. **404** **401/403/500**." } },
+				{ "name": "Create Role", "request": { "method": "POST", "url": "{{baseUrl}}/api/roles", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"New Role\",\n  \"organizationType\": \"SERVICE_PROVIDER\",\n  \"permissionIds\": [1, 2]\n}" }, "description": "## Summary\nCreate role. Requires approved org and roles.create. Body: name, organizationType, permissionIds. **201** Created. **400/422** **401/403/500**." } },
+				{ "name": "Update Role", "request": { "method": "PATCH", "url": "{{baseUrl}}/api/roles/1", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated\"\n}" }, "description": "## Summary\nUpdate role. **200** **404/422** **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Audit",
+			"item": [
+				{ "name": "List Audit Logs", "request": { "method": "GET", "url": "{{baseUrl}}/api/audit", "description": "## Summary\nList audit logs. Authority only; requires audit.read. Query: entityType, entityId, action, userId, from, to, page, limit.\n\n## Success\n- **200:** Paginated audit entries. **401** **403** **422** **500**." } }
+			]
+		},
+		{
+			"name": "Service Categories",
+			"item": [
+				{ "name": "List Service Categories", "request": { "method": "GET", "url": "{{baseUrl}}/api/service-categories", "description": "## Summary\nList service categories. **200** List. **401/403/500**." } },
+				{ "name": "Get by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/service-categories/1", "description": "## Summary\nGet service category by ID. **200** Category. **404** **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Inspections",
+			"item": [
+				{ "name": "List Inspections", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspections", "description": "## Summary\nList inspections. Authority only; inspections.read. **200** List. **401/403/500**." } },
+				{ "name": "Get Inspection by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/inspections/1", "description": "## Summary\nGet inspection by ID. **200** Inspection. **404** **401/403/500**." } },
+				{ "name": "Create Inspection", "request": { "method": "POST", "url": "{{baseUrl}}/api/inspections", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{}" }, "description": "## Summary\nCreate inspection. Authority; inspections.create. **201** Created. **400/422** **401/403/500**." } }
+			]
+		},
+		{
+			"name": "Operators",
+			"item": [
+				{ "name": "List Operators", "request": { "method": "GET", "url": "{{baseUrl}}/api/operators", "description": "## Summary\nList operators (service provider). **200** List. **401/403/500**." } },
+				{ "name": "Get Operator by ID", "request": { "method": "GET", "url": "{{baseUrl}}/api/operators/1", "description": "## Summary\nGet operator by ID. **200** Operator. **404** **401/403/500**." } }
+			]
+		}
+	]
+}

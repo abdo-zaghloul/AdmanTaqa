@@ -156,6 +156,15 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
   "station-requests/:id": {
     orgTypes: ["FUEL_STATION"],
   },
+  "linked-providers": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "station-job-orders": {
+    orgTypes: ["FUEL_STATION"],
+  },
+  "station-job-orders/:id": {
+    orgTypes: ["FUEL_STATION"],
+  },
   // Provider (Service Provider): RFQs, job orders
   "provider-rfqs": {
     orgTypes: ["SERVICE_PROVIDER"],
@@ -164,6 +173,9 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["SERVICE_PROVIDER"],
   },
   "provider-job-orders": {
+    orgTypes: ["SERVICE_PROVIDER"],
+  },
+  "provider-job-orders/review-queue": {
     orgTypes: ["SERVICE_PROVIDER"],
   },
   "provider-job-orders/:id": {

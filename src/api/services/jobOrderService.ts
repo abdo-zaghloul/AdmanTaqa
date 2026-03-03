@@ -150,3 +150,25 @@ export async function fetchJobOrderById(
   if (!item) return null;
   return mapItemToDetailView(item);
 }
+
+/** GET /api/job-orders/review-queue — job orders awaiting payment confirmation (Service Provider) */
+export async function fetchJobOrderReviewQueue(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<{ items: JobOrderRow[]; total: number; page: number; limit: number }> {
+  const res = await axiosInstance.get<JobOrderListResponse>("job-orders/review-queue", {
+    params: { page: params?.page ?? 1, limit: params?.limit ?? 20 },
+  });
+  const data = res.data?.data;
+  const rawItems: JobOrderApiItem[] = Array.isArray(data)
+    ? data
+    : (data && typeof data === "object" && "items" in data ? (data as { items: JobOrderApiItem[] }).items : []);
+  const items = rawItems.map(mapItemToRow);
+  const paginated = data && typeof data === "object" && "total" in data ? (data as { total: number; page: number; limit: number }) : null;
+  return {
+    items,
+    total: paginated?.total ?? items.length,
+    page: paginated?.page ?? params?.page ?? 1,
+    limit: paginated?.limit ?? params?.limit ?? 20,
+  };
+}

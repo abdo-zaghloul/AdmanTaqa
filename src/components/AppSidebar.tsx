@@ -17,6 +17,7 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
+import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -48,6 +49,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 
 const navGroups: NavGroup[] = [
@@ -89,8 +93,11 @@ const navGroups: NavGroup[] = [
       { label: "Work Orders", path: "/work-orders", icon: Briefcase },
       { label: "Internal Work Orders", path: "/internal-work-orders", icon: Briefcase },
       { label: "External Requests", path: "/station-requests", icon: Briefcase },
+      { label: "Station Job Orders", path: "/station-job-orders", icon: Briefcase },
+      { label: "Linked Providers", path: "/linked-providers", icon: Briefcase },
       { label: "RFQs", path: "/provider-rfqs", icon: Briefcase },
       { label: "Provider Job Orders", path: "/provider-job-orders", icon: Briefcase },
+      { label: "Provider Review Queue", path: "/provider-job-orders/review-queue", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       
       // { label: "Inspections", path: "/inspections", icon: SearchCheck },
@@ -154,42 +161,40 @@ export default function AppSidebar() {
   const renderItem = (item: NavItem) => {
     if (item.isDropdown) {
       const isOpen = openDropdowns[item.label];
+      const visibleChildren = item.children?.filter((child) => canSeeItem(child)) ?? [];
       return (
-        <div key={item.label}>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="px-4 py-6 hover:bg-primary/5 transition-all group/btn w-full justify-between"
-              onClick={() => toggleDropdown(item.label)}
-            >
-              <div className="flex items-center gap-3">
-                <item.icon className="h-4 w-4 text-slate-500" />
-                <span className="font-semibold text-sm">{item.label}</span>
-              </div>
-              {isOpen ? 
-                <ChevronDown className="h-4 w-4 text-slate-500" /> : 
-                <ChevronRight className="h-4 w-4 text-slate-500" />
-              }
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          {isOpen && item.children && (
-            <div className="ml-8 border-l-2 border-slate-200 pl-2">
-              {item.children.filter((child) => canSeeItem(child)).map((child) => (
-                <SidebarMenuItem key={child.path}>
-                  <SidebarMenuButton
-                    className="px-4 py-4 hover:bg-primary/5 transition-all group/btn"
-                    asChild
-                    isActive={isItemActive(child)}
-                  >
+        <SidebarMenuItem key={item.label}>
+          <SidebarMenuButton
+            className="px-4 py-6 hover:bg-primary/5 transition-all group/btn w-full justify-between"
+            onClick={() => toggleDropdown(item.label)}
+          >
+            <div className="flex items-center gap-3">
+              <item.icon className="h-4 w-4 text-slate-500" />
+              <span className="font-semibold text-sm">{item.label}</span>
+            </div>
+            {isOpen ? (
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-slate-500" />
+            )}
+          </SidebarMenuButton>
+          {isOpen && visibleChildren.length > 0 && (
+            <SidebarMenuSub>
+              {visibleChildren.map((child) => (
+                <SidebarMenuSubItem key={child.path}>
+                  <SidebarMenuSubButton asChild isActive={isItemActive(child)}>
                     <Link to={child.path!} className="flex items-center gap-3">
-                      <child.icon className={`h-4 w-4 transition-colors ${isItemActive(child) ? 'text-primary' : 'text-slate-500 group-hover/btn:text-primary'}`} />
+                      <child.icon
+                        className={`h-4 w-4 transition-colors ${isItemActive(child) ? "text-primary" : "text-slate-500 group-hover/btn:text-primary"}`}
+                      />
                       <span className="font-medium text-sm">{child.label}</span>
                     </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
               ))}
-            </div>
+            </SidebarMenuSub>
           )}
-        </div>
+        </SidebarMenuItem>
       );
     } else {
       // Only render items with paths
@@ -215,14 +220,21 @@ export default function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        {visibleGroups.map((group) => (
-          <SidebarGroup key={group.label}>
+        {visibleGroups.map((group, groupIndex) => (
+          <SidebarGroup key={group.label ?? `nav-group-${groupIndex}`}>
             <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest opacity-60 px-4 mt-2">
               {group.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map(renderItem)}
+                {group.items.map((item, itemIndex) => {
+                  const el = renderItem(item);
+                  return el != null ? (
+                    <React.Fragment key={item.path ?? item.label ?? `nav-${groupIndex}-${itemIndex}`}>
+                      {el}
+                    </React.Fragment>
+                  ) : null;
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

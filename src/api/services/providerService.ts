@@ -9,6 +9,10 @@ import type {
   ConfirmReceivedBody,
   ProviderRfqsListResponse,
   ProviderJobOrdersListResponse,
+  ProviderVisitItem,
+  ProviderAttachmentItem,
+  ProviderReportItem,
+  CreateProviderReportBody,
 } from "@/types/provider";
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -128,6 +132,110 @@ export async function updateProviderJobOrderStatus(
   const response = await axiosInstance.patch(
     `provider/job-orders/${jobOrderId}/status`,
     body
+  );
+  return response.data;
+}
+
+/** GET /api/provider/job-orders/:id/visits — list visits */
+export async function fetchProviderJobOrderVisits(
+  jobOrderId: number | string
+): Promise<ProviderVisitItem[]> {
+  const response = await axiosInstance.get<{
+    success?: boolean;
+    data?: ProviderVisitItem[];
+  }>(`provider/job-orders/${jobOrderId}/visits`);
+  const data = response.data?.data;
+  return Array.isArray(data) ? data : [];
+}
+
+/** POST /api/provider/job-orders/:id/visits/checkin — register visit (check-in) */
+export async function createProviderJobOrderVisitCheckin(
+  jobOrderId: number | string,
+  body?: { notes?: string }
+): Promise<unknown> {
+  const response = await axiosInstance.post(
+    `provider/job-orders/${jobOrderId}/visits/checkin`,
+    body ?? {}
+  );
+  return response.data;
+}
+
+/** GET /api/provider/job-orders/:id/attachments — list attachments (if supported) */
+export async function fetchProviderJobOrderAttachments(
+  jobOrderId: number | string
+): Promise<ProviderAttachmentItem[]> {
+  const response = await axiosInstance.get<{
+    success?: boolean;
+    data?: ProviderAttachmentItem[];
+  }>(`provider/job-orders/${jobOrderId}/attachments`);
+  const data = response.data?.data;
+  return Array.isArray(data) ? data : [];
+}
+
+/** POST /api/provider/job-orders/:id/attachments — upload attachment */
+export async function uploadProviderJobOrderAttachment(
+  jobOrderId: number | string,
+  file: File
+): Promise<{ id?: number; url?: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await axiosInstance.post<{ success?: boolean; data?: { id?: number; url?: string } }>(
+    `provider/job-orders/${jobOrderId}/attachments`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  return response.data?.data ?? {};
+}
+
+/** POST /api/provider/job-orders/:id/submit-completion — send job order for station review (e.g. UNDER_REVIEW) */
+export async function submitProviderJobOrderForCompletion(
+  jobOrderId: number | string
+): Promise<unknown> {
+  const response = await axiosInstance.post(
+    `provider/job-orders/${jobOrderId}/submit-completion`
+  );
+  return response.data;
+}
+
+/** GET /api/provider/job-orders/:id/reports — list maintenance reports for this job order */
+export async function fetchProviderJobOrderReports(
+  jobOrderId: number | string
+): Promise<ProviderReportItem[]> {
+  const response = await axiosInstance.get<{
+    success?: boolean;
+    data?: ProviderReportItem[] | { items?: ProviderReportItem[] };
+  }>(`provider/job-orders/${jobOrderId}/reports`);
+  const data = response.data?.data;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object" && "items" in data)
+    return Array.isArray((data as { items?: ProviderReportItem[] }).items)
+      ? (data as { items: ProviderReportItem[] }).items
+      : [];
+  return [];
+}
+
+/** POST /api/provider/job-orders/:id/reports — create maintenance report */
+export async function createProviderJobOrderReport(
+  jobOrderId: number | string,
+  body: CreateProviderReportBody
+): Promise<ProviderReportItem> {
+  const response = await axiosInstance.post<{ success?: boolean; data?: ProviderReportItem }>(
+    `provider/job-orders/${jobOrderId}/reports`,
+    body
+  );
+  const item = response.data?.data;
+  if (!item) throw new Error(getErrorMessage(null, "Unexpected create report response."));
+  return item;
+}
+
+/** PATCH /api/provider/job-orders/:id/reports/:reportId/submit — submit report for review (or POST reports/:id/submit) */
+export async function submitProviderJobOrderReport(
+  jobOrderId: number | string,
+  reportId: number | string
+): Promise<unknown> {
+  const response = await axiosInstance.patch(
+    `provider/job-orders/${jobOrderId}/reports/${reportId}/submit`,
+    {}
   );
   return response.data;
 }

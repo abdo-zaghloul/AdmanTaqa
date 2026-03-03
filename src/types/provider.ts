@@ -71,3 +71,36 @@ export interface ProviderJobOrdersListResponse {
     | { items?: ProviderJobOrderItem[]; total?: number; page?: number; limit?: number };
   message?: string;
 }
+
+export interface ProviderVisitItem {
+  id: number;
+  visitDate?: string;
+  status?: string;
+  notes?: string | null;
+  createdAt?: string;
+}
+
+export interface ProviderAttachmentItem {
+  id: number;
+  name?: string;
+  url?: string;
+  createdAt?: string;
+}
+
+/** Maintenance report (provider job order) */
+export interface ProviderReportItem {
+  id: number;
+  jobOrderId?: number;
+  title?: string;
+  content?: string | null;
+  status?: string;
+  submittedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateProviderReportBody {
+  title: string;
+  content?: string | null;
+  [key: string]: unknown;
+}

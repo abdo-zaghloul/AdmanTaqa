@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +10,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, Send, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar } from "lucide-react";
+import { ChevronLeft, Send, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
 import useAvailableProviders from "@/hooks/Station/useAvailableProviders";
 import useSendToProviders from "@/hooks/Station/useSendToProviders";
 import useSelectQuote from "@/hooks/Station/useSelectQuote";
+import useRejectQuote from "@/hooks/Station/useRejectQuote";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
+import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
+import { STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS } from "@/types/station";
+import type { StationRequestStatusSendToProviders } from "@/types/station";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function StationRequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -24,10 +30,15 @@ export default function StationRequestDetail() {
   const { data: availableProviders = [] } = useAvailableProviders();
   const sendMutation = useSendToProviders();
   const selectQuoteMutation = useSelectQuote();
+  const rejectQuoteMutation = useRejectQuote();
   const confirmSentMutation = useConfirmPaymentSent();
+  const uploadReceiptMutation = useUploadJobOrderReceipt();
 
   const [selectedQuoteId, setSelectedQuoteId] = useState<string>("");
+  const receiptFileInputRef = useRef<HTMLInputElement>(null);
   const [providerIds, setProviderIds] = useState<number[]>([]);
+  const [rejectQuoteId, setRejectQuoteId] = useState<number | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const isCancelled = request?.status === "CANCELLED";
   const quotes = request?.quotes ?? [];
@@ -45,6 +56,12 @@ export default function StationRequestDetail() {
     (jo) => jo.status === "AWAITING_PAYMENT"
   );
 
+  const canSendToProviders =
+    request?.status != null &&
+    STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS.includes(
+      request.status as StationRequestStatusSendToProviders
+    );
+
   const handleSendToProviders = () => {
     if (!id || providerIds.length === 0) {
       toast.error("Select at least one provider.");
@@ -54,7 +71,12 @@ export default function StationRequestDetail() {
       { requestId: id, providerOrganizationIds: providerIds },
       {
         onSuccess: () => toast.success("Sent to providers."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Send failed."),
+        onError: (e) => {
+          const msg =
+            (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+            (e instanceof Error ? e.message : "Send failed.");
+          toast.error(msg);
+        },
       }
     );
   };
@@ -73,13 +95,50 @@ export default function StationRequestDetail() {
     );
   };
 
-  const handleConfirmSent = () => {
+  const handleConfirmSent = (receiptFileUrl?: string) => {
     if (!awaitingPaymentJob?.id) return;
     confirmSentMutation.mutate(
-      { jobOrderId: awaitingPaymentJob.id },
+      {
+        jobOrderId: awaitingPaymentJob.id,
+        body: receiptFileUrl ? { receiptFileUrl } : undefined,
+      },
       {
         onSuccess: () => toast.success("Payment send confirmed."),
         onError: (e) => toast.error(e instanceof Error ? e.message : "Confirm failed."),
+      }
+    );
+  };
+
+  const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!awaitingPaymentJob?.id || !file) return;
+    uploadReceiptMutation.mutate(
+      { jobOrderId: awaitingPaymentJob.id, file },
+      {
+        onSuccess: (data) => {
+          toast.success("Receipt uploaded.");
+          if (data?.receiptFileUrl) handleConfirmSent(data.receiptFileUrl);
+          e.target.value = "";
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : "Upload failed."),
+      }
+    );
+  };
+
+  const handleRejectQuote = () => {
+    if (!id || rejectQuoteId == null || !rejectReason.trim()) {
+      toast.error("Enter a rejection reason.");
+      return;
+    }
+    rejectQuoteMutation.mutate(
+      { requestId: id, quoteId: rejectQuoteId, reason: rejectReason.trim() },
+      {
+        onSuccess: () => {
+          toast.success("Quote rejected.");
+          setRejectQuoteId(null);
+          setRejectReason("");
+        },
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Reject failed."),
       }
     );
   };
@@ -185,10 +244,11 @@ export default function StationRequestDetail() {
                   const isRejected = q.status === "REJECTED";
                   const isWithdrawn = q.status === "WITHDRAWN";
                   const isInactive = isRejected || isWithdrawn;
+                  const showRejectForm = !isCancelled && !isInactive && rejectQuoteId === q.id;
                   return (
                     <li
                       key={q.id}
-                      className={`flex items-center justify-between rounded-lg border p-3 text-sm ${
+                      className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm ${
                         isInactive ? "opacity-75 bg-muted/50 border-muted" : ""
                       }`}
                     >
@@ -197,12 +257,59 @@ export default function StationRequestDetail() {
                         {q.amount != null && ` · ${q.amount}`}
                         {q.providerOrganizationId != null && ` · Org ${q.providerOrganizationId}`}
                       </span>
-                      <Badge
-                        variant={isRejected ? "destructive" : isWithdrawn ? "secondary" : "default"}
-                        className="shrink-0"
-                      >
-                        {q.status ?? "—"}
-                      </Badge>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {!isInactive && rejectQuoteId !== q.id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive gap-1"
+                            onClick={() => setRejectQuoteId(q.id)}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            Reject
+                          </Button>
+                        )}
+                        {showRejectForm && (
+                          <div className="flex flex-wrap items-end gap-2">
+                            <div className="space-y-1 min-w-[180px]">
+                              <Label htmlFor={`reject-reason-${q.id}`} className="text-xs">
+                                Reason (required)
+                              </Label>
+                              <Input
+                                id={`reject-reason-${q.id}`}
+                                placeholder="Rejection reason"
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                className="h-8"
+                              />
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={handleRejectQuote}
+                              disabled={rejectQuoteMutation.isPending || !rejectReason.trim()}
+                            >
+                              Submit reject
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setRejectQuoteId(null);
+                                setRejectReason("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        )}
+                        <Badge
+                          variant={isRejected ? "destructive" : isWithdrawn ? "secondary" : "default"}
+                          className="shrink-0"
+                        >
+                          {q.status ?? "—"}
+                        </Badge>
+                      </div>
                     </li>
                   );
                 })}
@@ -217,7 +324,7 @@ export default function StationRequestDetail() {
 
           {!isCancelled && (
             <>
-              {availableProviders.length > 0 && (
+              {canSendToProviders && availableProviders.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Send to providers</p>
                   <div className="flex flex-wrap gap-2">
@@ -249,6 +356,11 @@ export default function StationRequestDetail() {
                   </Button>
                 </div>
               )}
+              {!canSendToProviders && request?.status === "QUOTING_OPEN" && (
+                <p className="text-sm text-muted-foreground rounded-md bg-muted/50 p-3">
+                  الطلب مُرسل للمزودين ومفتوح للعروض (QUOTING_OPEN). يمكنك اختيار عرض من القائمة أعلاه أو رفض عرض.
+                </p>
+              )}
 
               {selectableQuotes.length > 0 && (
                 <div className="space-y-2">
@@ -278,16 +390,34 @@ export default function StationRequestDetail() {
               )}
 
               {awaitingPaymentJob && !paymentRejected && (
-                <div className="pt-2 border-t">
+                <div className="pt-2 border-t space-y-2">
                   <p className="text-sm font-medium mb-2">Payment</p>
-                  <Button
-                    size="sm"
-                    className="gap-1"
-                    onClick={handleConfirmSent}
-                    disabled={confirmSentMutation.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4" /> Confirm payment sent
-                  </Button>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <input
+                      ref={receiptFileInputRef}
+                      type="file"
+                      accept="image/*,.pdf"
+                      className="hidden"
+                      onChange={handleReceiptFileChange}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => receiptFileInputRef.current?.click()}
+                      disabled={uploadReceiptMutation.isPending}
+                    >
+                      <Upload className="h-4 w-4" /> Upload receipt
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => handleConfirmSent()}
+                      disabled={confirmSentMutation.isPending}
+                    >
+                      <CheckCircle className="h-4 w-4" /> Confirm payment sent
+                    </Button>
+                  </div>
                 </div>
               )}
             </>

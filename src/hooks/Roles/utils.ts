@@ -56,19 +56,32 @@ export const normalizeRole = (raw: unknown): RoleItem | null => {
   const rawPermissionIds = Array.isArray(rec.permissionIds)
     ? rec.permissionIds
     : [];
+  const rawPermissionsFromApi = Array.isArray(rec.Permissions)
+    ? rec.Permissions
+    : [];
 
-  const permissions = rawPermissions
-    .map(toPermissionCode)
-    .filter((item): item is string => !!item);
+  let permissions: string[];
+  let permissionIds: number[];
+  let permissionsList: PermissionItem[] | undefined;
 
-  const permissionIds = [
-    ...rawPermissionIds
-      .map((id) => (typeof id === "number" ? id : null))
-      .filter((item): item is number => item !== null),
-    ...rawPermissions
-      .map(toPermissionId)
-      .filter((item): item is number => item !== null),
-  ];
+  if (rawPermissionsFromApi.length > 0) {
+    permissionsList = normalizePermissions(rawPermissionsFromApi);
+    permissions = permissionsList.map((p) => p.code);
+    permissionIds = permissionsList.map((p) => p.id).filter((id) => id >= 0);
+  } else {
+    permissions = rawPermissions
+      .map(toPermissionCode)
+      .filter((item): item is string => !!item);
+    permissionIds = [
+      ...rawPermissionIds
+        .map((id) => (typeof id === "number" ? id : null))
+        .filter((item): item is number => item !== null),
+      ...rawPermissions
+        .map(toPermissionId)
+        .filter((item): item is number => item !== null),
+    ];
+    permissionIds = Array.from(new Set(permissionIds));
+  }
 
   return {
     id:
@@ -76,11 +89,14 @@ export const normalizeRole = (raw: unknown): RoleItem | null => {
     name: typeof rec.name === "string" ? rec.name : "Unnamed role",
     description: typeof rec.description === "string" ? rec.description : "",
     type: typeof rec.type === "string" ? rec.type : "ORGANIZATION",
+    organizationType:
+      typeof rec.organizationType === "string" ? rec.organizationType : undefined,
     isSystem: typeof rec.isSystem === "boolean" ? rec.isSystem : undefined,
     organizationId:
       typeof rec.organizationId === "number" ? rec.organizationId : null,
     permissions,
     permissionIds: Array.from(new Set(permissionIds)),
+    permissionsList,
     userCount: typeof rec.userCount === "number" ? rec.userCount : undefined,
     createdAt: typeof rec.createdAt === "string" ? rec.createdAt : undefined,
     updatedAt: typeof rec.updatedAt === "string" ? rec.updatedAt : undefined,

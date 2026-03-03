@@ -10,10 +10,13 @@ export interface RoleItem {
   name: string;
   description?: string | null;
   type?: string;
+  organizationType?: string;
   isSystem?: boolean;
   organizationId?: number | null;
   permissions: string[];
   permissionIds: number[];
+  /** Full list from API (Permissions array with id, code, name) for display */
+  permissionsList?: PermissionItem[];
   userCount?: number;
   createdAt?: string;
   updatedAt?: string;
