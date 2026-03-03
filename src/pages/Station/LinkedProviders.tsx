@@ -1,7 +1,16 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ChevronLeft, Building2, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import useLinkedProviders from "@/hooks/Station/useLinkedProviders";
@@ -14,6 +23,7 @@ export default function LinkedProviders() {
   const { data: available = [] } = useAvailableProviders();
   const addMutation = useAddLinkedProvider();
   const removeMutation = useRemoveLinkedProvider();
+  const [removeTarget, setRemoveTarget] = useState<{ linkId: number; name: string } | null>(null);
 
   const linkedOrgIds = new Set(linked.map((p) => p.organizationId));
   const canAdd = available.filter((p) => !linkedOrgIds.has(p.organizationId));
@@ -28,10 +38,17 @@ export default function LinkedProviders() {
     );
   };
 
-  const handleRemove = (linkId: number, name: string) => {
-    if (!confirm(`Remove ${name || "this provider"} from linked providers?`)) return;
-    removeMutation.mutate(linkId, {
-      onSuccess: () => toast.success("Provider removed."),
+  const openRemoveModal = (linkId: number, name: string) => {
+    setRemoveTarget({ linkId, name });
+  };
+
+  const handleRemoveConfirm = () => {
+    if (!removeTarget) return;
+    removeMutation.mutate(removeTarget.linkId, {
+      onSuccess: () => {
+        toast.success("Provider removed.");
+        setRemoveTarget(null);
+      },
       onError: (e) => toast.error(e instanceof Error ? e.message : "Failed to remove."),
     });
   };
@@ -91,7 +108,7 @@ export default function LinkedProviders() {
                     variant="ghost"
                     size="sm"
                     className="text-destructive hover:text-destructive gap-1"
-                    onClick={() => handleRemove(p.id, p.organizationName ?? "")}
+                    onClick={() => openRemoveModal(p.id, p.organizationName ?? "")}
                     disabled={removeMutation.isPending}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -152,6 +169,30 @@ export default function LinkedProviders() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove linked provider</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove &quot;{removeTarget?.name || "this provider"}&quot; from
+              linked providers? You can add them again later from available providers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemoveTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveConfirm}
+              disabled={removeMutation.isPending}
+            >
+              {removeMutation.isPending ? "Removing..." : "Remove"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

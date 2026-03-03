@@ -36,6 +36,12 @@ export default function Users() {
   const { data, isLoading, isError, error } = useGetUsers();
   const users = useMemo(() => data?.data ?? [], [data?.data]);
   const rows = useMemo(() => users.map(toUserRow), [users]);
+  const roleOptions = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((u) => { if (u.role) set.add(u.role); });
+    return Array.from(set).sort();
+  }, [rows]);
+
   const filteredUsers = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const list = q
@@ -43,7 +49,8 @@ export default function Users() {
         (u) =>
           u.fullName.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          String(u.id).toLowerCase().includes(q)
+          String(u.id).toLowerCase().includes(q) ||
+          (u.role && u.role.toLowerCase().includes(q))
       )
       : rows;
     return roleFilter === "all" ? list : list.filter((u) => u.role === roleFilter);
@@ -94,11 +101,9 @@ export default function Users() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="AUTHORITY">Authority</SelectItem>
-                    <SelectItem value="SERVICE_PROVIDER">Service Provider</SelectItem>
-                    <SelectItem value="BRANCH_MANAGER">Branch Manager</SelectItem>
-                    <SelectItem value="TECHNICIAN">Technician</SelectItem>
+                    {roleOptions.map((name) => (
+                      <SelectItem key={name} value={name}>{name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

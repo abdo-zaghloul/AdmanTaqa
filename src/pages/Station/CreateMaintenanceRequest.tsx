@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -12,15 +13,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import useGetBranches from "@/hooks/Branches/useGetBranches";
 import useCreateMaintenanceRequest from "@/hooks/Station/useCreateMaintenanceRequest";
+import useLinkedProviders from "@/hooks/Station/useLinkedProviders";
 import type { MaintenanceMode, MaintenancePriority } from "@/types/station";
 
 export default function CreateMaintenanceRequest() {
   const navigate = useNavigate();
   const { data: branches = [] } = useGetBranches();
+  const { data: linkedProviders = [], isLoading: linkedLoading } = useLinkedProviders();
   const createMutation = useCreateMaintenanceRequest();
 
   const [branchId, setBranchId] = useState<string>("");
@@ -29,6 +32,13 @@ export default function CreateMaintenanceRequest() {
   const [priority, setPriority] = useState<MaintenancePriority>("MEDIUM");
   const [maintenanceMode, setMaintenanceMode] = useState<MaintenanceMode>("INTERNAL");
   const [firstTaskNotes, setFirstTaskNotes] = useState("");
+  const [selectedProviderIds, setSelectedProviderIds] = useState<number[]>([]);
+
+  const toggleProvider = (orgId: number) => {
+    setSelectedProviderIds((prev) =>
+      prev.includes(orgId) ? prev.filter((id) => id !== orgId) : [...prev, orgId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,19 +47,30 @@ export default function CreateMaintenanceRequest() {
       toast.error("Branch and title are required.");
       return;
     }
+    if (!description.trim()) {
+      toast.error("Description is required.");
+      return;
+    }
+    if (maintenanceMode === "EXTERNAL" && selectedProviderIds.length === 0) {
+      toast.error("Select at least one service provider to send the request to.");
+      return;
+    }
 
     createMutation.mutate(
       {
         branchId: bid!,
         title: title.trim(),
-        description: description.trim() || undefined,
+        description: description.trim(),
         priority,
         maintenanceMode,
         firstTask:
           maintenanceMode === "INTERNAL" && firstTaskNotes.trim()
             ? { notes: firstTaskNotes.trim() }
             : undefined,
-        providerOrganizationIds: undefined,
+        providerOrganizationIds:
+          maintenanceMode === "EXTERNAL" && selectedProviderIds.length > 0
+            ? selectedProviderIds
+            : undefined,
       },
       {
         onSuccess: (data) => {
@@ -109,13 +130,14 @@ export default function CreateMaintenanceRequest() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description *</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Optional description"
+                placeholder="Request description (required)"
                 rows={3}
+                required
               />
             </div>
             <div className="space-y-2">
@@ -160,10 +182,56 @@ export default function CreateMaintenanceRequest() {
                 />
               </div>
             )}
+            {maintenanceMode === "EXTERNAL" && (
+              <div className="space-y-2 rounded-lg border bg-muted/20 p-4">
+                <Label className="text-base font-semibold">Send to providers (select at least one) *</Label>
+                <p className="text-sm text-muted-foreground">
+                  Request will be sent to selected providers and appear in their RFQ list. Linked providers only.
+                </p>
+                {linkedLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading providers...</p>
+                ) : linkedProviders.length === 0 ? (
+                  <p className="text-sm text-amber-600">
+                    No linked providers. Link providers from the{" "}
+                    <Link to="/linked-providers" className="underline font-medium">
+                      Linked Providers
+                    </Link>{" "}
+                    page first.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                    {linkedProviders.map((p) => (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-3 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={selectedProviderIds.includes(p.organizationId)}
+                          onCheckedChange={() => toggleProvider(p.organizationId)}
+                        />
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {p.organizationName ?? `Provider #${p.organizationId}`}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                {linkedProviders.length > 0 && selectedProviderIds.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedProviderIds.length} provider(s) selected. Request will open for quotes (QUOTING_OPEN).
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 pt-4">
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={
+                  createMutation.isPending ||
+                  (maintenanceMode === "EXTERNAL" &&
+                    (linkedProviders.length === 0 || selectedProviderIds.length === 0))
+                }
               >
                 {createMutation.isPending ? "Creating..." : "Create request"}
               </Button>

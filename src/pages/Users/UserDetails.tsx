@@ -27,9 +27,10 @@ function getRoleBadge(role?: string) {
     BRANCH_MANAGER: "bg-amber-50 text-amber-700 border-amber-200",
     TECHNICIAN: "bg-slate-50 text-slate-700 border-slate-200",
   };
+  const label = variants[role] ? role.replace(/_/g, " ") : role;
   return (
-    <Badge className={`${variants[role] || "bg-gray-50"} border font-bold shadow-none uppercase text-[10px] tracking-widest`}>
-      {role.replace(/_/g, " ")}
+    <Badge className={`${variants[role] || "bg-muted text-muted-foreground border-muted-foreground/20"} border font-bold shadow-none text-[10px] tracking-wide`}>
+      {label}
     </Badge>
   );
 }
