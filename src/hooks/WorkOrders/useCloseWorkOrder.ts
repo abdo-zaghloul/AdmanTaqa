@@ -9,7 +9,7 @@ type Payload = {
 export default function useCloseWorkOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, note }: Payload) => closeWorkOrder(id, note),
+    mutationFn: ({ id }: Payload) => closeWorkOrder(id),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["work-orders"] });
       queryClient.invalidateQueries({ queryKey: ["work-order", id] });

@@ -31,8 +31,15 @@ export default function WorkOrderDetails() {
 
   const handleReview = (action: "APPROVE" | "REJECT") => {
     if (!id) return;
+    if (action === "REJECT") {
+      const trimmed = reviewNote.trim();
+      if (trimmed.length > 0 && trimmed.length < 3) {
+        toast.error("Reject note must be at least 3 characters when provided.");
+        return;
+      }
+    }
     reviewMutation.mutate(
-      { id, body: { action, note: reviewNote || undefined } },
+      { id, body: { action, note: reviewNote.trim() || undefined } },
       {
         onSuccess: () => toast.success(`Work order ${action === "APPROVE" ? "approved" : "rejected"}.`),
         onError: (err) =>
@@ -44,7 +51,7 @@ export default function WorkOrderDetails() {
   const handleClose = () => {
     if (!id) return;
     closeMutation.mutate(
-      { id, note: reviewNote || undefined },
+      { id },
       {
         onSuccess: () => toast.success("Work order closed."),
         onError: (err) =>
@@ -128,19 +135,25 @@ export default function WorkOrderDetails() {
                     />
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => handleReview("APPROVE")} disabled={reviewMutation.isPending}>
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleReview("REJECT")}
-                      disabled={reviewMutation.isPending}
-                    >
-                      Reject
-                    </Button>
-                    <Button variant="secondary" onClick={handleClose} disabled={closeMutation.isPending}>
-                      Close Work Order
-                    </Button>
+                    {workOrder.status === "UNDER_REVIEW" ? (
+                      <>
+                        <Button onClick={() => handleReview("APPROVE")} disabled={reviewMutation.isPending}>
+                          Approve
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleReview("REJECT")}
+                          disabled={reviewMutation.isPending}
+                        >
+                          Reject
+                        </Button>
+                      </>
+                    ) : null}
+                    {workOrder.status !== "CLOSED" ? (
+                      <Button variant="secondary" onClick={handleClose} disabled={closeMutation.isPending}>
+                        Close Work Order
+                      </Button>
+                    ) : null}
                   </div>
                 </>
               ) : null}

@@ -59,7 +59,6 @@ import StationJobOrderDetail from "./pages/Station/StationJobOrderDetail";
 import ProviderRfqs from "./pages/Provider/ProviderRfqs";
 import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
-import ProviderJobOrdersReviewQueue from "./pages/Provider/ProviderJobOrdersReviewQueue";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 
 export const router = createHashRouter([
@@ -450,14 +449,6 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="provider-job-orders">
             <ProviderJobOrders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "provider-job-orders/review-queue",
-        element: (
-          <RouteAccessGuard pathKey="provider-job-orders/review-queue">
-            <ProviderJobOrdersReviewQueue />
           </RouteAccessGuard>
         ),
       },

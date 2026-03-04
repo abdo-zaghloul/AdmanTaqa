@@ -96,7 +96,6 @@ const navGroups: NavGroup[] = [
       { label: "Linked Providers", path: "/linked-providers", icon: Briefcase },
       { label: "RFQs", path: "/provider-rfqs", icon: Briefcase },
       { label: "Provider Job Orders", path: "/provider-job-orders", icon: Briefcase },
-      { label: "Provider Review Queue", path: "/provider-job-orders/review-queue", icon: Briefcase },
       { label: "Quotations", path: "/quotations", icon: FileOutput },
       
       // { label: "Inspections", path: "/inspections", icon: SearchCheck },

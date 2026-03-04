@@ -163,9 +163,6 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
   "provider-job-orders": {
     orgTypes: ["SERVICE_PROVIDER"],
   },
-  "provider-job-orders/review-queue": {
-    orgTypes: ["SERVICE_PROVIDER"],
-  },
   "provider-job-orders/:id": {
     orgTypes: ["SERVICE_PROVIDER"],
   },

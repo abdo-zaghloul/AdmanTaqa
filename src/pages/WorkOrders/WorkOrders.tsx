@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,12 +14,23 @@ import type { WorkOrderPriority, WorkOrderStatus } from "@/types/workOrder";
 import WorkOrdersTable from "./components/WorkOrdersTable";
 import CreateWorkOrderDialog from "./components/CreateWorkOrderDialog";
 
+const STATUS_TABS: { label: string; status: WorkOrderStatus }[] = [
+  { label: "New", status: "PENDING" },
+  { label: "In progress", status: "IN_PROGRESS" },
+  { label: "Under review", status: "UNDER_REVIEW" },
+  { label: "Closed", status: "CLOSED" },
+];
+
 export default function WorkOrders() {
   const { hasPermission } = useAuth();
-  const [status, setStatus] = useState<WorkOrderStatus | "all">("all");
+  const hasApprove = hasPermission("workorders.approve");
+  const [status, setStatus] = useState<WorkOrderStatus>("PENDING");
   const [priority, setPriority] = useState<WorkOrderPriority | "all">("all");
   const [page, setPage] = useState(1);
+  const [counts, setCounts] = useState<Partial<Record<WorkOrderStatus, number>>>({});
   const limit = 20;
+
+  const tabs = STATUS_TABS.filter((tab) => tab.status !== "UNDER_REVIEW" || hasApprove);
 
   const { data, isLoading, isError, error } = useGetWorkOrders({
     status,
@@ -27,6 +38,12 @@ export default function WorkOrders() {
     page,
     limit,
   });
+
+  useEffect(() => {
+    if (data?.total != null) {
+      setCounts((prev) => ({ ...prev, [status]: data.total }));
+    }
+  }, [data?.total, status]);
 
   const items = data?.items ?? [];
   const maxPage = Math.max(1, Math.ceil((data?.total ?? 0) / Math.max(limit, 1)));
@@ -46,20 +63,23 @@ export default function WorkOrders() {
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md p-4 space-y-4">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2 border-b pb-2">
-            <span className="text-xs text-muted-foreground mr-2">Status:</span>
-            {(["all", "PENDING", "IN_PROGRESS", "UNDER_REVIEW", "CLOSED"] as const).map((s) => (
-              <Button
-                key={s}
-                variant={status === s ? "default" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  setStatus(s);
-                  setPage(1);
-                }}
-              >
-                {s === "all" ? "All" : s.replace("_", " ")}
-              </Button>
-            ))}
+            {tabs.map(({ label, status: tabStatus }) => {
+              const count = counts[tabStatus];
+              const labelWithCount = count !== undefined ? `${label} (${count})` : `${label} (—)`;
+              return (
+                <Button
+                  key={tabStatus}
+                  variant={status === tabStatus ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => {
+                    setStatus(tabStatus);
+                    setPage(1);
+                  }}
+                >
+                  {labelWithCount}
+                </Button>
+              );
+            })}
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
             <div>

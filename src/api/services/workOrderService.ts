@@ -74,11 +74,28 @@ const normalizeWorkOrdersList = (
     .map(normalizeWorkOrder)
     .filter((row): row is WorkOrderItem => row !== null);
 
+  const pagination = toObject(data?.pagination);
+  const total = pagination && typeof pagination.total === "number"
+    ? pagination.total
+    : typeof data?.total === "number"
+    ? data.total
+    : items.length;
+  const pageNum = pagination && typeof pagination.page === "number"
+    ? pagination.page
+    : typeof data?.page === "number"
+    ? data.page
+    : page;
+  const limitNum = pagination && typeof pagination.limit === "number"
+    ? pagination.limit
+    : typeof data?.limit === "number"
+    ? data.limit
+    : limit;
+
   return {
     items,
-    total: typeof data?.total === "number" ? data.total : items.length,
-    page: typeof data?.page === "number" ? data.page : page,
-    limit: typeof data?.limit === "number" ? data.limit : limit,
+    total,
+    page: pageNum,
+    limit: limitNum,
   };
 };
 
@@ -162,14 +179,10 @@ export async function reviewWorkOrder(
   }
 }
 
-export async function closeWorkOrder(
-  id: number | string,
-  note?: string
-): Promise<WorkOrderItem> {
+export async function closeWorkOrder(id: number | string): Promise<WorkOrderItem> {
   try {
     const response = await axiosInstance.patch<WorkOrdersApiResponse>(
-      `work-orders/${id}/close`,
-      note ? { note } : undefined
+      `work-orders/${id}/close`
     );
     const item = normalizeWorkOrder(response.data?.data ?? response.data);
     if (!item) throw new Error("Unexpected close work order response.");
