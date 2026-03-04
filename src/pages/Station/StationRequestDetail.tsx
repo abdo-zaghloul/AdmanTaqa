@@ -17,8 +17,11 @@ import useSelectQuote from "@/hooks/Station/useSelectQuote";
 import useRejectQuote from "@/hooks/Station/useRejectQuote";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
 import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
+import { getApiErrorMessage } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+const MAX_RECEIPT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export default function StationRequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -84,6 +87,11 @@ export default function StationRequestDetail() {
   const handleReceiptFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!awaitingPaymentJob?.id || !file) return;
+    if (file.size > MAX_RECEIPT_SIZE_BYTES) {
+      toast.error("File size too large. Maximum size is 5MB.");
+      e.target.value = "";
+      return;
+    }
     uploadReceiptMutation.mutate(
       { jobOrderId: awaitingPaymentJob.id, file },
       {
@@ -96,7 +104,7 @@ export default function StationRequestDetail() {
           }
           e.target.value = "";
         },
-        onError: (err) => toast.error(err instanceof Error ? err.message : "Upload failed."),
+        onError: (err) => toast.error(getApiErrorMessage(err, "Upload failed.")),
       }
     );
   };

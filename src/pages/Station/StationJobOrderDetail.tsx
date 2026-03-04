@@ -22,6 +22,9 @@ import useApproveReport from "@/hooks/Station/useApproveReport";
 import useRejectReport from "@/hooks/Station/useRejectReport";
 import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
+import { getApiErrorMessage } from "@/lib/utils";
+
+const MAX_RECEIPT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export default function StationJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -100,6 +103,11 @@ export default function StationJobOrderDetail() {
   const handleUploadReceipt = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !id) return;
+    if (file.size > MAX_RECEIPT_SIZE_BYTES) {
+      toast.error("File size too large. Maximum size is 5MB.");
+      e.target.value = "";
+      return;
+    }
     uploadReceiptMutation.mutate(
       { jobOrderId: id, file },
       {
@@ -110,15 +118,15 @@ export default function StationJobOrderDetail() {
             confirmSentMutation.mutate(
               { jobOrderId: id, body: { receiptFileUrl: url } },
               {
-                onSuccess: () => toast.success("تم رفع الإيصال وتأكيد الدفع."),
-                onError: (err) => toast.error(err instanceof Error ? err.message : "فشل التأكيد."),
+                onSuccess: () => toast.success("Receipt uploaded and payment confirmed."),
+                onError: (err) => toast.error(getApiErrorMessage(err, "Confirm failed.")),
               }
             );
           } else {
-            toast.success("تم رفع الإيصال.");
+            toast.success("Receipt uploaded.");
           }
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "فشل رفع الإيصال."),
+        onError: (err) => toast.error(getApiErrorMessage(err, "Upload failed.")),
       }
     );
     e.target.value = "";
