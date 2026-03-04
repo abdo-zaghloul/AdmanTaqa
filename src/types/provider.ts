@@ -123,6 +123,16 @@ export interface ProviderVisitItem {
   createdAt?: string;
 }
 
+/** Body for POST .../visits/checkin — arrivalVerificationType required by backend */
+export type ProviderVisitCheckinVerificationType = "GPS" | "QR" | "MANUAL";
+
+export interface CreateProviderVisitCheckinBody {
+  arrivalVerificationType: ProviderVisitCheckinVerificationType;
+  notes?: string;
+  visitDate?: string; // YYYY-MM-DD
+  metadataJson?: object;
+}
+
 export interface ProviderAttachmentItem {
   id: number;
   name?: string;

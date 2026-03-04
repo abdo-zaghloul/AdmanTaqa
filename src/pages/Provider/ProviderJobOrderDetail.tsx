@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -53,6 +60,8 @@ export default function ProviderJobOrderDetail() {
   const [cancellationReason, setCancellationReason] = useState("");
   const [reportTitle, setReportTitle] = useState("");
   const [reportContent, setReportContent] = useState("");
+  const [checkinModalOpen, setCheckinModalOpen] = useState(false);
+  const [checkinNotes, setCheckinNotes] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
@@ -112,13 +121,22 @@ export default function ProviderJobOrderDetail() {
     );
   };
 
-  const handleCheckin = () => {
+  const handleCheckinSubmit = () => {
     if (!id) return;
     checkinMutation.mutate(
-      { jobOrderId: id },
       {
-        onSuccess: () => toast.success("Visit check-in recorded."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Check-in failed."),
+        jobOrderId: id,
+        body: { notes: checkinNotes.trim() || undefined },
+      },
+      {
+        onSuccess: () => {
+          setCheckinModalOpen(false);
+          setCheckinNotes("");
+          toast.success("Visit check-in recorded.");
+        },
+        onError: (e) => {
+          toast.error(e instanceof Error ? e.message : "Check-in failed.");
+        },
       }
     );
   };
@@ -394,11 +412,44 @@ export default function ProviderJobOrderDetail() {
                   size="sm"
                   variant="outline"
                   className="gap-1"
-                  onClick={handleCheckin}
-                  disabled={checkinMutation.isPending}
+                  onClick={() => setCheckinModalOpen(true)}
                 >
                   <MapPin className="h-3.5 w-3.5" /> Check-in visit
                 </Button>
+                <Dialog
+                  open={checkinModalOpen}
+                  onOpenChange={(open) => {
+                    setCheckinModalOpen(open);
+                    if (!open) setCheckinNotes("");
+                  }}
+                >
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Check-in visit</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-2">
+                      <Label htmlFor="checkin-notes" className="text-sm">
+                        Notes (optional)
+                      </Label>
+                      <Textarea
+                        id="checkin-notes"
+                        value={checkinNotes}
+                        onChange={(e) => setCheckinNotes(e.target.value)}
+                        placeholder="Add a message..."
+                        className="min-h-[80px] resize-y"
+                      />
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        size="sm"
+                        onClick={handleCheckinSubmit}
+                        disabled={checkinMutation.isPending}
+                      >
+                        {checkinMutation.isPending ? "Submitting..." : "Submit"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">

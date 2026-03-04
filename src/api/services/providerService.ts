@@ -10,6 +10,7 @@ import type {
   ProviderRfqsListResponse,
   ProviderJobOrdersListResponse,
   ProviderVisitItem,
+  CreateProviderVisitCheckinBody,
   ProviderAttachmentItem,
   ProviderReportItem,
   CreateProviderReportBody,
@@ -148,14 +149,20 @@ export async function fetchProviderJobOrderVisits(
   return Array.isArray(data) ? data : [];
 }
 
-/** POST /api/provider/job-orders/:id/visits/checkin — register visit (check-in) */
+/** POST /api/provider/job-orders/:id/visits/checkin — register visit (check-in). Backend requires arrivalVerificationType (use MANUAL for web). */
 export async function createProviderJobOrderVisitCheckin(
   jobOrderId: number | string,
-  body?: { notes?: string }
+  body?: { arrivalVerificationType?: CreateProviderVisitCheckinBody["arrivalVerificationType"]; notes?: string; visitDate?: string; metadataJson?: object }
 ): Promise<unknown> {
+  const payload: CreateProviderVisitCheckinBody = {
+    arrivalVerificationType: body?.arrivalVerificationType ?? "MANUAL",
+    ...(body?.notes != null && body.notes !== "" && { notes: body.notes }),
+    ...(body?.visitDate && { visitDate: body.visitDate }),
+    ...(body?.metadataJson && { metadataJson: body.metadataJson }),
+  };
   const response = await axiosInstance.post(
     `provider/job-orders/${jobOrderId}/visits/checkin`,
-    body ?? {}
+    payload
   );
   return response.data;
 }
@@ -172,19 +179,22 @@ export async function fetchProviderJobOrderAttachments(
   return Array.isArray(data) ? data : [];
 }
 
-/** POST /api/provider/job-orders/:id/attachments — upload attachment */
+/** POST /api/provider/job-orders/:id/attachments/upload — multipart upload (file); backend uploads to storage then adds attachment. */
 export async function uploadProviderJobOrderAttachment(
   jobOrderId: number | string,
-  file: File
+  file: File,
+  description?: string
 ): Promise<{ id?: number; url?: string }> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await axiosInstance.post<{ success?: boolean; data?: { id?: number; url?: string } }>(
-    `provider/job-orders/${jobOrderId}/attachments`,
+  if (description != null && description !== "") formData.append("description", description);
+  const response = await axiosInstance.post<{ success?: boolean; data?: { jobOrder?: unknown; fileUrl?: string; publicId?: string } }>(
+    `provider/job-orders/${jobOrderId}/attachments/upload`,
     formData,
     { headers: { "Content-Type": "multipart/form-data" } }
   );
-  return response.data?.data ?? {};
+  const data = response.data?.data;
+  return data?.fileUrl ? { url: data.fileUrl } : {};
 }
 
 /** POST /api/provider/job-orders/:id/submit-completion — send job order for station review (e.g. UNDER_REVIEW) */
