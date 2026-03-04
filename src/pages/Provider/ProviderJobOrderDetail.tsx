@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
 import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
@@ -271,8 +271,14 @@ export default function ProviderJobOrderDetail() {
           {order.description && <p className="text-sm text-muted-foreground">{order.description}</p>}
 
           {awaitingPayment && !paymentRejected && !isCancelled && (
-            <div className="pt-4 border-t space-y-3">
-              <p className="text-sm font-medium">Confirm payment received</p>
+            <div className="pt-4 border-t space-y-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-3">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <Banknote className="h-4 w-4" /> Payment
+                <Badge variant="secondary" className="text-xs">STATION CONFIRMED SENT</Badge>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Station has confirmed payment sent. Confirm that you received it to activate the order and start work.
+              </p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -310,6 +316,12 @@ export default function ProviderJobOrderDetail() {
 
           {canAssignOrUpdateStatus && (
             <>
+              <div className="pt-4 border-t rounded-lg border bg-muted/20 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirm work</p>
+                <p className="text-xs text-muted-foreground">
+                  Assign operator, create and check into visits, add reports or attachments. When all work is done, submit for station review below.
+                </p>
+              </div>
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Assign operator
@@ -337,12 +349,12 @@ export default function ProviderJobOrderDetail() {
                 </div>
               </div>
               {canSubmitForReview && (
-                <div className="pt-4 border-t space-y-2">
+                <div className="pt-4 border-t space-y-2 rounded-lg border bg-muted/20 p-3">
                   <p className="text-sm font-medium flex items-center gap-1">
                     <Send className="h-4 w-4" /> Submit for station review
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Send this job order to the fuel station for approval (status will move to Under review).
+                    When all work is done, submit for station review. Complete at least one visit before submitting. Attach completion evidence or notes if needed.
                   </p>
                   <Button
                     size="sm"
@@ -350,7 +362,7 @@ export default function ProviderJobOrderDetail() {
                     onClick={handleSubmitForReview}
                     disabled={submitCompletionMutation.isPending}
                   >
-                    <Send className="h-3.5 w-3.5" /> Submit for review
+                    <Send className="h-3.5 w-3.5" /> Submit completion
                   </Button>
                 </div>
               )}
