@@ -42,6 +42,9 @@ export default function StationJobOrderDetail() {
   const [rejectReportReason, setRejectReportReason] = useState("");
   const [rejectReportId, setRejectReportId] = useState<number | null>(null);
   const [receiptFileUrl, setReceiptFileUrl] = useState<string>("");
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<string>("");
   const underReview = order?.status === "UNDER_REVIEW";
   const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
@@ -108,6 +111,11 @@ export default function StationJobOrderDetail() {
       e.target.value = "";
       return;
     }
+    if (order?.paymentRecord?.status === "STATION_CONFIRMED_SENT") {
+      toast.info("Payment already confirmed for this job order.");
+      e.target.value = "";
+      return;
+    }
     uploadReceiptMutation.mutate(
       { jobOrderId: id, file },
       {
@@ -115,13 +123,7 @@ export default function StationJobOrderDetail() {
           const url = (data as { receiptFileUrl?: string })?.receiptFileUrl;
           if (url) {
             setReceiptFileUrl(url);
-            confirmSentMutation.mutate(
-              { jobOrderId: id, body: { receiptFileUrl: url } },
-              {
-                onSuccess: () => toast.success("Receipt uploaded and payment confirmed."),
-                onError: (err) => toast.error(getApiErrorMessage(err, "Confirm failed.")),
-              }
-            );
+            toast.success("Receipt uploaded. Click «Confirm payment sent» to confirm.");
           } else {
             toast.success("Receipt uploaded.");
           }
@@ -130,6 +132,37 @@ export default function StationJobOrderDetail() {
       }
     );
     e.target.value = "";
+  };
+
+  const handleConfirmPaymentSent = () => {
+    if (!id) return;
+    if (order?.paymentRecord?.status === "STATION_CONFIRMED_SENT") {
+      toast.info("Payment already confirmed for this job order.");
+      return;
+    }
+    const hasReceipt = !!(receiptFileUrl || order.paymentRecord?.receiptFileUrl);
+    const hasRef = referenceNumber.trim().length > 0;
+    if (!hasReceipt && !hasRef) {
+      toast.error("Upload a receipt or enter a reference number before confirming.");
+      return;
+    }
+    const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
+    const url = receiptFileUrl || order.paymentRecord?.receiptFileUrl;
+    if (url) body.receiptFileUrl = url;
+    if (referenceNumber.trim()) body.referenceNumber = referenceNumber.trim();
+    const amountNum = paymentAmount.trim() ? Number(paymentAmount.trim()) : undefined;
+    if (amountNum != null && !Number.isNaN(amountNum)) body.amount = amountNum;
+    if (paymentMethod) body.method = paymentMethod;
+
+    confirmSentMutation.mutate(
+      { jobOrderId: id, body },
+      {
+        onSuccess: () => {
+          toast.success("Payment sent confirmed. Waiting for provider to confirm receipt.");
+        },
+        onError: (err) => toast.error(getApiErrorMessage(err, "Confirm failed.")),
+      }
+    );
   };
 
   if (isLoading || !id) {
@@ -213,19 +246,25 @@ export default function StationJobOrderDetail() {
       {paymentRejected && (
         <Card className="border-destructive/50 bg-destructive/5">
           <CardHeader>
-            <CardTitle className="text-destructive">المزود رفض استلام الدفع</CardTitle>
+            <CardTitle className="text-destructive">المزود رفض استلام الدفع (Payment Rejected)</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              أمر العمل يبقى في انتظار الدفع ولا يُفعّل — لا يصل إلى ACTIVE.
+            </p>
             {order.paymentRecord?.rejectionReason && (
-              <p className="text-sm text-muted-foreground">{order.paymentRecord.rejectionReason}</p>
+              <p className="text-sm text-muted-foreground mt-1">{order.paymentRecord.rejectionReason}</p>
             )}
           </CardHeader>
         </Card>
       )}
 
       {awaitingPayment && stationAlreadyConfirmedSent && (
-        <Card className="border-muted bg-muted/30">
-          <CardContent className="pt-4">
-            <p className="text-sm text-muted-foreground">
-              Payment sent. Waiting for provider to confirm receipt.
+        <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+          <CardContent className="pt-4 space-y-2">
+            <p className="text-sm font-medium text-green-800 dark:text-green-200">
+              تم تأكيد إرسال المبلغ. في انتظار تأكيد المزود.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              المزود يدخل من حسابه → <strong>Provider Job Orders</strong> → يفتح هذا الأمر (أمر العمل #{id}) → يضغط <strong>«Confirm received»</strong>. لو المزود لا يرى الأمر في القائمة، فهو يجب أن يكون مسجّل دخول بحساب منظمة المزود صاحبة العرض المختار.
             </p>
           </CardContent>
         </Card>
@@ -234,31 +273,96 @@ export default function StationJobOrderDetail() {
       {showPaymentSection && (
         <Card>
           <CardHeader>
-            <CardTitle>الدفع</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              ارفع إيصال التحويل لتأكيد إرسال المبلغ. المزود سيتلقى التأكيد ويستطيع بدء أمر العمل.
+            <CardTitle>الدفع (Payment)</CardTitle>
+            <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+              تأكيد الدفع من هنا — المحطة تؤكد أنها أرسلت المبلغ للمزود.
             </p>
-            <input
-              type="file"
-              accept=".pdf,image/*"
-              ref={fileInputRef}
-              onChange={handleUploadReceipt}
-              className="hidden"
-            />
-            <Button
-              type="button"
-              size="sm"
-              className="gap-1"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadReceiptMutation.isPending || confirmSentMutation.isPending}
-            >
-              <Upload className="h-4 w-4" /> رفع إيصال وتأكيد الدفع
-            </Button>
-            {receiptFileUrl && (
-              <span className="text-sm text-muted-foreground">تم رفع الإيصال</span>
-            )}
+            <p className="text-sm text-muted-foreground">
+              ١) ارفع إيصال التحويل. ٢) (اختياري) أدخل رقم التحويل / المبلغ / الطريقة. ٣) اضغط «تأكيد إرسال المبلغ».
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm">1. رفع إيصال التحويل (Upload receipt)</Label>
+              <input
+                type="file"
+                accept=".pdf,image/*"
+                ref={fileInputRef}
+                onChange={handleUploadReceipt}
+                className="hidden"
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadReceiptMutation.isPending}
+                >
+                  <Upload className="h-4 w-4" /> رفع إيصال
+                </Button>
+                {(receiptFileUrl || order.paymentRecord?.receiptFileUrl) && (
+                  <a
+                    href={(receiptFileUrl || order.paymentRecord?.receiptFileUrl) ?? "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-primary underline"
+                  >
+                    View receipt
+                  </a>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="ref-number" className="text-sm">رقم التحويل (optional)</Label>
+                <Input
+                  id="ref-number"
+                  value={referenceNumber}
+                  onChange={(e) => setReferenceNumber(e.target.value)}
+                  placeholder="e.g. TRF-2024-001"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="payment-amount" className="text-sm">المبلغ (optional)</Label>
+                <Input
+                  id="payment-amount"
+                  type="number"
+                  min={0}
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  placeholder="Amount"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-sm">طريقة الدفع (optional)</Label>
+                <Select value={paymentMethod || "_"} onValueChange={(v) => setPaymentMethod(v === "_" ? "" : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="_">—</SelectItem>
+                    <SelectItem value="BANK_TRANSFER">Bank transfer</SelectItem>
+                    <SelectItem value="CASH">Cash</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Button
+                size="sm"
+                className="gap-1"
+                onClick={handleConfirmPaymentSent}
+                disabled={
+                  confirmSentMutation.isPending ||
+                  (!(receiptFileUrl || order.paymentRecord?.receiptFileUrl) && !referenceNumber.trim())
+                }
+              >
+                <CheckCircle className="h-4 w-4" /> 2. تأكيد إرسال المبلغ (Confirm payment sent)
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

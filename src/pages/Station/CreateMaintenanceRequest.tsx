@@ -51,11 +51,6 @@ export default function CreateMaintenanceRequest() {
       toast.error("Description is required.");
       return;
     }
-    if (maintenanceMode === "EXTERNAL" && selectedProviderIds.length === 0) {
-      toast.error("Select at least one service provider to send the request to.");
-      return;
-    }
-
     createMutation.mutate(
       {
         branchId: bid!,
@@ -74,7 +69,11 @@ export default function CreateMaintenanceRequest() {
       },
       {
         onSuccess: (data) => {
-          toast.success("Maintenance request created.");
+          if (maintenanceMode === "EXTERNAL" && selectedProviderIds.length === 0 && data?.externalRequest?.id) {
+            toast.success("Request created (SUBMITTED_BY_STATION). Send to providers from the request detail.");
+          } else {
+            toast.success("Maintenance request created.");
+          }
           if (maintenanceMode === "INTERNAL" && data?.internalWorkOrder?.id) {
             navigate(`/internal-work-orders/${data.internalWorkOrder.id}`);
           } else if (maintenanceMode === "EXTERNAL" && data?.externalRequest?.id) {
@@ -157,7 +156,7 @@ export default function CreateMaintenanceRequest() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Execution</Label>
+              <Label>Execution (Internal vs External)</Label>
               <Select
                 value={maintenanceMode}
                 onValueChange={(v) => setMaintenanceMode(v as MaintenanceMode)}
@@ -170,6 +169,11 @@ export default function CreateMaintenanceRequest() {
                   <SelectItem value="EXTERNAL">External (service provider)</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {maintenanceMode === "INTERNAL"
+                  ? "Internal: المحطة تنفذ الطلب (موظفوها). مزود الخدمة لا يرى الطلبات الداخلية."
+                  : "External: ينفذ مزود الخدمة بعد اختيار العرض وتأكيد الدفع (ثنائي الخطوة)."}
+              </p>
             </div>
             {maintenanceMode === "INTERNAL" && (
               <div className="space-y-2">
@@ -184,19 +188,19 @@ export default function CreateMaintenanceRequest() {
             )}
             {maintenanceMode === "EXTERNAL" && (
               <div className="space-y-2 rounded-lg border bg-muted/20 p-4">
-                <Label className="text-base font-semibold">Send to providers (select at least one) *</Label>
+                <Label className="text-base font-semibold">المزودون (اختياري)</Label>
                 <p className="text-sm text-muted-foreground">
-                  Request will be sent to selected providers and appear in their RFQ list. Linked providers only.
+                  اختر مزودين ليرسل لهم الطلب الآن فيصبح الطلب QUOTING_OPEN. إن لم تختر أي مزود، يُنشأ الطلب بحالة SUBMITTED_BY_STATION ويمكنك إرساله للمزودين لاحقاً من صفحة تفاصيل الطلب (Send to providers).
                 </p>
                 {linkedLoading ? (
                   <p className="text-sm text-muted-foreground">Loading providers...</p>
                 ) : linkedProviders.length === 0 ? (
                   <p className="text-sm text-amber-600">
-                    No linked providers. Link providers from the{" "}
+                    لا يوجد مزودون مرتبطين. يمكنك إنشاء الطلب الآن (سيبقى SUBMITTED_BY_STATION) ثم{" "}
                     <Link to="/linked-providers" className="underline font-medium">
-                      Linked Providers
+                      ربط مزودين
                     </Link>{" "}
-                    page first.
+                    وإرسال الطلب من تفاصيل الطلب لاحقاً.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
@@ -219,7 +223,7 @@ export default function CreateMaintenanceRequest() {
                 )}
                 {linkedProviders.length > 0 && selectedProviderIds.length > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {selectedProviderIds.length} provider(s) selected. Request will open for quotes (QUOTING_OPEN).
+                    {selectedProviderIds.length} مزود محدد. الطلب سيُرسل لهم ويصبح QUOTING_OPEN.
                   </p>
                 )}
               </div>
@@ -227,11 +231,7 @@ export default function CreateMaintenanceRequest() {
             <div className="flex gap-2 pt-4">
               <Button
                 type="submit"
-                disabled={
-                  createMutation.isPending ||
-                  (maintenanceMode === "EXTERNAL" &&
-                    (linkedProviders.length === 0 || selectedProviderIds.length === 0))
-                }
+                disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? "Creating..." : "Create request"}
               </Button>

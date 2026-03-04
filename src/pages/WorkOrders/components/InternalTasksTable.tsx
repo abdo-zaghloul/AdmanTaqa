@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import type { InternalTaskItem, InternalTaskStatus } from "@/types/internalTask";
 import InternalTaskStatusBadge from "./InternalTaskStatusBadge";
 import useUpdateInternalTaskStatus from "@/hooks/WorkOrders/useUpdateInternalTaskStatus";
@@ -38,6 +48,8 @@ const STATUS_OPTIONS: InternalTaskStatus[] = [
 
 export default function InternalTasksTable({ items }: Props) {
   const { hasPermission } = useAuth();
+  const [startTask, setStartTask] = useState<InternalTaskItem | null>(null);
+  const [startMessage, setStartMessage] = useState("");
   const updateStatusMutation = useUpdateInternalTaskStatus();
   const reviewMutation = useReviewInternalTask();
   const closeMutation = useCloseInternalTask();
@@ -83,6 +95,26 @@ export default function InternalTasksTable({ items }: Props) {
         onSuccess: () => toast.success("Attachment uploaded."),
         onError: (err) =>
           toast.error(err instanceof Error ? err.message : "Failed to upload attachment."),
+      }
+    );
+  };
+
+  const handleStartSubmit = () => {
+    if (!startTask) return;
+    updateStatusMutation.mutate(
+      {
+        id: startTask.id,
+        body: { status: "IN_PROGRESS", message: startMessage.trim() || undefined },
+        workOrderId: startTask.workOrderId,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Task started (Check-in recorded).");
+          setStartTask(null);
+          setStartMessage("");
+        },
+        onError: (err) =>
+          toast.error(err instanceof Error ? err.message : "Failed to start task."),
       }
     );
   };
@@ -133,6 +165,18 @@ export default function InternalTasksTable({ items }: Props) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-wrap gap-2 justify-end">
+                    {task.status === "ASSIGNED" && canUpdateStatus ? (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setStartTask(task);
+                          setStartMessage("");
+                        }}
+                        disabled={updateStatusMutation.isPending}
+                      >
+                        Start
+                      </Button>
+                    ) : null}
                     {canUpdateStatus ? (
                       <Select
                         value={task.status}
@@ -206,6 +250,50 @@ export default function InternalTasksTable({ items }: Props) {
           )}
         </TableBody>
       </Table>
+      <Dialog
+        open={startTask != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setStartTask(null);
+            setStartMessage("");
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Start / Check-in visit</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="start-message" className="text-sm">
+              Message (optional)
+            </Label>
+            <Textarea
+              id="start-message"
+              value={startMessage}
+              onChange={(e) => setStartMessage(e.target.value)}
+              placeholder="Add a message..."
+              className="min-h-[80px] resize-y"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStartTask(null);
+                setStartMessage("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStartSubmit}
+              disabled={updateStatusMutation.isPending}
+            >
+              {updateStatusMutation.isPending ? "Submitting..." : "Submit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

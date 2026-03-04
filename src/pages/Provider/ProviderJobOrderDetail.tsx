@@ -6,13 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -20,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText, Banknote } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText } from "lucide-react";
 import { toast } from "sonner";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
 import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
@@ -60,8 +53,7 @@ export default function ProviderJobOrderDetail() {
   const [cancellationReason, setCancellationReason] = useState("");
   const [reportTitle, setReportTitle] = useState("");
   const [reportContent, setReportContent] = useState("");
-  const [checkinModalOpen, setCheckinModalOpen] = useState(false);
-  const [checkinNotes, setCheckinNotes] = useState("");
+  const [completionNote, setCompletionNote] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
@@ -121,22 +113,13 @@ export default function ProviderJobOrderDetail() {
     );
   };
 
-  const handleCheckinSubmit = () => {
+  const handleCheckin = () => {
     if (!id) return;
     checkinMutation.mutate(
+      { jobOrderId: id },
       {
-        jobOrderId: id,
-        body: { notes: checkinNotes.trim() || undefined },
-      },
-      {
-        onSuccess: () => {
-          setCheckinModalOpen(false);
-          setCheckinNotes("");
-          toast.success("Visit check-in recorded.");
-        },
-        onError: (e) => {
-          toast.error(e instanceof Error ? e.message : "Check-in failed.");
-        },
+        onSuccess: () => toast.success("Visit check-in recorded."),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Check-in failed."),
       }
     );
   };
@@ -158,10 +141,13 @@ export default function ProviderJobOrderDetail() {
 
   const handleSubmitForReview = () => {
     if (!id) return;
-    submitCompletionMutation.mutate(id, {
-      onSuccess: () => toast.success("Job order submitted for station review."),
-      onError: (e) => toast.error(e instanceof Error ? e.message : "Submit failed."),
-    });
+    submitCompletionMutation.mutate(
+      { jobOrderId: id, body: completionNote ? { completionNote } : undefined },
+      {
+        onSuccess: () => toast.success("Job order submitted for station review."),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit failed."),
+      }
+    );
   };
 
   const handleCreateReport = () => {
@@ -271,14 +257,8 @@ export default function ProviderJobOrderDetail() {
           {order.description && <p className="text-sm text-muted-foreground">{order.description}</p>}
 
           {awaitingPayment && !paymentRejected && !isCancelled && (
-            <div className="pt-4 border-t space-y-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-3">
-              <p className="text-sm font-medium flex items-center gap-2">
-                <Banknote className="h-4 w-4" /> Payment
-                <Badge variant="secondary" className="text-xs">STATION CONFIRMED SENT</Badge>
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Station has confirmed payment sent. Confirm that you received it to activate the order and start work.
-              </p>
+            <div className="pt-4 border-t space-y-3">
+              <p className="text-sm font-medium">Confirm payment received</p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -316,12 +296,6 @@ export default function ProviderJobOrderDetail() {
 
           {canAssignOrUpdateStatus && (
             <>
-              <div className="pt-4 border-t rounded-lg border bg-muted/20 p-3 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Confirm work</p>
-                <p className="text-xs text-muted-foreground">
-                  Assign operator, create and check into visits, add reports or attachments. When all work is done, submit for station review below.
-                </p>
-              </div>
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Assign operator
@@ -349,21 +323,32 @@ export default function ProviderJobOrderDetail() {
                 </div>
               </div>
               {canSubmitForReview && (
-                <div className="pt-4 border-t space-y-2 rounded-lg border bg-muted/20 p-3">
+                <div className="pt-4 border-t space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
                     <Send className="h-4 w-4" /> Submit for station review
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    When all work is done, submit for station review. Complete at least one visit before submitting. Attach completion evidence or notes if needed.
+                    Send this job order to the fuel station for approval (status will move to Under review).
                   </p>
-                  <Button
-                    size="sm"
-                    className="gap-1"
-                    onClick={handleSubmitForReview}
-                    disabled={submitCompletionMutation.isPending}
-                  >
-                    <Send className="h-3.5 w-3.5" /> Submit completion
-                  </Button>
+                  <div className="flex flex-wrap gap-2 items-end">
+                    <div className="space-y-1 min-w-[200px]">
+                      <Label className="text-xs">Completion note (optional)</Label>
+                      <Input
+                        placeholder="ملاحظة إكمال..."
+                        value={completionNote}
+                        onChange={(e) => setCompletionNote(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <Button
+                      size="sm"
+                      className="gap-1"
+                      onClick={handleSubmitForReview}
+                      disabled={submitCompletionMutation.isPending}
+                    >
+                      <Send className="h-3.5 w-3.5" /> Submit for review
+                    </Button>
+                  </div>
                 </div>
               )}
               <div className="pt-4 border-t space-y-2">
@@ -424,44 +409,11 @@ export default function ProviderJobOrderDetail() {
                   size="sm"
                   variant="outline"
                   className="gap-1"
-                  onClick={() => setCheckinModalOpen(true)}
+                  onClick={handleCheckin}
+                  disabled={checkinMutation.isPending}
                 >
                   <MapPin className="h-3.5 w-3.5" /> Check-in visit
                 </Button>
-                <Dialog
-                  open={checkinModalOpen}
-                  onOpenChange={(open) => {
-                    setCheckinModalOpen(open);
-                    if (!open) setCheckinNotes("");
-                  }}
-                >
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Check-in visit</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-2">
-                      <Label htmlFor="checkin-notes" className="text-sm">
-                        Notes (optional)
-                      </Label>
-                      <Textarea
-                        id="checkin-notes"
-                        value={checkinNotes}
-                        onChange={(e) => setCheckinNotes(e.target.value)}
-                        placeholder="Add a message..."
-                        className="min-h-[80px] resize-y"
-                      />
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        size="sm"
-                        onClick={handleCheckinSubmit}
-                        disabled={checkinMutation.isPending}
-                      >
-                        {checkinMutation.isPending ? "Submitting..." : "Submit"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
               </div>
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">

@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import useGetWorkOrderReviewQueue from "@/hooks/WorkOrders/useGetWorkOrderReviewQueue";
 import useGetInternalTaskReviewQueue from "@/hooks/WorkOrders/useGetInternalTaskReviewQueue";
 import WorkOrderStatusBadge from "./components/WorkOrderStatusBadge";
@@ -87,7 +89,14 @@ export default function WorkOrdersReviewQueue() {
                       Task #{task.id} · WorkOrder #{task.workOrderId}
                     </p>
                   </div>
-                  <InternalTaskStatusBadge status={task.status} />
+                  <div className="flex items-center gap-2">
+                    <InternalTaskStatusBadge status={task.status} />
+                    {task.workOrderId != null && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/work-orders/${task.workOrderId}`}>View / Review</Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))
             )}

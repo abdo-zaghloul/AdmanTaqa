@@ -1,50 +1,173 @@
-# Project Status Report — For Manager
+# شرح مسار Work Order من محطة الوقود (Fuel Station) إلى مقدم الخدمة (Service Provider)
 
-**Purpose:** To see what is **fully done and working** and what is **in progress or not yet complete**.  
-**Language:** Plain (no technical jargon).
-
----
-
-## ✅ What Is Done and Working (Ready to Use)
-
-These parts are **complete**: the screen exists, data comes from the real system, and approve/reject are saved.
-
-| Feature | Plain description |
-|--------|--------------------|
-| **Organizations** | View list of all organizations, open details of any one, approve or reject pending requests (reject requires a reason). |
-| **Fuel Stations** | View list of fuel stations only; same approve/reject actions from the details screen. |
-| **Registrations** | View registration requests and their details; approve or reject them. |
-| **Onboarding** | Manage onboarding content (add, edit, delete, with optional image). |
-| **Audit Log** | View log of administrative actions with pagination. |
-| **Branch Requests** | View branch request details and approve or reject (reason required when rejecting). |
-| **Quotations / Service Categories / Service Offering** | View quotations, service categories, and service offerings according to assigned permissions. |
-| **Access control** | Users only see menus and pages they are allowed; attempting an unauthorized page shows “Access Denied”. |
+هذا الملف يوضح بالتفصيل كيف يتم إنشاء "أمر عمل" (Work Order / Job Order) عندما تريد محطة وقود أن تستفيد من صيانة خارجية يقدمها مقدم خدمة (Service Provider)، مع توضيح كل خطوة والـ APIs المستخدمة.
 
 ---
 
-## ⏳ In Progress / Not Yet Complete
+## 1. الفرق بين الصيانة الداخلية والخارجية
 
-These parts **have a UI** but either show **static sample data** (not from the system) or are **not fully wired** to the system yet.
+في النظام يوجد نوعان من طلبات الصيانة:
 
-| Feature | Current status |
-|--------|-----------------|
-| **Job Orders** | List and detail screens exist, but **data shown is static sample data** — not yet connected to the Job Orders API. Backend (per old docs) supports list, details, and permissions; frontend does not call it yet. |
-| **Inspections** | List screen and “Create inspection” form exist, but **data is sample only** — creating an inspection only shows a success message and is not saved in the system. |
-| **Branch Requests list for Authority** | Request details and approve/reject work; **viewing the list** for Authority may need permission setup confirmed in the current code. |
+| النوع | الوصف | النتيجة في النظام |
+|------|--------|---------------------|
+| **INTERNAL** | صيانة داخلية تنفذها المحطة بنفسها أو موظفوها | يتم إنشاء **Internal Work Order** (أمر عمل داخلي) وربما مهام داخلية (Internal Tasks). لا يشارك فيه مقدم خدمة خارجي. |
+| **EXTERNAL** | صيانة خارجية يطلب فيها استدعاء مقدم خدمة (مثل شركة صيانة) | يتم إنشاء **External Request** (طلب خارجي)، ثم بعد اختيار عرض السعر يتم إنشاء **External Job Order** (أمر العمل بين المحطة ومقدم الخدمة). |
 
----
-
-## Quick Summary
-
-- **Done and in use:** Organizations, Fuel Stations, Registrations, Onboarding, Audit Log, Branch Requests (details + approve/reject), Quotations, Service Categories, Service Offering, and access control.
-- **UI ready but not fully connected:** Job Orders (sample data), Inspections (sample data, no real save).
+**الموضوع الذي يهمك هنا هو مسار EXTERNAL فقط** — أي عندما تريد المحطة أن تعمل "work order" مع مقدم الخدمة.
 
 ---
 
-## References for Developers (Optional)
+## 2. نظرة عامة على المسار الكامل
 
-- **Job Orders (technical):** `old doc/frontend-job-orders-guide-ar.md` — flow, permissions, frontend–backend mapping.
-- **Work Orders (technical):** `old doc/frontend-work-orders-guide-ar.md` — internal maintenance orders (Fuel Station, not Authority).
-- **Authority and backend mapping:** `doc/authority-frontend-and-backend-mapping-ar.md`.
+المسار من البداية للنهاية كالتالي:
 
-This summary is a quick reference for the manager to see **what is done** and **what was in progress or not yet complete**.
+1. **محطة الوقود** تنشئ طلب صيانة خارجي (External Request).
+2. (اختياري) المحطة ترسل الطلب لمقدمين محددين أو وفق قواعد (محافظة، فئة خدمة، إلخ) — يسمى إرسال RFQ.
+3. **مقدمو الخدمة** يشاهدون الطلبات المرسلة لهم ويقدمون عروض أسعار (Quotes).
+4. **محطة الوقود** تختار عرض سعر واحد — **في هذه اللحظة يتم إنشاء Job Order (أمر العمل)** وربطه بالمحطة ومقدم الخدمة.
+5. المحطة ترفع إيصال الدفع وتؤكد "تم الإرسال"، ومقدم الخدمة يؤكد "تم الاستلام" — بعدها يصبح Job Order **ACTIVE** (قابل للتنفيذ).
+6. مقدم الخدمة ينفذ العمل (زيارات، تعيين فنيين، تقارير)، والمحطة تراجع وتوافق أو ترفض عند الانتهاء.
+
+---
+
+## 3. الخطوات بالتفصيل مع الـ APIs
+
+### الخطوة 1: إنشاء طلب الصيانة الخارجي (من محطة الوقود)
+
+- **الـ API:**  
+  `POST /api/station/maintenance-requests`
+
+- **المحتوى (Body) مثال:**  
+  - `maintenanceMode`: يجب أن تكون **`"EXTERNAL"`** لطلب صيانة خارجية.  
+  - `branchId`: رقم الفرع التابع للمحطة.  
+  - `title`: عنوان الطلب.  
+  - `description`: وصف (اختياري).  
+  - `assetId`: رقم الأصل/الجهاز (اختياري).  
+  - يمكن أيضاً إرسال الطلب مباشرة لمزودين أو وفق قواعد (مثل محافظة أو فئة خدمة) حسب ما يدعمه الـ Body.
+
+- **ما يحدث في النظام:**  
+  - يتم إنشاء سجل **ExternalRequest** بحالة **`SUBMITTED_BY_STATION`**.  
+  - إذا تم إرسال الطلب لمزودين في نفس الطلب، يتم إنشاء روابط **RequestProvider** وقد تتغير الحالة إلى **`SENT_TO_PROVIDERS`** ثم **`QUOTING_OPEN`** حتى يستطيع مقدمو الخدمة تقديم عروض الأسعار.
+
+---
+
+### الخطوة 2: إرسال الطلب لمقدمي الخدمة (إن لم يتم في الخطوة 1)
+
+- **الـ API:**  
+  `POST /api/station/requests/:id/send-to-providers`
+
+- **الاستخدام:**  
+  عندما يكون الطلب موجوداً لكن لم يُرسل بعد لمزودين، أو تريد إرساله لمزودين إضافيين.  
+  المعامل `:id` هو رقم الـ External Request.
+
+- **ما يحدث في النظام:**  
+  - يتم ربط الطلب بمقدمي الخدمة (سجلات **RequestProvider**).  
+  - الحالة تتحول إلى **`SENT_TO_PROVIDERS`** ثم **`QUOTING_OPEN`** ليكون الطلب مفتوحاً لعروض الأسعار.
+
+---
+
+### الخطوة 3: مقدم الخدمة يقدم عرض سعر (Quote)
+
+- **من طرف:** تطبيق أو واجهة **مقدم الخدمة (Service Provider)**.
+
+- **ما يحدث:**  
+  مقدم الخدمة يرى الطلبات المرسلة له (RFQ) ويقدم عرض سعر.  
+  يتم إنشاء سجل **ProviderQuote** مرتبط بنفس الـ **ExternalRequest**، وحالته تكون مثل **`SUBMITTED`** أو **`REVISED`**.
+
+- الـ APIs الخاصة بالمزود موجودة تحت مسارات الـ Provider (مثل تقديم/تعديل/سحب عرض السعر).
+
+---
+
+### الخطوة 4: محطة الوقود تختار عرض سعر واحد — هنا يُنشأ الـ Job Order
+
+- **الـ API:**  
+  `POST /api/station/requests/:id/select-quote`
+
+- **المحتوى (Body):**  
+  `{ "providerQuoteId": <رقم عرض السعر الذي اختارته المحطة> }`  
+  المعامل `:id` هو رقم الـ External Request.
+
+- **ما يحدث في النظام (وهذا هو جوهر إنشاء أمر العمل):**  
+  1. يتم التحقق من أن الطلب يخص محطة الوقود وأن عرض السعر يخص هذا الطلب.  
+  2. حالة **ExternalRequest** تتحول إلى **`AWAITING_PAYMENT`** (في انتظار الدفع).  
+  3. يتم إنشاء **ExternalJobOrder** (أمر العمل بين المحطة ومقدم الخدمة) بحالة **`AWAITING_PAYMENT`**.  
+  4. يتم إنشاء **PaymentRecord** (سجل الدفع) بحالة **`NOT_STARTED`** لتتبع خطوتي التأكيد (المحطة أرسلت — المزود استلم).
+
+**باختصار:** في لحظة استدعاء **select-quote** يتم إنشاء الـ **Job Order (Work Order)** وربطه بالمحطة ومقدم الخدمة. بعدها يأتي دور الدفع والتنفيذ.
+
+---
+
+### الخطوة 5: تأكيد الدفع (من المحطة ثم من مقدم الخدمة)
+
+- **من محطة الوقود:**  
+  - رفع إيصال التحويل:  
+    `POST /api/station/job-orders/:id/upload-receipt`  
+    (مع إرفاق الملف في الحقل المطلوب).  
+  - تأكيد أن المحطة أرسلت المبلغ:  
+    `POST /api/station/job-orders/:id/confirm-sent`
+
+- **من مقدم الخدمة:**  
+  - تأكيد استلام الدفع:  
+    `POST /api/job-orders/:id/payment/confirm-received`
+
+- **ما يحدث في النظام:**  
+  عندما تؤكد المحطة "تم الإرسال" ويؤكد المزود "تم الاستلام"، يتم تحديث **PaymentRecord** وتتحول حالة **ExternalJobOrder** إلى **`ACTIVE`**. من هذه اللحظة يمكن لمقدم الخدمة البدء في التنفيذ (تعيين فنيين، زيارات، تحديث الحالة، إلخ).
+
+---
+
+### الخطوة 6: التنفيذ والمراجعة (بعد تفعيل الـ Job Order)
+
+- **مقدم الخدمة:**  
+  - يعيّن فنيين (Assignments)، يسجل زيارات (Visits)، يحدّث حالة أمر العمل (مثلاً **IN_PROGRESS**، **WAITING_PARTS**، **UNDER_REVIEW**).  
+  - يرفع تقارير صيانة إن وجدت.
+
+- **محطة الوقود:**  
+  - تعرض أوامر العمل:  
+    `GET /api/station/job-orders`  
+    (يمكن التصفية بحالة مثل **UNDER_REVIEW**).  
+  - بعد انتهاء المزود من العمل وتقديم التقرير، المحطة إما:  
+    - توافق على إغلاق الأمر:  
+      `POST /api/station/job-orders/:id/approve`  
+    - أو ترفض وتطلب إعادة عمل:  
+      `POST /api/station/job-orders/:id/reject`  
+      (مع إمكانية إدخال سبب الرفض).
+
+---
+
+## 4. جدول ملخص الـ APIs من طرف محطة الوقود
+
+| الترتيب | الهدف | الـ API | ملاحظة |
+|---------|--------|---------|--------|
+| 1 | إنشاء طلب صيانة خارجي | `POST /api/station/maintenance-requests` | Body: `maintenanceMode: "EXTERNAL"` + branchId, title, إلخ. |
+| 2 | إرسال الطلب لمزودين (إن لزم) | `POST /api/station/requests/:id/send-to-providers` | :id = رقم External Request. |
+| 3 | — | (مقدم الخدمة يقدم عرض سعر من واجهته) | — |
+| 4 | اختيار عرض السعر وإنشاء Job Order | `POST /api/station/requests/:id/select-quote` | Body: `{ "providerQuoteId": <id> }`. **هنا يُنشأ أمر العمل.** |
+| 5 أ | رفع إيصال الدفع | `POST /api/station/job-orders/:id/upload-receipt` | مع إرفاق ملف الإيصال. |
+| 5 ب | تأكيد إرسال الدفع | `POST /api/station/job-orders/:id/confirm-sent` | بعدها المزود يؤكد الاستلام لتفعيل الأمر. |
+| 6 | عرض أوامر العمل | `GET /api/station/job-orders` | يمكن التصفية بحالة (مثلاً UNDER_REVIEW). |
+| 7 | الموافقة على إغلاق الأمر | `POST /api/station/job-orders/:id/approve` | بعد انتهاء المزود من العمل. |
+| 7 بديل | رفض وطلب إعادة عمل | `POST /api/station/job-orders/:id/reject` | مع إمكانية إدخال سبب. |
+
+---
+
+## 5. الحالات المهمة (للمرجع)
+
+- **External Request:**  
+  SUBMITTED_BY_STATION → SENT_TO_PROVIDERS → QUOTING_OPEN → QUOTE_SELECTED → AWAITING_PAYMENT → ACTIVE → COMPLETED (أو CANCELLED).
+
+- **External Job Order:**  
+  AWAITING_PAYMENT → ACTIVE → IN_PROGRESS / WAITING_PARTS / … → UNDER_REVIEW → CLOSED (أو REWORK_REQUIRED).
+
+- **Payment Record:**  
+  NOT_STARTED → STATION_CONFIRMED_SENT → PROVIDER_CONFIRMED_RECEIVED (وعندها يصبح الـ Job Order ACTIVE).
+
+---
+
+## 6. خلاصة في جملة واحدة
+
+**لعمل Work Order من Fuel Station إلى Service Provider:**  
+المحطة تنشئ طلب صيانة **EXTERNAL**، ترسله للمزودين، المزود يقدم عرض سعر، ثم المحطة تختار عرضاً واحداً عبر **select-quote** — في هذه اللحظة يُنشأ **External Job Order** (أمر العمل). بعد تأكيد الدفع من الطرفين يصبح الأمر **ACTIVE** ويقدر مقدم الخدمة يبدأ التنفيذ.
+
+---
+
+*تم إعداد هذا الشرح بناءً على هيكل الـ APIs والـ services في المشروع (مثل station.routes.js، stationMaintenanceRequest.service.js، externalRequest.service.js، وغيرها).*

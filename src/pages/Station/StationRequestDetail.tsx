@@ -10,22 +10,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
+import { ChevronLeft, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload, Send, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
 import useSelectQuote from "@/hooks/Station/useSelectQuote";
 import useRejectQuote from "@/hooks/Station/useRejectQuote";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
 import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
+import useLinkedProviders from "@/hooks/Station/useLinkedProviders";
+import useSendToProviders from "@/hooks/Station/useSendToProviders";
 import { getApiErrorMessage } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS } from "@/types/station";
 
 const MAX_RECEIPT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 export default function StationRequestDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: request, isLoading } = useStationRequestById(id ?? null);
+  const { data: request, isLoading, refetch: refetchRequest } = useStationRequestById(id ?? null);
   const selectQuoteMutation = useSelectQuote();
   const rejectQuoteMutation = useRejectQuote();
   const confirmSentMutation = useConfirmPaymentSent();
@@ -36,8 +40,43 @@ export default function StationRequestDetail() {
   const [rejectQuoteId, setRejectQuoteId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [receiptFileUrl, setReceiptFileUrl] = useState<string>("");
+  const [paymentReferenceNumber, setPaymentReferenceNumber] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [sendToProvidersIds, setSendToProvidersIds] = useState<number[]>([]);
+
+  const { data: linkedProviders = [], isLoading: linkedLoading } = useLinkedProviders();
+  const sendToProvidersMutation = useSendToProviders();
 
   const isCancelled = request?.status === "CANCELLED";
+  const canSendToProviders =
+    id &&
+    request &&
+    !isCancelled &&
+    (STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS as readonly string[]).includes(request.status ?? "");
+
+  const toggleSendToProvider = (orgId: number) => {
+    setSendToProvidersIds((prev) =>
+      prev.includes(orgId) ? prev.filter((x) => x !== orgId) : [...prev, orgId]
+    );
+  };
+
+  const handleSendToProviders = () => {
+    if (!id || sendToProvidersIds.length === 0) {
+      toast.error("Select at least one provider.");
+      return;
+    }
+    sendToProvidersMutation.mutate(
+      { requestId: id, providerOrganizationIds: sendToProvidersIds },
+      {
+        onSuccess: () => {
+          toast.success("Request sent to providers.");
+          setSendToProvidersIds([]);
+        },
+        onError: (e) => toast.error(getApiErrorMessage(e, "Send to providers failed.")),
+      }
+    );
+  };
   const quotes = request?.quotes ?? [];
   const selectableQuotes = quotes.filter(
     (q) => q.status !== "REJECTED" && q.status !== "WITHDRAWN"
@@ -70,16 +109,37 @@ export default function StationRequestDetail() {
     );
   };
 
-  const handleConfirmSentWithReceipt = (receiptFileUrlValue: string) => {
+  const handleConfirmPaymentSent = () => {
     if (!awaitingPaymentJob?.id) return;
+    if (awaitingPaymentJob.paymentRecord?.status === "STATION_CONFIRMED_SENT") {
+      toast.info("Payment already confirmed for this job order.");
+      return;
+    }
+    const hasReceipt = !!(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl);
+    const hasRef = paymentReferenceNumber.trim().length > 0;
+    if (!hasReceipt && !hasRef) {
+      toast.error("Upload a receipt or enter a reference number before confirming.");
+      return;
+    }
+    const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
+    const url = receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl;
+    if (url) body.receiptFileUrl = url;
+    if (paymentReferenceNumber.trim()) body.referenceNumber = paymentReferenceNumber.trim();
+    const amountNum = paymentAmount.trim() ? Number(paymentAmount.trim()) : undefined;
+    if (amountNum != null && !Number.isNaN(amountNum)) body.amount = amountNum;
+    if (paymentMethod) body.method = paymentMethod;
+
     confirmSentMutation.mutate(
+      { jobOrderId: awaitingPaymentJob.id, body },
       {
-        jobOrderId: awaitingPaymentJob.id,
-        body: { receiptFileUrl: receiptFileUrlValue },
-      },
-      {
-        onSuccess: () => toast.success("تم رفع الإيصال وتأكيد الدفع."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "فشل التأكيد."),
+        onSuccess: () => {
+          refetchRequest();
+          toast.success(
+            "تم تأكيد إرسال المبلغ. المزود يرى أمر العمل في قائمة Provider Job Orders (من حسابه كمزود) ويضغط «تأكيد استلام الدفع» لتفعيل الأمر والبدء.",
+            { duration: 8000 }
+          );
+        },
+        onError: (e) => toast.error(getApiErrorMessage(e, "فشل التأكيد.")),
       }
     );
   };
@@ -92,13 +152,18 @@ export default function StationRequestDetail() {
       e.target.value = "";
       return;
     }
+    if (awaitingPaymentJob.paymentRecord?.status === "STATION_CONFIRMED_SENT") {
+      toast.info("Payment already confirmed for this job order.");
+      e.target.value = "";
+      return;
+    }
     uploadReceiptMutation.mutate(
       { jobOrderId: awaitingPaymentJob.id, file },
       {
         onSuccess: (data) => {
           if (data?.receiptFileUrl) {
             setReceiptFileUrl(data.receiptFileUrl);
-            handleConfirmSentWithReceipt(data.receiptFileUrl);
+            toast.success("تم رفع الإيصال. اضغط «تأكيد إرسال المبلغ» للتأكيد.");
           } else {
             toast.success("Receipt uploaded.");
           }
@@ -151,7 +216,8 @@ export default function StationRequestDetail() {
       {isCancelled && (
         <Card className="border-amber-200 bg-amber-50/50">
           <CardContent className="pt-4">
-            <p className="font-medium text-amber-800">Request cancelled.</p>
+            <p className="font-medium text-amber-800">Request cancelled (الطلب ملغى)</p>
+            <p className="text-xs text-muted-foreground">الإلغاء نهائي — لا انتقالات تالية.</p>
             {request.cancellationReason && (
               <p className="text-sm text-amber-700 mt-1">{request.cancellationReason}</p>
             )}
@@ -164,7 +230,10 @@ export default function StationRequestDetail() {
           <CardContent className="pt-4 flex items-start gap-2">
             <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
             <div>
-              <p className="font-medium text-destructive">Provider rejected payment.</p>
+              <p className="font-medium text-destructive">المزود رفض استلام الدفع (Payment Rejected)</p>
+              <p className="text-sm text-muted-foreground">
+                أمر العمل يبقى في انتظار الدفع ولا يُفعّل — لا يصل إلى ACTIVE.
+              </p>
               {rejectionReason && (
                 <p className="text-sm text-muted-foreground mt-1">{rejectionReason}</p>
               )}
@@ -217,6 +286,56 @@ export default function StationRequestDetail() {
                   </span>
                 )}
               </div>
+            </div>
+          )}
+
+          {canSendToProviders && (
+            <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <Send className="h-4 w-4" /> Send to providers
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Request was not sent to providers yet (or you can send to more). Select providers to send this request; they will see it in their RFQ list.
+              </p>
+              {linkedLoading ? (
+                <p className="text-sm text-muted-foreground">Loading providers...</p>
+              ) : linkedProviders.length === 0 ? (
+                <p className="text-sm text-amber-600">
+                  No linked providers.{" "}
+                  <Link to="/linked-providers" className="underline font-medium">
+                    Link providers
+                  </Link>{" "}
+                  first.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                    {linkedProviders.map((p) => (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-3 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-muted/50"
+                      >
+                        <Checkbox
+                          checked={sendToProvidersIds.includes(p.organizationId)}
+                          onCheckedChange={() => toggleSendToProvider(p.organizationId)}
+                        />
+                        <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="font-medium">
+                          {p.organizationName ?? `Provider #${p.organizationId}`}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <Button
+                    size="sm"
+                    className="gap-1"
+                    onClick={handleSendToProviders}
+                    disabled={sendToProvidersMutation.isPending || sendToProvidersIds.length === 0}
+                  >
+                    <Send className="h-3.5 w-3.5" /> Send to selected providers
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
@@ -298,11 +417,11 @@ export default function StationRequestDetail() {
                   );
                 })}
               </ul>
-              {(quotes.some((q) => q.status === "REJECTED" || q.status === "WITHDRAWN") && (
+              {quotes.some((q) => q.status === "REJECTED" || q.status === "WITHDRAWN") && (
                 <p className="text-xs text-muted-foreground">
-                  العروض الملغاة أو المرفوضة لا يمكن اختيارها.
+                  عرض مرفوض أو منسحب — الطلب قد يستمر مع مزود أو عرض آخر. العروض الملغاة أو المرفوضة لا يمكن اختيارها.
                 </p>
-              ))}
+              )}
             </div>
           )}
 
@@ -336,32 +455,111 @@ export default function StationRequestDetail() {
               )}
 
               {awaitingPaymentJob && !paymentRejected && stationAlreadyConfirmedSent && (
-                <div className="pt-2 border-t">
-                  <p className="text-sm text-muted-foreground">
-                    Payment sent. Waiting for provider to confirm receipt.
+                <div className="pt-2 border-t space-y-2 rounded-lg border bg-green-50/50 dark:bg-green-950/20 p-3">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    تم تأكيد إرسال المبلغ. في انتظار تأكيد المزود.
                   </p>
+                  <p className="text-xs text-muted-foreground">
+                    الخطوة التالية: المزود (صاحب العرض المختار) يدخل من <strong>حسابه كمزود خدمة</strong> → يفتح القائمة <strong>Provider Job Orders</strong> → يفتح أمر العمل → يضغط <strong>«تأكيد استلام الدفع» (Confirm received)</strong> لتفعيل الأمر والبدء في العمل. لو المزود لا يرى الأمر، تأكد أنه مسجّل دخول بحساب منظمة المزود التي قُبل عرضها.
+                  </p>
+                  {(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl) && (
+                    <a
+                      href={(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl) ?? "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm text-primary underline"
+                    >
+                      View bank transfer receipt
+                    </a>
+                  )}
                 </div>
               )}
               {awaitingPaymentJob && !paymentRejected && !stationAlreadyConfirmedSent && (
-                <div className="pt-2 border-t space-y-2">
-                  <p className="text-sm font-medium">الدفع</p>
-                  <p className="text-xs text-muted-foreground">
-                    ارفع إيصال التحويل لتأكيد إرسال المبلغ. المزود سيتلقى التأكيد ويستطيع بدء أمر العمل.
+                <div className="pt-2 border-t space-y-3">
+                  <p className="text-sm font-medium">الدفع (Payment)</p>
+                  <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    تأكيد الدفع من هنا — المحطة تؤكد أنها أرسلت المبلغ للمزود.
                   </p>
-                  <input
-                    ref={receiptFileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={handleReceiptFileChange}
-                  />
+                  <p className="text-xs text-muted-foreground">
+                    ١) ارفع إيصال التحويل. ٢) (اختياري) رقم التحويل / المبلغ / الطريقة. ٣) اضغط «تأكيد إرسال المبلغ».
+                  </p>
+                  <div className="space-y-2">
+                    <Label className="text-xs">1. رفع إيصال</Label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        ref={receiptFileInputRef}
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        onChange={handleReceiptFileChange}
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1"
+                        onClick={() => receiptFileInputRef.current?.click()}
+                        disabled={uploadReceiptMutation.isPending}
+                      >
+                        <Upload className="h-4 w-4" /> رفع إيصال
+                      </Button>
+                      {(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl) && (
+                        <a
+                          href={(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl) ?? "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-primary underline"
+                        >
+                          View receipt
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">رقم التحويل (optional)</Label>
+                      <Input
+                        value={paymentReferenceNumber}
+                        onChange={(e) => setPaymentReferenceNumber(e.target.value)}
+                        placeholder="e.g. TRF-2024-001"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">المبلغ (optional)</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={paymentAmount}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                        placeholder="Amount"
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">طريقة الدفع (optional)</Label>
+                      <Select value={paymentMethod || "_"} onValueChange={(v) => setPaymentMethod(v === "_" ? "" : v)}>
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_">—</SelectItem>
+                          <SelectItem value="BANK_TRANSFER">Bank transfer</SelectItem>
+                          <SelectItem value="CASH">Cash</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   <Button
                     size="sm"
                     className="gap-1"
-                    onClick={() => receiptFileInputRef.current?.click()}
-                    disabled={uploadReceiptMutation.isPending || confirmSentMutation.isPending}
+                    onClick={handleConfirmPaymentSent}
+                    disabled={
+                      confirmSentMutation.isPending ||
+                      (!(receiptFileUrl || awaitingPaymentJob.paymentRecord?.receiptFileUrl) && !paymentReferenceNumber.trim())
+                    }
                   >
-                    <Upload className="h-4 w-4" /> رفع إيصال وتأكيد الدفع
+                    <CheckCircle className="h-4 w-4" /> 2. تأكيد إرسال المبلغ
                   </Button>
                 </div>
               )}

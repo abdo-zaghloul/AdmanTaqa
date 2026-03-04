@@ -44,29 +44,24 @@ export default function WorkOrders() {
       </div>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md p-4 space-y-4">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-          <div className="flex flex-wrap gap-3">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Status</p>
-              <Select
-                value={status}
-                onValueChange={(value: WorkOrderStatus | "all") => {
-                  setStatus(value);
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2 border-b pb-2">
+            <span className="text-xs text-muted-foreground mr-2">Status:</span>
+            {(["all", "PENDING", "IN_PROGRESS", "UNDER_REVIEW", "CLOSED"] as const).map((s) => (
+              <Button
+                key={s}
+                variant={status === s ? "default" : "ghost"}
+                size="sm"
+                onClick={() => {
+                  setStatus(s);
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="PENDING">PENDING</SelectItem>
-                  <SelectItem value="IN_PROGRESS">IN PROGRESS</SelectItem>
-                  <SelectItem value="UNDER_REVIEW">UNDER REVIEW</SelectItem>
-                  <SelectItem value="CLOSED">CLOSED</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {s === "all" ? "All" : s.replace("_", " ")}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
             <div>
               <p className="text-xs text-muted-foreground mb-1">Priority</p>
               <Select
@@ -87,10 +82,10 @@ export default function WorkOrders() {
                 </SelectContent>
               </Select>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Total: {data?.total ?? 0} | Page: {data?.page ?? page}
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Total: {data?.total ?? 0} | Page: {data?.page ?? page}
-          </p>
         </div>
 
         {isLoading ? (

@@ -260,22 +260,36 @@ export async function fetchStationJobOrderById(
   return response.data?.data ?? null;
 }
 
-/** POST /api/station/job-orders/:id/approve — approve close */
-export async function approveStationJobOrder(jobOrderId: number | string): Promise<unknown> {
-  const response = await axiosInstance.post(`station/job-orders/${jobOrderId}/approve`);
+/** Doc (8.5): POST /api/station/job-orders/:id/approve — الموافقة على أمر العمل (إغلاق/إكمال). body اختياري: reviewNote */
+export async function approveStationJobOrder(
+  jobOrderId: number | string,
+  body?: { reviewNote?: string }
+): Promise<unknown> {
+  const response = await axiosInstance.post(
+    `station/job-orders/${jobOrderId}/approve`,
+    body ?? {}
+  );
   return response.data;
 }
 
-/** POST /api/station/job-orders/:id/reject — rework */
+/** Doc (8.6): POST /api/station/job-orders/:id/reject — رفض أمر العمل (إعادة عمل). body: rejectionReason، اختياري reviewNote */
 export async function rejectStationJobOrder(
   jobOrderId: number | string,
-  body: { reason?: string }
+  body: { rejectionReason?: string; reason?: string; reviewNote?: string }
 ): Promise<unknown> {
-  const response = await axiosInstance.post(`station/job-orders/${jobOrderId}/reject`, body);
+  const rejectionReason = body.rejectionReason ?? body.reason ?? "";
+  const payload = {
+    rejectionReason,
+    ...(body.reviewNote != null && body.reviewNote !== "" && { reviewNote: body.reviewNote }),
+  };
+  const response = await axiosInstance.post(
+    `station/job-orders/${jobOrderId}/reject`,
+    payload
+  );
   return response.data;
 }
 
-/** GET /api/station/job-orders/:id/reports — maintenance reports */
+/** Doc (8.1): GET /api/station/job-orders/:id/reports — قائمة تقارير أمر العمل */
 export async function fetchStationJobOrderReports(
   jobOrderId: number | string
 ): Promise<import("@/types/station").StationJobOrderReportItem[]> {
@@ -287,17 +301,28 @@ export async function fetchStationJobOrderReports(
   return Array.isArray(data) ? data : [];
 }
 
-/** POST /api/reports/:id/approve — approve report */
+/** Doc (8.2): GET /api/station/reports/:reportId — تفاصيل تقرير */
+export async function fetchStationReportById(
+  reportId: number | string
+): Promise<import("@/types/station").StationJobOrderReportItem | null> {
+  const response = await axiosInstance.get<{
+    success?: boolean;
+    data?: import("@/types/station").StationJobOrderReportItem;
+  }>(`station/reports/${reportId}`);
+  return response.data?.data ?? null;
+}
+
+/** Doc (8.3): POST /api/station/reports/:reportId/approve — الموافقة على تقرير */
 export async function approveReport(reportId: number | string): Promise<unknown> {
-  const response = await axiosInstance.post(`reports/${reportId}/approve`);
+  const response = await axiosInstance.post(`station/reports/${reportId}/approve`);
   return response.data;
 }
 
-/** POST /api/reports/:id/reject — reject report */
+/** Doc (8.4): POST /api/station/reports/:reportId/reject — رفض تقرير */
 export async function rejectReport(
   reportId: number | string,
   body?: { reason?: string }
 ): Promise<unknown> {
-  const response = await axiosInstance.post(`reports/${reportId}/reject`, body ?? {});
+  const response = await axiosInstance.post(`station/reports/${reportId}/reject`, body ?? {});
   return response.data;
 }

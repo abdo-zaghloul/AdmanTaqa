@@ -52,6 +52,8 @@ export interface CreateInternalTaskBody {
 export interface UpdateInternalTaskStatusBody {
   status: InternalTaskStatus;
   note?: string;
+  /** Optional message for Start/Check-in (backend may expect "message") */
+  message?: string;
 }
 
 export interface ReviewInternalTaskBody {

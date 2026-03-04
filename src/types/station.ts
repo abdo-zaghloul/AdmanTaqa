@@ -121,7 +121,7 @@ export interface StationRequestDetail extends StationRequestItem {
 export interface ExternalJobOrderSummary {
   id: number;
   status?: string;
-  paymentRecord?: { status?: string; rejectionReason?: string | null };
+  paymentRecord?: { status?: string; rejectionReason?: string | null; receiptFileUrl?: string | null };
 }
 
 /** ExternalRequest nested in station job order list item */
@@ -156,7 +156,7 @@ export interface StationJobOrderListItem {
   ExternalRequest?: StationJobOrderExternalRequest | null;
   ProviderQuote?: StationJobOrderProviderQuote | null;
   MaintenanceReports?: unknown[];
-  paymentRecord?: { status?: string; rejectionReason?: string | null };
+  paymentRecord?: { status?: string; rejectionReason?: string | null; receiptFileUrl?: string | null };
   /** Legacy */
   serviceRequestId?: number;
   ServiceRequest?: { id: number; formData?: { description?: string; title?: string }; status?: string };

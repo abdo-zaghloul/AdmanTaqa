@@ -1,10 +1,11 @@
 /** Provider (Service Provider) — RFQs, quotes, job orders, confirm received */
 
-/** formData from GET provider/rfqs list item */
+/** formData from GET /requests (RFQ) — doc: title, description, requiredTimeline */
 export interface ProviderRfqFormData {
   title?: string;
   priority?: string;
   description?: string;
+  requiredTimeline?: string;
   attachments?: unknown[];
 }
 
@@ -91,12 +92,16 @@ export interface PaymentRecordSummary {
   id?: number;
   status?: string;
   rejectionReason?: string | null;
+  /** URL of uploaded bank transfer receipt (when API returns it). */
+  receiptFileUrl?: string | null;
 }
 
 export interface ProviderJobOrderDetail extends ProviderJobOrderItem {
   title?: string;
   description?: string | null;
   selectedQuoteId?: number;
+  /** When status is CANCELLED */
+  cancellationReason?: string | null;
 }
 
 export interface ConfirmReceivedBody {
@@ -125,6 +130,18 @@ export interface ProviderVisitItem {
   status?: string;
   notes?: string | null;
   createdAt?: string;
+  /** Visit type when supported by API */
+  type?: "EXECUTION" | "INSPECTION" | "FOLLOW_UP";
+}
+
+/** Body for POST .../job-orders/:id/visits — create visit (visit-first flow). */
+export type ProviderVisitType = "EXECUTION" | "INSPECTION" | "FOLLOW_UP";
+
+export interface CreateProviderVisitBody {
+  type: ProviderVisitType;
+  scheduledAt?: string; // YYYY-MM-DD
+  operatorUserId?: number;
+  notes?: string;
 }
 
 /** Body for POST .../visits/checkin — arrivalVerificationType required by backend */

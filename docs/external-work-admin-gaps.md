@@ -8,7 +8,7 @@
 
 | المرحلة | من | الوظيفة | الحالة في الـ Admin |
 |--------|-----|---------|---------------------|
-| 1 | المحطة | إنشاء طلب EXTERNAL + اختيار مزودين (`providerOrganizationIds`) | ✅ في `CreateMaintenanceRequest`: maintenanceMode EXTERNAL واختيار مزودين مرتبطين (linked providers). الطلب يُنشأ ويُرسل للمزودين عند الإنشاء. |
+| 1 | المحطة | إنشاء طلب EXTERNAL + اختيار مزودين (`providerOrganizationIds`) | ✅ في `CreateMaintenanceRequest`: maintenanceMode EXTERNAL. اختيار المزودين **اختياري** — إن لم تختر أي مزود يُنشأ الطلب بحالة SUBMITTED_BY_STATION ويمكن إرساله لاحقاً من تفاصيل الطلب (Send to providers). إن اخترت مزودين يُرسل الطلب ويصبح QUOTING_OPEN. |
 | 2 | المزود | رؤية RFQs وإرسال عرض أسعار | ✅ `ProviderRfqs` + `ProviderRfqDetail` مع نموذج Submit quote (تسعير، عرض فني، مدة وضمان). |
 | 3 | المحطة | اختيار عرض → إنشاء ExternalJobOrder + PaymentRecord | ✅ في `StationRequestDetail`: Select quote ثم زر Select. |
 | 4 أ | المحطة | confirm-sent (رفع إيصال وتأكيد إرسال المبلغ) | ✅ في `StationRequestDetail` و `StationJobOrderDetail`: رفع إيصال وتأكيد الدفع (زر واحد). |
