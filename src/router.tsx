@@ -44,7 +44,6 @@ import ServiceOfferings from "./pages/ServiceOfferings/ServiceOfferings";
 import BranchRequests from "./pages/BranchRequests/BranchRequests";
 import CreateBranchRequest from "./pages/BranchRequests/CreateBranchRequest";
 import BranchRequestDetails from "./pages/BranchRequests/BranchRequestDetails";
-import WorkOrders from "./pages/WorkOrders/WorkOrders";
 import WorkOrderDetails from "./pages/WorkOrders/WorkOrderDetails";
 import WorkOrdersReviewQueue from "./pages/WorkOrders/WorkOrdersReviewQueue";
 import InternalWorkOrders from "./pages/Station/InternalWorkOrders";
@@ -269,14 +268,6 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="job-orders">
             <JobOrders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "work-orders",
-        element: (
-          <RouteAccessGuard pathKey="work-orders">
-            <WorkOrders />
           </RouteAccessGuard>
         ),
       },

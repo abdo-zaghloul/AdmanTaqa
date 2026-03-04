@@ -70,7 +70,7 @@ export default function StationJobOrders() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Station Job Orders</h1>
           <p className="text-muted-foreground">
-            External job orders (data: items, total, page, limit).
+            External job orders 
           </p>
         </div>
       </div>

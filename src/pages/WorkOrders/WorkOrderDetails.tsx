@@ -63,8 +63,8 @@ export default function WorkOrderDetails() {
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between gap-4">
-        <Button variant="outline" onClick={() => navigate("/work-orders")}>
-          Back to Work Orders
+        <Button variant="outline" onClick={() => navigate("/work-orders/review-queue")}>
+          Back to Review Queue
         </Button>
         {id && hasPermission("internal_tasks.assign") ? (
           <AssignTaskDialog workOrderId={id} />

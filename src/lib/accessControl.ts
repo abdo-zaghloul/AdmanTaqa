@@ -97,16 +97,12 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["quotations:read", "quotations:submit"],
   },
   "job-orders": {
-    orgTypes: ["FUEL_STATION", "AUTHORITY"],
+    orgTypes: [  "AUTHORITY"],
     anyPermissions: ["job-orders:read"],
   },
   "job-orders/:id": {
-    orgTypes: ["FUEL_STATION", "AUTHORITY"],
+    orgTypes: [  "AUTHORITY"],
     anyPermissions: ["job-orders:read"],
-  },
-  "work-orders": {
-    orgTypes: ["FUEL_STATION"],
-    anyPermissions: ["workorders.read"],
   },
   "work-orders/:id": {
     orgTypes: ["FUEL_STATION"],
