@@ -140,14 +140,14 @@ export default function StationJobOrderDetail() {
       toast.info("Payment already confirmed for this job order.");
       return;
     }
-    const hasReceipt = !!(receiptFileUrl || order.paymentRecord?.receiptFileUrl);
+    const hasReceipt = !!(receiptFileUrl || order?.paymentRecord?.receiptFileUrl);
     const hasRef = referenceNumber.trim().length > 0;
     if (!hasReceipt && !hasRef) {
       toast.error("Upload a receipt or enter a reference number before confirming.");
       return;
     }
     const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
-    const url = receiptFileUrl || order.paymentRecord?.receiptFileUrl;
+    const url = receiptFileUrl || order?.paymentRecord?.receiptFileUrl;
     if (url) body.receiptFileUrl = url;
     if (referenceNumber.trim()) body.referenceNumber = referenceNumber.trim();
     const amountNum = paymentAmount.trim() ? Number(paymentAmount.trim()) : undefined;
