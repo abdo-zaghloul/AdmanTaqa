@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
+import { ChevronLeft, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
 import useSelectQuote from "@/hooks/Station/useSelectQuote";
@@ -33,9 +33,6 @@ export default function StationRequestDetail() {
   const [rejectQuoteId, setRejectQuoteId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [receiptFileUrl, setReceiptFileUrl] = useState<string>("");
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("BANK_TRANSFER");
 
   const isCancelled = request?.status === "CANCELLED";
   const quotes = request?.quotes ?? [];
@@ -70,23 +67,16 @@ export default function StationRequestDetail() {
     );
   };
 
-  const handleConfirmSent = (receiptFileUrlOverride?: string) => {
+  const handleConfirmSentWithReceipt = (receiptFileUrlValue: string) => {
     if (!awaitingPaymentJob?.id) return;
-    const url = receiptFileUrlOverride ?? receiptFileUrl;
-    const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
-    if (url) body.receiptFileUrl = url;
-    if (referenceNumber.trim()) body.referenceNumber = referenceNumber.trim();
-    const num = amount.trim() ? Number(amount) : undefined;
-    if (num != null && !Number.isNaN(num)) body.amount = num;
-    if (paymentMethod) body.method = paymentMethod;
     confirmSentMutation.mutate(
       {
         jobOrderId: awaitingPaymentJob.id,
-        body: Object.keys(body).length > 0 ? body : undefined,
+        body: { receiptFileUrl: receiptFileUrlValue },
       },
       {
-        onSuccess: () => toast.success("Payment send confirmed."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Confirm failed."),
+        onSuccess: () => toast.success("تم رفع الإيصال وتأكيد الدفع."),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "فشل التأكيد."),
       }
     );
   };
@@ -98,10 +88,11 @@ export default function StationRequestDetail() {
       { jobOrderId: awaitingPaymentJob.id, file },
       {
         onSuccess: (data) => {
-          toast.success("Receipt uploaded.");
           if (data?.receiptFileUrl) {
             setReceiptFileUrl(data.receiptFileUrl);
-            handleConfirmSent(data.receiptFileUrl);
+            handleConfirmSentWithReceipt(data.receiptFileUrl);
+          } else {
+            toast.success("Receipt uploaded.");
           }
           e.target.value = "";
         },
@@ -344,66 +335,26 @@ export default function StationRequestDetail() {
                 </div>
               )}
               {awaitingPaymentJob && !paymentRejected && !stationAlreadyConfirmedSent && (
-                <div className="pt-2 border-t space-y-3">
-                  <p className="text-sm font-medium mb-2">Payment</p>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <input
-                      ref={receiptFileInputRef}
-                      type="file"
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      onChange={handleReceiptFileChange}
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => receiptFileInputRef.current?.click()}
-                      disabled={uploadReceiptMutation.isPending}
-                    >
-                      <Upload className="h-4 w-4" /> Upload receipt
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => handleConfirmSent()}
-                      disabled={confirmSentMutation.isPending}
-                    >
-                      <CheckCircle className="h-4 w-4" /> Confirm payment sent
-                    </Button>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Reference number (optional)</Label>
-                      <Input
-                        value={referenceNumber}
-                        onChange={(e) => setReferenceNumber(e.target.value)}
-                        placeholder="Reference number"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Amount (optional)</Label>
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="Amount"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Payment method</Label>
-                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="BANK_TRANSFER">Bank transfer</SelectItem>
-                          <SelectItem value="CASH">Cash</SelectItem>
-                          <SelectItem value="OTHER">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                <div className="pt-2 border-t space-y-2">
+                  <p className="text-sm font-medium">الدفع</p>
+                  <p className="text-xs text-muted-foreground">
+                    ارفع إيصال التحويل لتأكيد إرسال المبلغ. المزود سيتلقى التأكيد ويستطيع بدء أمر العمل.
+                  </p>
+                  <input
+                    ref={receiptFileInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={handleReceiptFileChange}
+                  />
+                  <Button
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => receiptFileInputRef.current?.click()}
+                    disabled={uploadReceiptMutation.isPending || confirmSentMutation.isPending}
+                  >
+                    <Upload className="h-4 w-4" /> رفع إيصال وتأكيد الدفع
+                  </Button>
                 </div>
               )}
             </>

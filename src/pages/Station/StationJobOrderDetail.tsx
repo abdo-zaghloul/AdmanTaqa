@@ -39,10 +39,6 @@ export default function StationJobOrderDetail() {
   const [rejectReportReason, setRejectReportReason] = useState("");
   const [rejectReportId, setRejectReportId] = useState<number | null>(null);
   const [receiptFileUrl, setReceiptFileUrl] = useState<string>("");
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [amount, setAmount] = useState<string>("");
-  const [paymentMethod, setPaymentMethod] = useState<string>("BANK_TRANSFER");
-
   const underReview = order?.status === "UNDER_REVIEW";
   const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
@@ -109,32 +105,23 @@ export default function StationJobOrderDetail() {
       {
         onSuccess: (data) => {
           const url = (data as { receiptFileUrl?: string })?.receiptFileUrl;
-          if (url) setReceiptFileUrl(url);
-          toast.success("تم رفع الإيصال.");
+          if (url) {
+            setReceiptFileUrl(url);
+            confirmSentMutation.mutate(
+              { jobOrderId: id, body: { receiptFileUrl: url } },
+              {
+                onSuccess: () => toast.success("تم رفع الإيصال وتأكيد الدفع."),
+                onError: (err) => toast.error(err instanceof Error ? err.message : "فشل التأكيد."),
+              }
+            );
+          } else {
+            toast.success("تم رفع الإيصال.");
+          }
         },
         onError: (e) => toast.error(e instanceof Error ? e.message : "فشل رفع الإيصال."),
       }
     );
     e.target.value = "";
-  };
-
-  const handleConfirmSent = () => {
-    if (!id) return;
-    const body: { receiptFileUrl?: string; referenceNumber?: string; amount?: number; method?: string } = {};
-    if (receiptFileUrl) body.receiptFileUrl = receiptFileUrl;
-    if (referenceNumber.trim()) body.referenceNumber = referenceNumber.trim();
-    const num = amount.trim() ? Number(amount) : undefined;
-    if (num != null && !Number.isNaN(num)) body.amount = num;
-    if (paymentMethod) body.method = paymentMethod;
-    confirmSentMutation.mutate(
-      { jobOrderId: id, body },
-      {
-        onSuccess: () => {
-          toast.success("تم تأكيد إرسال المبلغ.");
-        },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "فشل التأكيد."),
-      }
-    );
   };
 
   if (isLoading || !id) {
@@ -241,67 +228,29 @@ export default function StationJobOrderDetail() {
           <CardHeader>
             <CardTitle>الدفع</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap gap-2 items-end">
-              <input
-                type="file"
-                accept=".pdf,image/*"
-                ref={fileInputRef}
-                onChange={handleUploadReceipt}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadReceiptMutation.isPending}
-              >
-                <Upload className="h-4 w-4" /> رفع إيصال
-              </Button>
-              {receiptFileUrl && (
-                <span className="text-sm text-muted-foreground">تم رفع الإيصال</span>
-              )}
-            </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <div className="space-y-1">
-                <Label className="text-xs">رقم التحويل (اختياري)</Label>
-                <Input
-                  value={referenceNumber}
-                  onChange={(e) => setReferenceNumber(e.target.value)}
-                  placeholder="رقم التحويل"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">المبلغ (اختياري)</Label>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="المبلغ"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">طريقة الدفع</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BANK_TRANSFER">تحويل بنكي</SelectItem>
-                    <SelectItem value="CASH">نقدي</SelectItem>
-                    <SelectItem value="OTHER">أخرى</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              ارفع إيصال التحويل لتأكيد إرسال المبلغ. المزود سيتلقى التأكيد ويستطيع بدء أمر العمل.
+            </p>
+            <input
+              type="file"
+              accept=".pdf,image/*"
+              ref={fileInputRef}
+              onChange={handleUploadReceipt}
+              className="hidden"
+            />
             <Button
-              onClick={handleConfirmSent}
-              disabled={confirmSentMutation.isPending}
+              type="button"
+              size="sm"
+              className="gap-1"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadReceiptMutation.isPending || confirmSentMutation.isPending}
             >
-              تأكيد إرسال المبلغ
+              <Upload className="h-4 w-4" /> رفع إيصال وتأكيد الدفع
             </Button>
+            {receiptFileUrl && (
+              <span className="text-sm text-muted-foreground">تم رفع الإيصال</span>
+            )}
           </CardContent>
         </Card>
       )}

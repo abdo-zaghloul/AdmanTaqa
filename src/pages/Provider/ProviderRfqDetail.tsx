@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash } from "lucide-react";
+import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, DollarSign, FileText, Clock } from "lucide-react";
 import { toast } from "sonner";
 import useProviderRfqById from "@/hooks/Provider/useProviderRfqById";
 import useCreateQuote from "@/hooks/Provider/useCreateQuote";
@@ -24,7 +25,14 @@ export default function ProviderRfqDetail() {
   const reviseQuoteMutation = useReviseQuote();
   const withdrawQuoteMutation = useWithdrawQuote();
 
-  const [amount, setAmount] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
+  const [laborCost, setLaborCost] = useState("");
+  const [materialCost, setMaterialCost] = useState("");
+  const [currency, setCurrency] = useState("EGP");
+  const [technicalProposal, setTechnicalProposal] = useState("");
+  const [scopeOfWork, setScopeOfWork] = useState("");
+  const [timeline, setTimeline] = useState("");
+  const [warranty, setWarranty] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [editingQuoteId, setEditingQuoteId] = useState<number | null>(null);
   const [reviseAmount, setReviseAmount] = useState("");
@@ -32,26 +40,42 @@ export default function ProviderRfqDetail() {
 
   const handleSubmitQuote = (e: React.FormEvent) => {
     e.preventDefault();
-    const num = Number(amount);
-    if (!id || Number.isNaN(num) || num <= 0) {
-      toast.error("Enter a valid amount.");
+    const amountNum = Number(totalAmount);
+    if (!id || Number.isNaN(amountNum) || amountNum <= 0) {
+      toast.error("Enter a valid total amount.");
       return;
     }
+    const laborNum = laborCost.trim() ? Number(laborCost) : undefined;
+    const materialNum = materialCost.trim() ? Number(materialCost) : undefined;
+    const pricingJson: Record<string, unknown> = {
+      amount: amountNum,
+      currency: currency.trim() || "EGP",
+      validUntil: validUntil.trim() || undefined,
+      laborCost: laborNum != null && !Number.isNaN(laborNum) ? laborNum : undefined,
+      materialCost: materialNum != null && !Number.isNaN(materialNum) ? materialNum : undefined,
+      technicalProposal: technicalProposal.trim() || undefined,
+      scopeOfWork: scopeOfWork.trim() || undefined,
+      timeline: timeline.trim() || undefined,
+      warranty: warranty.trim() || undefined,
+    };
     createQuoteMutation.mutate(
       {
         rfqId: id,
-        body: {
-          amount: num,
-          validUntil: validUntil.trim() || undefined,
-        },
+        body: { pricingJson, submit: true },
       },
       {
         onSuccess: () => {
           toast.success("Quote submitted.");
-          setAmount("");
+          setTotalAmount("");
+          setLaborCost("");
+          setMaterialCost("");
+          setTechnicalProposal("");
+          setScopeOfWork("");
+          setTimeline("");
+          setWarranty("");
           setValidUntil("");
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit failed."),
+        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit quote failed."),
       }
     );
   };
@@ -203,36 +227,140 @@ export default function ProviderRfqDetail() {
             </div>
           )}
 
-          <form onSubmit={handleSubmitQuote} className="space-y-3 pt-4 border-t">
-            <p className="text-sm font-medium">Submit quote</p>
-            <div className="flex flex-wrap gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="validUntil">Valid until (optional)</Label>
-                <Input
-                  id="validUntil"
-                  type="date"
-                  value={validUntil}
-                  onChange={(e) => setValidUntil(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button type="submit" disabled={createQuoteMutation.isPending}>
-                  {createQuoteMutation.isPending ? "Submitting..." : "Submit quote"}
-                </Button>
-              </div>
-            </div>
+          <form onSubmit={handleSubmitQuote} className="space-y-6 pt-4 border-t">
+            <p className="text-sm font-medium">Submit quote — {title}</p>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" /> Pricing
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">Total amount and cost breakdown</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor="totalAmount">Total amount *</Label>
+                  <Input
+                    id="totalAmount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    placeholder="0"
+                    required
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="laborCost">Labor cost</Label>
+                    <Input
+                      id="laborCost"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={laborCost}
+                      onChange={(e) => setLaborCost(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="materialCost">Material cost</Label>
+                    <Input
+                      id="materialCost"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={materialCost}
+                      onChange={(e) => setMaterialCost(e.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="currency">Currency</Label>
+                  <Input
+                    id="currency"
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    placeholder="EGP"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" /> Technical proposal
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">Describe your approach and scope of work</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor="technicalProposal">Technical approach</Label>
+                  <Textarea
+                    id="technicalProposal"
+                    value={technicalProposal}
+                    onChange={(e) => setTechnicalProposal(e.target.value)}
+                    placeholder="Describe your approach and solution..."
+                    className="min-h-[80px] resize-y"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="scopeOfWork">Scope of work</Label>
+                  <Textarea
+                    id="scopeOfWork"
+                    value={scopeOfWork}
+                    onChange={(e) => setScopeOfWork(e.target.value)}
+                    placeholder="Details of scope of work..."
+                    className="min-h-[80px] resize-y"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" /> Timeline & warranty
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">Estimated duration and warranty terms</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label htmlFor="timeline">Estimated timeline</Label>
+                  <Input
+                    id="timeline"
+                    value={timeline}
+                    onChange={(e) => setTimeline(e.target.value)}
+                    placeholder="e.g., 3–5 working days"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="warranty">Warranty</Label>
+                  <Input
+                    id="warranty"
+                    value={warranty}
+                    onChange={(e) => setWarranty(e.target.value)}
+                    placeholder="Warranty terms"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="validUntil">Valid until (optional)</Label>
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    value={validUntil}
+                    onChange={(e) => setValidUntil(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Button type="submit" disabled={createQuoteMutation.isPending}>
+              {createQuoteMutation.isPending ? "Submitting..." : "Submit quote"}
+            </Button>
           </form>
 
           {quotes.length > 0 && (

@@ -68,8 +68,12 @@ export interface ProviderQuoteItem {
   createdAt?: string;
 }
 
+/** Backend expects pricingJson (free-form) and submit. Use pricingJson for all quote details. */
 export interface CreateQuoteBody {
-  amount: number;
+  pricingJson?: Record<string, unknown>;
+  submit?: boolean;
+  /** @deprecated Prefer pricingJson.amount */
+  amount?: number;
   validUntil?: string;
   [key: string]: unknown;
 }
