@@ -10,20 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload, Send, CheckCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle, Building2, MapPin, Phone, Calendar, XCircle, Upload, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import useStationRequestById from "@/hooks/Station/useStationRequestById";
 import useSelectQuote from "@/hooks/Station/useSelectQuote";
 import useRejectQuote from "@/hooks/Station/useRejectQuote";
 import useConfirmPaymentSent from "@/hooks/Station/useConfirmPaymentSent";
 import useUploadJobOrderReceipt from "@/hooks/Station/useUploadJobOrderReceipt";
-import useLinkedProviders from "@/hooks/Station/useLinkedProviders";
-import useSendToProviders from "@/hooks/Station/useSendToProviders";
 import { getApiErrorMessage } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS } from "@/types/station";
 
 const MAX_RECEIPT_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
@@ -43,40 +39,8 @@ export default function StationRequestDetail() {
   const [paymentReferenceNumber, setPaymentReferenceNumber] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [sendToProvidersIds, setSendToProvidersIds] = useState<number[]>([]);
-
-  const { data: linkedProviders = [], isLoading: linkedLoading } = useLinkedProviders();
-  const sendToProvidersMutation = useSendToProviders();
 
   const isCancelled = request?.status === "CANCELLED";
-  const canSendToProviders =
-    id &&
-    request &&
-    !isCancelled &&
-    (STATION_REQUEST_STATUSES_ALLOWED_SEND_TO_PROVIDERS as readonly string[]).includes(request.status ?? "");
-
-  const toggleSendToProvider = (orgId: number) => {
-    setSendToProvidersIds((prev) =>
-      prev.includes(orgId) ? prev.filter((x) => x !== orgId) : [...prev, orgId]
-    );
-  };
-
-  const handleSendToProviders = () => {
-    if (!id || sendToProvidersIds.length === 0) {
-      toast.error("Select at least one provider.");
-      return;
-    }
-    sendToProvidersMutation.mutate(
-      { requestId: id, providerOrganizationIds: sendToProvidersIds },
-      {
-        onSuccess: () => {
-          toast.success("Request sent to providers.");
-          setSendToProvidersIds([]);
-        },
-        onError: (e) => toast.error(getApiErrorMessage(e, "Send to providers failed.")),
-      }
-    );
-  };
   const quotes = request?.quotes ?? [];
   const selectableQuotes = quotes.filter(
     (q) => q.status !== "REJECTED" && q.status !== "WITHDRAWN"
@@ -286,56 +250,6 @@ export default function StationRequestDetail() {
                   </span>
                 )}
               </div>
-            </div>
-          )}
-
-          {canSendToProviders && (
-            <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
-              <p className="text-sm font-medium flex items-center gap-2">
-                <Send className="h-4 w-4" /> Send to providers
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Request was not sent to providers yet (or you can send to more). Select providers to send this request; they will see it in their RFQ list.
-              </p>
-              {linkedLoading ? (
-                <p className="text-sm text-muted-foreground">Loading providers...</p>
-              ) : linkedProviders.length === 0 ? (
-                <p className="text-sm text-amber-600">
-                  No linked providers.{" "}
-                  <Link to="/linked-providers" className="underline font-medium">
-                    Link providers
-                  </Link>{" "}
-                  first.
-                </p>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-                    {linkedProviders.map((p) => (
-                      <label
-                        key={p.id}
-                        className="flex items-center gap-3 rounded-md border bg-background px-3 py-2 cursor-pointer hover:bg-muted/50"
-                      >
-                        <Checkbox
-                          checked={sendToProvidersIds.includes(p.organizationId)}
-                          onCheckedChange={() => toggleSendToProvider(p.organizationId)}
-                        />
-                        <Building2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="font-medium">
-                          {p.organizationName ?? `Provider #${p.organizationId}`}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  <Button
-                    size="sm"
-                    className="gap-1"
-                    onClick={handleSendToProviders}
-                    disabled={sendToProvidersMutation.isPending || sendToProvidersIds.length === 0}
-                  >
-                    <Send className="h-3.5 w-3.5" /> Send to selected providers
-                  </Button>
-                </>
-              )}
             </div>
           )}
 

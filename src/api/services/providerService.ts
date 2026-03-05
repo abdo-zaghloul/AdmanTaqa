@@ -205,20 +205,18 @@ export async function confirmJobOrderPaymentReceived(
   return response.data;
 }
 
-/** Doc (7.1): تعيين عامل — body: operatorId (التوثيق) أو userId (للتوافق مع الباكند الحالي) */
+/** Doc (7.1): تعيين عامل — الـ API يتوقع body.operatorId (رقم). نرسل userId من الواجهة كـ operatorId. */
 export async function assignProviderJobOrderOperator(
   jobOrderId: number | string,
   body: { operatorId?: number; userId?: number }
 ): Promise<unknown> {
-  const payload =
-    body.operatorId != null
-      ? { operatorId: body.operatorId }
-      : body.userId != null
-        ? { userId: body.userId }
-        : {};
+  const operatorId = body.operatorId ?? body.userId;
+  if (operatorId == null || typeof operatorId !== "number") {
+    throw new Error("operatorId is required (number).");
+  }
   const response = await axiosInstance.post(
     `provider/job-orders/${jobOrderId}/assign-operator`,
-    payload
+    { operatorId }
   );
   return response.data;
 }
