@@ -53,6 +53,14 @@ export interface ProviderRfqItem {
   City?: { id: number; name?: string } | null;
 }
 
+/** Backend returns this inside ProviderQuotes[].ExternalJobOrder (selected quote) */
+export interface ProviderRfqExternalJobOrder {
+  id: number;
+  status?: string;
+  /** API returns PaymentRecord (capital P) */
+  PaymentRecord?: { status?: string; rejectionReason?: string | null };
+}
+
 /** Detail API may return ProviderQuotes (capital P) */
 export interface ProviderRfqDetail extends ProviderRfqItem {
   stationOrganizationId?: number;
@@ -62,11 +70,16 @@ export interface ProviderRfqDetail extends ProviderRfqItem {
 export interface ProviderQuoteItem {
   id: number;
   rfqId?: number;
+  externalRequestId?: number;
   providerOrganizationId?: number;
+  serviceProviderOrganizationId?: number;
   amount?: number;
   validUntil?: string;
   status?: string;
   createdAt?: string;
+  updatedAt?: string;
+  /** When this quote is SELECTED, backend returns the linked External Job Order */
+  ExternalJobOrder?: ProviderRfqExternalJobOrder;
 }
 
 /** Backend expects pricingJson (free-form) and submit. Use pricingJson for all quote details. */

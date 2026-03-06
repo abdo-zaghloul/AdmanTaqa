@@ -54,19 +54,19 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: [ "FUEL_STATION"],
   },
   "users/:id": {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "users/:id/edit": {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   roles: {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "roles/create": {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "roles/:id": {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "roles/:id/edit": {
     orgTypes: [ "FUEL_STATION"],

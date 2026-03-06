@@ -35,6 +35,14 @@ export interface AuthResponse {
     message?: string;
 }
 
+/** register-v2 API can return documentsReceived */
+export interface RegisterV2Response extends AuthResponse {
+    documentsReceived?: {
+        organization?: string[];
+        serviceProvider?: string[];
+    };
+}
+
 export interface MeData {
     user: User;
     organization: Organization;

@@ -1,7 +1,7 @@
 import axios from "axios";
 import axiosInstance from "../config";
 import { apiUrl } from "../config";
-import type { AuthResponse, MeResponse } from "@/types/auth";
+import type { AuthResponse, MeResponse, RegisterV2Response } from "@/types/auth";
 
 export interface LoginBody {
   email: string;
@@ -17,6 +17,27 @@ export interface RegisterBody {
   phone?: string;
 }
 
+/** Payload for POST /api/auth/register-v2 (inside FormData field "payload") — registration-v2-api.md */
+export interface RegisterV2Profile {
+  licenseNumber?: string;
+  yearsExperience?: number;
+  areaId?: number;
+  cityId?: number;
+  street?: string;
+  serviceCategories?: (number | string)[];
+  amount?: number;
+}
+
+export interface RegisterV2Payload {
+  organizationName: string;
+  organizationType: "SERVICE_PROVIDER" | "FUEL_STATION";
+  email: string;
+  password: string;
+  fullName: string;
+  phone?: string;
+  profile?: RegisterV2Profile;
+}
+
 export interface RefreshBody {
   refreshToken: string;
 }
@@ -28,6 +49,11 @@ export const authService = {
   },
   async register(body: RegisterBody): Promise<AuthResponse> {
     const { data } = await axiosInstance.post<AuthResponse>("auth/register", body);
+    return data;
+  },
+  /** POST /api/auth/register-v2 — multipart/form-data: payload (JSON string) + optional files (org_*, sp_*) */
+  async registerV2(formData: FormData): Promise<RegisterV2Response> {
+    const { data } = await axiosInstance.post<RegisterV2Response>("auth/register-v2", formData);
     return data;
   },
   async refresh(body: RefreshBody): Promise<AuthResponse> {
