@@ -1,5 +1,6 @@
 import {
   Building2,
+  Fuel,
   MapPin,
   GitBranch,
   ShieldCheck,
@@ -67,7 +68,17 @@ const navGroups: NavGroup[] = [
         isDropdown: true,
         children: [
           { label: "Organizations", path: "/organizations", icon: Building2 },
-          { label: "Fuel Stations", path: "/fuel-stations", icon: Building2 },
+          { label: "Organizations (Rejected)", path: "/organizations/rejected", icon: Building2 },
+        ]
+      },
+      {
+        label: "Fuel Stations",
+        icon: Fuel,
+        isDropdown: true,
+        children: [
+          { label: "Fuel Stations", path: "/fuel-stations", icon: Fuel },
+          { label: "Fuel Stations (Pending)", path: "/fuel-stations/pending", icon: Fuel },
+          { label: "Fuel Stations (Rejected)", path: "/fuel-stations/rejected", icon: Fuel },
         ]
       },
       { 
@@ -110,6 +121,7 @@ export default function AppSidebar() {
   // State to manage dropdowns
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({
     "Organizations": false,
+    "Fuel Stations": false,
     "Users": false
   });
 

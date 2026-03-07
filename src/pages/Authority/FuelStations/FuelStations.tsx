@@ -4,12 +4,11 @@ import FuelStationsTable from "./Component/FuelStationsTable";
 
 export default function FuelStations() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [page] = useState(1);
-  const [limit] = useState(20);
+  const [limit] = useState(100);
 
   const { data, isLoading, isError, error } = useGetFuelStations({
-    status: statusFilter === "all" ? undefined : (statusFilter as "PENDING" | "APPROVED" | "REJECTED"),
+    status: "APPROVED",
     page,
     limit,
   });
@@ -31,7 +30,7 @@ export default function FuelStations() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Fuel Stations</h1>
           <p className="text-muted-foreground">
-            View and approve or reject fuel station registrations (Authority).
+            Approved fuel stations.
           </p>
         </div>
       </div>
@@ -48,9 +47,10 @@ export default function FuelStations() {
         <FuelStationsTable
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
+          statusFilter="APPROVED"
+          onStatusFilterChange={() => {}}
           stations={filteredStations}
+          hideStatusFilter
         />
       )}
     </div>

@@ -146,7 +146,11 @@ export default function TableAuditLog({
                       <div className="flex flex-col">
                         <span>{new Date(log.createdAt).toLocaleDateString()}</span>
                         <span className="font-mono text-primary/70">
-                          {new Date(log.createdAt).toLocaleTimeString()}
+                          {new Date(log.createdAt).toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          })}
                         </span>
                       </div>
                     </TableCell>
@@ -174,7 +178,7 @@ export default function TableAuditLog({
                           <Database className="h-2.5 w-2.5" />
                           {log.resourceType}
                         </span>
-                        <span className="text-xs text-muted-foreground">{log.resourceId}</span>
+                        {/* <span className="text-xs text-muted-foreground">{log.resourceId}</span> */}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -3,7 +3,10 @@ import Layout from "./components/Layout";
   // Authority
 import OrganizationDetails from "./pages/Authority/Organizations/OrganizationDetails";
 import Organizations from "./pages/Authority/Organizations/Organizations";
+import OrganizationsRejected from "./pages/Authority/Organizations/OrganizationsRejected";
 import FuelStations from "./pages/Authority/FuelStations/FuelStations";
+import FuelStationsPending from "./pages/Authority/FuelStations/FuelStationsPending";
+import FuelStationsRejected from "./pages/Authority/FuelStations/FuelStationsRejected";
  
 
 import Locations from "./pages/Locations/Locations";
@@ -100,10 +103,34 @@ export const router = createHashRouter([
         ),
       },
       {
+        path: "organizations/rejected",
+        element: (
+          <RouteAccessGuard pathKey="organizations/rejected">
+            <OrganizationsRejected />
+          </RouteAccessGuard>
+        ),
+      },
+      {
         path: "fuel-stations",
         element: (
           <RouteAccessGuard pathKey="fuel-stations">
             <FuelStations />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "fuel-stations/pending",
+        element: (
+          <RouteAccessGuard pathKey="fuel-stations/pending">
+            <FuelStationsPending />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "fuel-stations/rejected",
+        element: (
+          <RouteAccessGuard pathKey="fuel-stations/rejected">
+            <FuelStationsRejected />
           </RouteAccessGuard>
         ),
       },

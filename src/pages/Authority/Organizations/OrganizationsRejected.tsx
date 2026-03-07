@@ -2,13 +2,13 @@ import { useState, useMemo } from "react";
 import TableOrganization from "./Component/TableOrganization";
 import useGetOrganizations from "@/hooks/Organization/useGetOrganizations";
 
-export default function Organizations() {
+export default function OrganizationsRejected() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data, isLoading, isError, error } = useGetOrganizations({
     page: 1,
     limit: 100,
     type: "SERVICE_PROVIDER",
-    status: "PENDING",
+    status: "REJECTED",
   });
 
   const items = data?.data?.items ?? [];
@@ -26,9 +26,9 @@ export default function Organizations() {
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Organizations</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Organizations — Rejected</h1>
           <p className="text-muted-foreground">
-            Service providers pending approval.
+            Service providers that were rejected.
           </p>
         </div>
       </div>

@@ -1,18 +1,20 @@
 import { useState, useMemo } from "react";
-import TableOrganization from "./Component/TableOrganization";
-import useGetOrganizations from "@/hooks/Organization/useGetOrganizations";
+import useGetFuelStations from "@/hooks/Organization/useGetFuelStations";
+import FuelStationsTable from "./Component/FuelStationsTable";
 
-export default function Organizations() {
+export default function FuelStationsRejected() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data, isLoading, isError, error } = useGetOrganizations({
-    page: 1,
-    limit: 100,
-    type: "SERVICE_PROVIDER",
-    status: "PENDING",
+  const [page] = useState(1);
+  const [limit] = useState(100);
+
+  const { data, isLoading, isError, error } = useGetFuelStations({
+    status: "REJECTED",
+    page,
+    limit,
   });
 
   const items = data?.data?.items ?? [];
-  const filteredOrgs = useMemo(() => {
+  const filteredStations = useMemo(() => {
     if (!searchQuery.trim()) return items;
     const q = searchQuery.toLowerCase();
     return items.filter(
@@ -26,26 +28,29 @@ export default function Organizations() {
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Organizations</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Fuel Stations — Rejected</h1>
           <p className="text-muted-foreground">
-            Service providers pending approval.
+            Fuel stations that were rejected.
           </p>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-muted-foreground">
-          Loading organizations...
+        <div className="flex justify-center py-16 text-muted-foreground">
+          Loading fuel stations...
         </div>
       ) : isError ? (
         <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-destructive">
-          {(error as Error)?.message ?? "Failed to load organizations."}
+          {(error as Error)?.message ?? "Failed to load fuel stations."}
         </div>
       ) : (
-        <TableOrganization
+        <FuelStationsTable
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          organizations={filteredOrgs}
+          statusFilter="REJECTED"
+          onStatusFilterChange={() => {}}
+          stations={filteredStations}
+          hideStatusFilter
         />
       )}
     </div>

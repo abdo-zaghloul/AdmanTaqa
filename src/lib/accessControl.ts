@@ -14,11 +14,23 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["AUTHORITY"],
     anyPermissions: ["organizations:approve", "organizations:read"],
   },
+  "organizations/rejected": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:approve", "organizations:read"],
+  },
   "organizations/:id": {
     orgTypes: ["AUTHORITY"],
     anyPermissions: ["organizations:approve", "organizations:read"],
   },
   "fuel-stations": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:approve", "organizations:read"],
+  },
+  "fuel-stations/pending": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:approve", "organizations:read"],
+  },
+  "fuel-stations/rejected": {
     orgTypes: ["AUTHORITY"],
     anyPermissions: ["organizations:approve", "organizations:read"],
   },
