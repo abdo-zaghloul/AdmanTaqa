@@ -23,6 +23,7 @@ export default function useUpdataOrganization() {
       onSuccess: (response) => {
         if (response.success) {
           queryClient.invalidateQueries({ queryKey: ["organization"] });
+          queryClient.invalidateQueries({ queryKey: ["organization", "full"] });
           toast.success(response.message || "Organization updated successfully");
         } else {
           toast.error(response.message || "Update failed");

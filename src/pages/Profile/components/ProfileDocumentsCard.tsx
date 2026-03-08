@@ -17,9 +17,11 @@ const DOC_TYPES: { value: OrganizationDocumentType; label: string }[] = [
 
 interface ProfileDocumentsCardProps {
   organizationId: number;
+  /** When true, render content only without Card wrapper (for use inside UnifiedProfileCard) */
+  embedded?: boolean;
 }
 
-export default function ProfileDocumentsCard({ organizationId }: ProfileDocumentsCardProps) {
+export default function ProfileDocumentsCard({ organizationId, embedded }: ProfileDocumentsCardProps) {
   const { data: documents = [], isLoading } = useGetOrganizationDocuments(organizationId);
   const uploadMutation = useUploadOrganizationDocument();
   const [documentType, setDocumentType] = useState<OrganizationDocumentType>("LICENSE");
@@ -42,16 +44,8 @@ export default function ProfileDocumentsCard({ organizationId }: ProfileDocument
 
   const getDocUrl = (doc: OrganizationDocument) => doc.url ?? doc.fileUrl ?? "#";
 
-  return (
-    <Card className="border-none shadow-lg bg-gradient-to-br from-card to-muted/20">
-      <CardHeader className="border-b bg-muted/30 pb-4">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Documents
-        </CardTitle>
-        <CardDescription>Upload and manage organization documents.</CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6 space-y-6">
+  const content = (
+    <>
         <div className="flex flex-wrap items-end gap-4">
           <div className="space-y-2">
             <Label>Document type</Label>
@@ -101,6 +95,35 @@ export default function ProfileDocumentsCard({ organizationId }: ProfileDocument
             ))}
           </ul>
         )}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div className="border-t pt-6 space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Documents
+          </h3>
+          <p className="text-sm text-muted-foreground">Upload and manage organization documents.</p>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Card className="border-none shadow-lg bg-gradient-to-br from-card to-muted/20">
+      <CardHeader className="border-b bg-muted/30 pb-4">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Documents
+        </CardTitle>
+        <CardDescription>Upload and manage organization documents.</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6 space-y-6">
+        {content}
       </CardContent>
     </Card>
   );

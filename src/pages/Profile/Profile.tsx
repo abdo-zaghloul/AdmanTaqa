@@ -1,15 +1,12 @@
 import { useState } from "react";
-import useGetOrganization from "@/hooks/Organization/useGetOrganization";
+import useGetOrganizationFull from "@/hooks/Organization/useGetOrganizationFull";
 import { MoreVertical, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import EditOrganizationModal from "./components/EditOrganizationModal";
-import OrganizationDetailsCard from "./components/OrganizationDetailsCard";
-import ProfileDocumentsCard from "./components/ProfileDocumentsCard";
-import ProfileApprovalHistoryCard from "./components/ProfileApprovalHistoryCard";
-import ProfileServiceProviderProfileCard from "./components/ProfileServiceProviderProfileCard";
+import UnifiedProfileCard from "./components/UnifiedProfileCard";
 
 export default function Profile() {
-    const { data: organizationResponse, isLoading } = useGetOrganization();
+    const { data: organizationResponse, isLoading } = useGetOrganizationFull();
     const organization = organizationResponse?.data;
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const isPendingApproval = organization && organization.status !== "APPROVED";
@@ -55,22 +52,15 @@ export default function Profile() {
                 </div>
             )}
 
-            <OrganizationDetailsCard organization={organization} />
-
-            {organization?.id && (
-                <>
-                    <ProfileDocumentsCard organizationId={organization.id} />
-                    <ProfileApprovalHistoryCard organizationId={organization.id} />
-                    {organization?.type === "SERVICE_PROVIDER" && (
-                        <ProfileServiceProviderProfileCard organizationId={organization.id} />
-                    )}
-                </>
-            )}
+            <UnifiedProfileCard organization={organization} isLoading={isLoading} />
 
             <EditOrganizationModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 currentName={organization?.name || ""}
+                organizationType={organization?.type}
+                organizationId={organization?.id}
+                initialServiceProviderProfile={organization?.ServiceProviderProfile ?? null}
             />
         </div>
     );

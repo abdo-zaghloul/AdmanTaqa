@@ -20,6 +20,124 @@ export interface OrganizationResponse {
     message?: string;
 }
 
+/** Approver/user summary in GET /organizations/me/full (User, User in OrganizationApprovals) */
+export interface OrganizationMeFullUser {
+    id: number;
+    fullName: string;
+    email: string;
+}
+
+/** Branch in GET /organizations/me/full (Branches array) */
+export interface OrganizationMeFullBranch {
+    id: number;
+    organizationId: number;
+    areaId: number;
+    nameEn: string | null;
+    nameAr: string | null;
+    licenseNumber: string | null;
+    stationTypeId: number | null;
+    street: string | null;
+    latitude: number | null;
+    longitude: number | null;
+    workingHours: string | null;
+    address: string | null;
+    ownerName: string | null;
+    ownerEmail: string | null;
+    managerName: string | null;
+    managerEmail: string | null;
+    managerPhone: string | null;
+    managerUserId: number | null;
+    status: string;
+    qrToken: string | null;
+    geofenceRadiusMeters: number | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+    Area?: { id: number; name: string } | null;
+}
+
+/** Approval record in GET /organizations/me/full (OrganizationApprovals array) */
+export interface OrganizationMeFullApproval {
+    id: number;
+    organizationId: number;
+    reviewedByUserId: number;
+    decision: string;
+    reason: string | null;
+    createdAt: string;
+    User?: OrganizationMeFullUser | null;
+}
+
+/** Role in GET /organizations/me/full (Roles array) */
+export interface OrganizationMeFullRole {
+    id: number;
+    organizationId: number;
+    organizationType: string;
+    name: string;
+    description: string | null;
+    isSystem: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Linked service provider item (LinkedAsServiceProvider array) */
+export interface LinkedAsServiceProviderItem {
+    id: number;
+    fuelStationOrganizationId: number;
+    serviceProviderOrganizationId: number;
+    status: string;
+    startedAt: string;
+    createdAt: string;
+    updatedAt: string;
+    FuelStationOrganization?: { id: number; name: string } | null;
+}
+
+/** Employee invitation in GET /organizations/me/full (EmployeeInvitations array) */
+export interface OrganizationMeFullEmployeeInvitation {
+    id: number;
+    organizationId: number;
+    branchId: number | null;
+    roleId: number | null;
+    jobGradeId: number | null;
+    supervisorUserId: number | null;
+    email: string;
+    phone: string | null;
+    token: string;
+    status: string;
+    expiresAt: string;
+    createdByUserId: number | null;
+    acceptedByUserId: number | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** ServiceProviderProfile as returned in GET /organizations/me/full (includes amount, Area, City, ServiceProviderDocuments) */
+export interface OrganizationMeFullServiceProviderProfile extends ServiceProviderProfile {
+    amount?: string | null;
+    ServiceProviderDocuments?: ServiceProviderDocumentItem[];
+}
+
+/** GET /organizations/me/full — organization + nested User, Users, Branches, Approvals, Roles, etc. */
+export interface OrganizationMeFullData extends OrganizationProfile {
+    User?: OrganizationMeFullUser | null;
+    Users?: OrganizationByIdUser[];
+    Branches?: OrganizationMeFullBranch[];
+    OrganizationDocuments?: OrganizationByIdDocument[];
+    OrganizationApprovals?: OrganizationMeFullApproval[];
+    Roles?: OrganizationMeFullRole[];
+    ServiceProviderProfile?: OrganizationMeFullServiceProviderProfile | null;
+    FuelStationProfile?: unknown | null;
+    LinkedAsFuelStation?: unknown[];
+    LinkedAsServiceProvider?: LinkedAsServiceProviderItem[];
+    EmployeeInvitations?: OrganizationMeFullEmployeeInvitation[];
+    BranchRequests?: unknown[];
+}
+
+export interface OrganizationMeFullResponse {
+    success: boolean;
+    data: OrganizationMeFullData;
+    message?: string;
+}
+
 /** User in GET /organizations/:id response (Users array) */
 export interface OrganizationByIdUser {
     id: number;

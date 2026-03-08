@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Wrench, Plus, Pencil, Trash2, FileText, Upload } from "lucide-react";
+import { Wrench, Plus, Trash2, FileText, Upload } from "lucide-react";
 import { toast } from "sonner";
 import useGetServiceProviderProfile from "@/hooks/Organization/useGetServiceProviderProfile";
 import useCreateServiceProviderProfile from "@/hooks/Organization/useCreateServiceProviderProfile";
@@ -38,9 +38,11 @@ const PROFILE_DOC_TYPES: { value: ServiceProviderProfileDocumentType; label: str
 
 interface ProfileServiceProviderProfileCardProps {
   organizationId: number;
+  /** When true, render content only without Card wrapper (for use inside UnifiedProfileCard) */
+  embedded?: boolean;
 }
 
-export default function ProfileServiceProviderProfileCard({ organizationId }: ProfileServiceProviderProfileCardProps) {
+export default function ProfileServiceProviderProfileCard({ organizationId, embedded }: ProfileServiceProviderProfileCardProps) {
   const { data: profile, isLoading: profileLoading } = useGetServiceProviderProfile(organizationId);
   const { data: profileDocs = [], isLoading: docsLoading } =
     useGetServiceProviderProfileDocuments(organizationId, !!profile);
@@ -83,20 +85,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId }: Pr
     setGovernorateId(null);
     setShowForm(true);
     setEditing(false);
-  };
-
-  const openEditForm = () => {
-    if (!profile) return;
-    setForm({
-      licenseNumber: profile.licenseNumber ?? "",
-      yearsExperience: profile.yearsExperience ?? undefined,
-      areaId: profile.areaId ?? undefined,
-      cityId: profile.cityId ?? undefined,
-      street: profile.street ?? "",
-      serviceCategories: profile.serviceCategories ?? [],
-    });
-    setShowForm(true);
-    setEditing(true);
   };
 
   const submitForm = () => {
@@ -158,6 +146,7 @@ export default function ProfileServiceProviderProfileCard({ organizationId }: Pr
     doc.url ?? doc.fileUrl ?? "#";
 
   if (profileLoading) {
+    if (embedded) return <div className="border-t pt-6"><p className="text-sm text-muted-foreground">Loading profile...</p></div>;
     return (
       <Card className="border-none shadow-lg bg-gradient-to-br from-card to-muted/20">
         <CardContent className="pt-6">
@@ -167,41 +156,39 @@ export default function ProfileServiceProviderProfileCard({ organizationId }: Pr
     );
   }
 
-  return (
-    <Card className="border-none shadow-lg bg-gradient-to-br from-card to-muted/20">
-      <CardHeader className="border-b bg-muted/30 pb-4 flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Wrench className="h-5 w-5" />
-            Service Provider Profile
-          </CardTitle>
-          <CardDescription>License, experience, address, and profile documents.</CardDescription>
+  const sectionHeader = (
+    <div className="flex flex-row items-start justify-between gap-4">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight">Service Provider</h2>
+        <CardTitle className="text-lg flex items-center gap-2 font-medium">
+          <Wrench className="h-5 w-5" />
+          Service Provider Profile
+        </CardTitle>
+        <CardDescription>License, experience, address, and profile documents.</CardDescription>
+      </div>
+      {!showForm && (
+        <div className="flex gap-2">
+          {profile ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleteMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
+            </Button>
+          ) : (
+            <Button size="sm" onClick={openCreateForm}>
+              <Plus className="h-4 w-4 mr-1" /> Create Profile
+            </Button>
+          )}
         </div>
-        {!showForm && (
-          <div className="flex gap-2">
-            {profile ? (
-              <>
-                <Button variant="outline" size="sm" onClick={openEditForm}>
-                  <Pencil className="h-4 w-4 mr-1" /> Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" /> Delete
-                </Button>
-              </>
-            ) : (
-              <Button size="sm" onClick={openCreateForm}>
-                <Plus className="h-4 w-4 mr-1" /> Create Profile
-              </Button>
-            )}
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="pt-6 space-y-6">
+      )}
+    </div>
+  );
+
+  const sectionContent = (
+    <>
         {profile ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -283,6 +270,107 @@ export default function ProfileServiceProviderProfileCard({ organizationId }: Pr
             No service provider profile yet. Create one to add license, address, and profile documents.
           </p>
         )}
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        <div className="border-t pt-6 space-y-6">
+          {sectionHeader}
+          {sectionContent}
+        </div>
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editing ? "Edit Profile" : "Create Profile"}</DialogTitle>
+              <DialogDescription>
+                {editing ? "Update your service provider profile." : "Add license, experience, and address (all optional)."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>License Number</Label>
+                  <Input value={form.licenseNumber ?? ""} onChange={(e) => setForm((p) => ({ ...p, licenseNumber: e.target.value }))} placeholder="Optional" />
+                </div>
+                <div>
+                  <Label>Years Experience</Label>
+                  <Input type="number" min={0} value={form.yearsExperience ?? ""} onChange={(e) => setForm((p) => ({ ...p, yearsExperience: e.target.value ? Number(e.target.value) : undefined }))} placeholder="Optional" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Country</Label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={countryId ?? ""} onChange={(e) => { const v = e.target.value ? Number(e.target.value) : null; setCountryId(v); setGovernorateId(null); setForm((p) => ({ ...p, cityId: undefined, areaId: undefined })); }}>
+                    <option value="">Select</option>
+                    {countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label>Governorate</Label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={governorateId ?? ""} onChange={(e) => { const v = e.target.value ? Number(e.target.value) : null; setGovernorateId(v); setForm((p) => ({ ...p, cityId: undefined, areaId: undefined })); }}>
+                    <option value="">Select</option>
+                    {governorates.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>City</Label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={form.cityId ?? ""} onChange={(e) => setForm((p) => ({ ...p, cityId: e.target.value ? Number(e.target.value) : undefined, areaId: undefined }))}>
+                    <option value="">Select</option>
+                    {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label>Area</Label>
+                  <select className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm" value={form.areaId ?? ""} onChange={(e) => setForm((p) => ({ ...p, areaId: e.target.value ? Number(e.target.value) : undefined }))}>
+                    <option value="">Select</option>
+                    {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <Label>Street</Label>
+                <Input value={form.street ?? ""} onChange={(e) => setForm((p) => ({ ...p, street: e.target.value }))} placeholder="Optional" />
+              </div>
+              <div>
+                <Label>Service Categories (comma-separated)</Label>
+                <Input value={Array.isArray(form.serviceCategories) ? form.serviceCategories.join(", ") : ""} onChange={(e) => setForm((p) => ({ ...p, serviceCategories: e.target.value ? e.target.value.split(",").map((s) => s.trim()).filter(Boolean) : [] }))} placeholder="e.g. Maintenance, Inspection" />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button onClick={submitForm} disabled={createMutation.isPending || updateMutation.isPending}>{editing ? "Update" : "Create"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Service Provider Profile</DialogTitle>
+              <DialogDescription>
+                This will delete the profile and all associated documents (commercial registration, tax certificate, technical certificate, insurance). This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  return (
+    <Card className="border-none shadow-lg bg-gradient-to-br from-card to-muted/20">
+      <CardHeader className="border-b bg-muted/30 pb-4">
+        {sectionHeader}
+      </CardHeader>
+      <CardContent className="pt-6 space-y-6">
+        {sectionContent}
       </CardContent>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
