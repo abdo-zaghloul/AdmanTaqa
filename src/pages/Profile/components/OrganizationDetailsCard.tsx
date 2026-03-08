@@ -43,7 +43,7 @@ const organizationDetailsContent = (organization: OrganizationMeFullData | null 
                         </div>
                     </div>
 
-                    {organization?.type === "SERVICE_PROVIDER" && organization?.serviceProviderProfile && (
+                    {organization?.type === "SERVICE_PROVIDER" && organization?.ServiceProviderProfile && (
                         <div className="border-t pt-6 space-y-3">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Wrench className="h-4 w-4" />
@@ -52,29 +52,29 @@ const organizationDetailsContent = (organization: OrganizationMeFullData | null 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">License Number</p>
-                                    <p className="font-medium">{organization.serviceProviderProfile.licenseNumber ?? "—"}</p>
+                                    <p className="font-medium">{organization.ServiceProviderProfile.licenseNumber ?? "—"}</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Years Experience</p>
-                                    <p className="font-medium">{organization.serviceProviderProfile.yearsExperience ?? "—"}</p>
+                                    <p className="font-medium">{organization.ServiceProviderProfile.yearsExperience ?? "—"}</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Area</p>
-                                    <p className="font-medium">{organization.serviceProviderProfile.Area?.name ?? organization.serviceProviderProfile.areaId ?? "—"}</p>
+                                    <p className="font-medium">{organization.ServiceProviderProfile.Area?.name ?? organization.ServiceProviderProfile.areaId ?? "—"}</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">City</p>
-                                    <p className="font-medium">{organization.serviceProviderProfile.City?.name ?? organization.serviceProviderProfile.cityId ?? "—"}</p>
+                                    <p className="font-medium">{organization.ServiceProviderProfile.City?.name ?? organization.ServiceProviderProfile.cityId ?? "—"}</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5 md:col-span-2">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Street</p>
-                                    <p className="font-medium">{organization.serviceProviderProfile.street ?? "—"}</p>
+                                    <p className="font-medium">{organization.ServiceProviderProfile.street ?? "—"}</p>
                                 </div>
                                 <div className="p-3 rounded-lg bg-background border space-y-0.5 md:col-span-2">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Service Categories</p>
                                     <p className="font-medium">
-                                        {Array.isArray(organization.serviceProviderProfile.serviceCategories) && organization.serviceProviderProfile.serviceCategories.length
-                                            ? organization.serviceProviderProfile.serviceCategories.join(", ")
+                                        {Array.isArray(organization.ServiceProviderProfile.serviceCategories) && organization.ServiceProviderProfile.serviceCategories.length
+                                            ? organization.ServiceProviderProfile.serviceCategories.join(", ")
                                             : "—"}
                                     </p>
                                 </div>

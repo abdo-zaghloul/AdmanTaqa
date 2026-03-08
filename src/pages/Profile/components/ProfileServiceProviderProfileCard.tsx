@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,30 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Wrench, Plus, Trash2, FileText, Upload } from "lucide-react";
+import { Wrench, Plus } from "lucide-react";
 import { toast } from "sonner";
 import useGetServiceProviderProfile from "@/hooks/Organization/useGetServiceProviderProfile";
 import useCreateServiceProviderProfile from "@/hooks/Organization/useCreateServiceProviderProfile";
 import useUpdateServiceProviderProfile from "@/hooks/Organization/useUpdateServiceProviderProfile";
-import useDeleteServiceProviderProfile from "@/hooks/Organization/useDeleteServiceProviderProfile";
-import useGetServiceProviderProfileDocuments from "@/hooks/Organization/useGetServiceProviderProfileDocuments";
-import useUploadServiceProviderProfileDocument from "@/hooks/Organization/useUploadServiceProviderProfileDocument";
 import useGetCountries from "@/hooks/Location/useGetCountries";
 import useGetGovernorates from "@/hooks/Location/useGetGovernorates";
 import useGetCities from "@/hooks/Location/useGetCities";
 import useGetAreas from "@/hooks/Location/useGetAreas";
-import type {
-  ServiceProviderProfileBody,
-  ServiceProviderProfileDocumentType,
-  ServiceProviderProfileDocument,
-} from "@/types/organization";
-
-const PROFILE_DOC_TYPES: { value: ServiceProviderProfileDocumentType; label: string }[] = [
-  { value: "COMMERCIAL_REGISTRATION", label: "Commercial Registration" },
-  { value: "TAX_CERTIFICATE", label: "Tax Certificate" },
-  { value: "TECHNICAL_CERTIFICATE", label: "Technical Certificate" },
-  { value: "INSURANCE_CERTIFICATE", label: "Insurance Certificate" },
-];
+import type { ServiceProviderProfileBody } from "@/types/organization";
 
 interface ProfileServiceProviderProfileCardProps {
   organizationId: number;
@@ -44,16 +30,11 @@ interface ProfileServiceProviderProfileCardProps {
 
 export default function ProfileServiceProviderProfileCard({ organizationId, embedded }: ProfileServiceProviderProfileCardProps) {
   const { data: profile, isLoading: profileLoading } = useGetServiceProviderProfile(organizationId);
-  const { data: profileDocs = [], isLoading: docsLoading } =
-    useGetServiceProviderProfileDocuments(organizationId, !!profile);
   const createMutation = useCreateServiceProviderProfile();
   const updateMutation = useUpdateServiceProviderProfile();
-  const deleteMutation = useDeleteServiceProviderProfile();
-  const uploadDocMutation = useUploadServiceProviderProfileDocument();
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState<ServiceProviderProfileBody>({
     licenseNumber: "",
     yearsExperience: undefined,
@@ -64,8 +45,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
   });
   const [countryId, setCountryId] = useState<number | null>(null);
   const [governorateId, setGovernorateId] = useState<number | null>(null);
-  const [profileDocType, setProfileDocType] = useState<ServiceProviderProfileDocumentType>("COMMERCIAL_REGISTRATION");
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const countries = useGetCountries().data?.data ?? [];
   const governorates = useGetGovernorates(countryId).data?.data ?? [];
@@ -117,34 +96,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
     }
   };
 
-  const handleDelete = () => {
-    deleteMutation.mutate(organizationId, {
-      onSuccess: () => {
-        toast.success("Profile deleted. All profile documents were removed.");
-        setShowDeleteConfirm(false);
-      },
-      onError: (e) => toast.error((e as Error)?.message ?? "Delete failed."),
-    });
-  };
-
-  const handleUploadDoc = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    uploadDocMutation.mutate(
-      { organizationId, file, documentType: profileDocType },
-      {
-        onSuccess: () => {
-          toast.success("Document uploaded.");
-          e.target.value = "";
-        },
-        onError: (err) => toast.error((err as Error)?.message ?? "Upload failed."),
-      }
-    );
-  };
-
-  const getDocUrl = (doc: ServiceProviderProfileDocument) =>
-    doc.url ?? doc.fileUrl ?? "#";
-
   if (profileLoading) {
     if (embedded) return <div className="border-t pt-6"><p className="text-sm text-muted-foreground">Loading profile...</p></div>;
     return (
@@ -166,23 +117,10 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
         </CardTitle>
         <CardDescription>License, experience, address, and profile documents.</CardDescription>
       </div>
-      {!showForm && (
-        <div className="flex gap-2">
-          {profile ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-1" /> Delete
-            </Button>
-          ) : (
-            <Button size="sm" onClick={openCreateForm}>
-              <Plus className="h-4 w-4 mr-1" /> Create Profile
-            </Button>
-          )}
-        </div>
+      {!showForm && !profile && (
+        <Button size="sm" onClick={openCreateForm}>
+          <Plus className="h-4 w-4 mr-1" /> Create Profile
+        </Button>
       )}
     </div>
   );
@@ -220,49 +158,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
                     : "—"}
                 </p>
               </div>
-            </div>
-            <div className="border-t pt-6">
-              <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Profile Documents
-              </h4>
-              <div className="flex flex-wrap items-end gap-4 mb-4">
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <select
-                    className="flex h-9 w-[200px] rounded-md border border-input bg-transparent px-3 py-1 text-sm"
-                    value={profileDocType}
-                    onChange={(e) => setProfileDocType(e.target.value as ServiceProviderProfileDocumentType)}
-                  >
-                    {PROFILE_DOC_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  onChange={handleUploadDoc}
-                />
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadDocMutation.isPending}>
-                  <Upload className="h-4 w-4 mr-2" /> {uploadDocMutation.isPending ? "Uploading..." : "Upload"}
-                </Button>
-              </div>
-              {docsLoading ? (
-                <p className="text-sm text-muted-foreground">Loading documents...</p>
-              ) : profileDocs.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No profile documents yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {profileDocs.map((doc) => (
-                    <li key={doc.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
-                      <span className="font-medium">{doc.fileName ?? doc.documentType ?? "Document"}</span>
-                      <a href={getDocUrl(doc)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-xs">View</a>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </div>
           </>
         ) : (
@@ -346,20 +241,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Service Provider Profile</DialogTitle>
-              <DialogDescription>
-                This will delete the profile and all associated documents (commercial registration, tax certificate, technical certificate, insurance). This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </>
     );
   }
@@ -436,21 +317,6 @@ export default function ProfileServiceProviderProfileCard({ organizationId, embe
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={submitForm} disabled={createMutation.isPending || updateMutation.isPending}>{editing ? "Update" : "Create"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Service Provider Profile</DialogTitle>
-            <DialogDescription>
-              This will delete the profile and all associated documents (commercial registration, tax certificate, technical certificate, insurance). This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? "Deleting..." : "Delete"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

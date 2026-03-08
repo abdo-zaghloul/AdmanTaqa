@@ -108,7 +108,7 @@ export default function EditOrganizationModal({
         { organizationId, body },
         {
           onSuccess: () => onClose(),
-          onError: (e) => {},
+          onError: () => {},
         }
       );
     } else {
@@ -116,7 +116,7 @@ export default function EditOrganizationModal({
         { organizationId, body },
         {
           onSuccess: () => onClose(),
-          onError: (e) => {},
+          onError: () => {},
         }
       );
     }

@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import useGetOrganizationFull from "@/hooks/Organization/useGetOrganizationFull";
-import { MoreVertical, AlertCircle } from "lucide-react";
+import useDeleteServiceProviderProfile from "@/hooks/Organization/useDeleteServiceProviderProfile";
+import { MoreVertical, AlertCircle, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 import EditOrganizationModal from "./components/EditOrganizationModal";
 import UnifiedProfileCard from "./components/UnifiedProfileCard";
 
@@ -9,7 +19,35 @@ export default function Profile() {
     const { data: organizationResponse, isLoading } = useGetOrganizationFull();
     const organization = organizationResponse?.data;
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const deleteMutation = useDeleteServiceProviderProfile();
+
     const isPendingApproval = organization && organization.status !== "APPROVED";
+    const isServiceProvider = organization?.type === "SERVICE_PROVIDER";
+    const hasSPProfile = !!organization?.ServiceProviderProfile?.id;
+
+    useEffect(() => {
+        if (!menuOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener("click", handleClickOutside);
+        return () => document.removeEventListener("click", handleClickOutside);
+    }, [menuOpen]);
+
+    const handleDeleteConfirm = () => {
+        if (!organization?.id) return;
+        deleteMutation.mutate(organization.id, {
+            onSuccess: () => {
+                setDeleteConfirmOpen(false);
+                toast.success("Service provider profile deleted.");
+            },
+        });
+    };
 
     if (isLoading) {
         return (
@@ -28,14 +66,42 @@ export default function Profile() {
                         Manage your organization's public identity and settings.
                     </p>
                 </div>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsEditModalOpen(true)}
-                    className="h-10 w-10 rounded-full"
-                >
-                    <MoreVertical className="h-5 w-5" />
-                </Button>
+                <div className="relative flex items-center gap-1" ref={menuRef}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setMenuOpen((o) => !o)}
+                        className="h-10 w-10 rounded-full"
+                    >
+                        <MoreVertical className="h-5 w-5" />
+                    </Button>
+                    {menuOpen && (
+                        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] rounded-md border bg-popover py-1 text-popover-foreground shadow-md">
+                            <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    setIsEditModalOpen(true);
+                                }}
+                            >
+                                <Pencil className="h-4 w-4" /> Edit
+                            </button>
+                            {isServiceProvider && hasSPProfile && (
+                                <button
+                                    type="button"
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-accent"
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        setDeleteConfirmOpen(true);
+                                    }}
+                                >
+                                    <Trash2 className="h-4 w-4" /> Delete
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {isPendingApproval && (
@@ -62,6 +128,29 @@ export default function Profile() {
                 organizationId={organization?.id}
                 initialServiceProviderProfile={organization?.ServiceProviderProfile ?? null}
             />
+
+            <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete Service Provider Profile</DialogTitle>
+                        <DialogDescription>
+                            This will delete the profile and all associated documents. This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteConfirm}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

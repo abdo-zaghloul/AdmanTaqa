@@ -16,6 +16,7 @@ export default function useDeleteServiceProviderProfile() {
         queryKey: ["serviceProviderProfile", organizationId],
       });
       queryClient.invalidateQueries({ queryKey: ["organization"] });
+      queryClient.invalidateQueries({ queryKey: ["organization", "full"] });
     },
   });
 }
