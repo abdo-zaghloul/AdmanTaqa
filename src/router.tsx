@@ -41,7 +41,7 @@ import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 import Locations from "./pages/Locations/Locations";
 
-// ---------- Shared (مشترك: Authority + Service Provider + Fuel Station) ----------
+// ---------- Shared (مشترك: Authority + Service Provider) ----------
 import Quotations from "./pages/Quotations/Quotations";
 
 export const router = createHashRouter([
