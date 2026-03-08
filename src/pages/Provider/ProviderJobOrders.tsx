@@ -22,8 +22,8 @@ import useProviderJobOrders from "@/hooks/Provider/useProviderJobOrders";
 import { Eye } from "lucide-react";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "كل الحالات" },
-  { value: "AWAITING_PAYMENT", label: "AWAITING_PAYMENT (تأكيد استلام الدفع من هنا)" },
+  { value: "", label: "All statuses" },
+  { value: "AWAITING_PAYMENT", label: "AWAITING_PAYMENT (confirm payment received here)" },
   { value: "ACTIVE", label: "ACTIVE" },
   { value: "IN_PROGRESS", label: "IN_PROGRESS" },
   { value: "UNDER_REVIEW", label: "UNDER_REVIEW" },
@@ -50,10 +50,10 @@ export default function ProviderJobOrders() {
         <p className="text-muted-foreground">External job orders assigned to your organization.</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">فلتر الحالة:</span>
+        <span className="text-sm text-muted-foreground">Status filter:</span>
         <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
           <SelectTrigger className="w-[280px]">
-            <SelectValue placeholder="كل الحالات" />
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((opt) => (
@@ -74,11 +74,11 @@ export default function ProviderJobOrders() {
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">No job orders.</p>
               <p className="text-xs text-muted-foreground">
-                تظهر هنا أوامر العمل عندما تختار المحطة عرضك (Select quote) ثم تؤكد إرسال المبلغ. تأكد أنك مسجّل الدخول بحساب <strong>منظمة المزود</strong> صاحبة العرض المختار وليس بحساب المحطة.
+                Job orders appear here when the station selects your quote and confirms payment. Make sure you are logged in with the <strong>service provider organization</strong> that owns the selected quote, not the station account.
               </p>
               {statusFilter === "AWAITING_PAYMENT" && (
                 <p className="text-xs text-amber-700 dark:text-amber-300">
-                  لا يوجد حالياً أوامر بانتظار تأكيد استلام الدفع. تظهر أوامر AWAITING_PAYMENT عندما تختار المحطة عرضك وتؤكد إرسال المبلغ — عندها ادخل من &quot;View&quot; وستجد بلوك &quot;تأكيد استلام الدفع عند المزود&quot;.
+                  No job orders currently awaiting payment confirmation. AWAITING_PAYMENT orders appear when the station selects your quote and confirms payment — then open &quot;View&quot; to find the &quot;Confirm payment received&quot; block.
                 </p>
               )}
             </div>
@@ -132,7 +132,7 @@ export default function ProviderJobOrders() {
             {items.length > 0 && !statusFilter && (
               <CardContent className="pt-0">
                 <p className="text-xs text-muted-foreground border-t pt-3">
-                  للعثور على أمر في حالة <strong>AWAITING_PAYMENT</strong> (تأكيد استلام الدفع): اختر الفلتر &quot;AWAITING_PAYMENT&quot; أو ادخل من View على الأمر وستجد تأكيد استلام الدفع في صفحة التفاصيل.
+                  To find an order in <strong>AWAITING_PAYMENT</strong> (payment confirmation): use the &quot;AWAITING_PAYMENT&quot; filter or open View on the order to see the confirm payment received section on the detail page.
                 </p>
               </CardContent>
             )}

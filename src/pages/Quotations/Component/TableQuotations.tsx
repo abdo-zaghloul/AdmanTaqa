@@ -47,15 +47,6 @@ function getStatusBadge(status: string) {
 }
 
 export default function TableQuotations({ quotations }: TableQuotationsProps) {
-  const formatAmount = (row: QuotationRow) => {
-    const amount = row.pricing?.amount;
-    const currency = row.pricing?.currency ?? "";
-    if (amount == null) return "N/A";
-    const numeric = Number(amount);
-    if (Number.isNaN(numeric)) return `${currency} ${String(amount)}`.trim();
-    return `${currency} ${numeric.toLocaleString()}`.trim();
-  };
-
   return (
     <CardContent className="p-0">
       <Table>
@@ -66,14 +57,13 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
             <TableHead className="font-bold text-foreground">Provider</TableHead>
             <TableHead className="font-bold text-foreground">Branch / Station</TableHead>
             <TableHead className="font-bold text-foreground">Submitted by</TableHead>
-            <TableHead className="font-bold text-foreground">Amount</TableHead>
             <TableHead className="font-bold text-foreground">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {quotations.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 No quotations found.
               </TableCell>
             </TableRow>
@@ -100,9 +90,6 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
                 </TableCell>
                 <TableCell className="text-sm">
                   {quo.submittedBy ?? "—"}
-                </TableCell>
-                <TableCell className="font-bold text-slate-700">
-                  {formatAmount(quo)}
                 </TableCell>
                 <TableCell>
                   {quo.requestStatus ? getStatusBadge(quo.requestStatus) : "—"}

@@ -9,6 +9,7 @@ import Register from "./pages/Auth/Register";
 import Profile from "./pages/Profile/Profile";
 
 // ---------- Authority   ----------
+
 import OrganizationDetails from "./pages/Authority/Organizations/OrganizationDetails";
 import Organizations from "./pages/Authority/Organizations/Organizations";
 import OrganizationsRejected from "./pages/Authority/Organizations/OrganizationsRejected";
@@ -38,27 +39,7 @@ import ProviderRfqs from "./pages/Provider/ProviderRfqs";
 import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
-
-// ---------- Fuel Station   ----------
 import Locations from "./pages/Locations/Locations";
-import Branches from "./pages/Branches/Branches";
-import BranchDetails from "./pages/Branches/BranchDetails";
-import CreateBranch from "./pages/Branches/CreateBranch";
-import EditBranch from "./pages/Branches/EditBranch";
-import BranchRequests from "./pages/BranchRequests/BranchRequests";
-import CreateBranchRequest from "./pages/BranchRequests/CreateBranchRequest";
-import BranchRequestDetails from "./pages/BranchRequests/BranchRequestDetails";
-import WorkOrderDetails from "./pages/WorkOrders/WorkOrderDetails";
-import WorkOrdersReviewQueue from "./pages/WorkOrders/WorkOrdersReviewQueue";
-import InternalWorkOrders from "./pages/Station/InternalWorkOrders";
-import InternalWorkOrderDetail from "./pages/Station/InternalWorkOrderDetail";
-import InternalWorkOrdersReviewQueue from "./pages/Station/InternalWorkOrdersReviewQueue";
-import StationRequests from "./pages/Station/StationRequests";
-import StationRequestDetail from "./pages/Station/StationRequestDetail";
-import CreateMaintenanceRequest from "./pages/Station/CreateMaintenanceRequest";
-import LinkedProviders from "./pages/Station/LinkedProviders";
-import StationJobOrders from "./pages/Station/StationJobOrders";
-import StationJobOrderDetail from "./pages/Station/StationJobOrderDetail";
 
 // ---------- Shared (مشترك: Authority + Service Provider + Fuel Station) ----------
 import Quotations from "./pages/Quotations/Quotations";
@@ -318,157 +299,11 @@ export const router = createHashRouter([
           </RouteAccessGuard>
         ),
       },
-
-      // ---------- Fuel Station (محطة وقود) ----------
       {
         path: "locations",
         element: (
           <RouteAccessGuard pathKey="locations">
             <Locations />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branches",
-        element: (
-          <RouteAccessGuard pathKey="branches">
-            <Branches />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branches/create",
-        element: (
-          <RouteAccessGuard pathKey="branches/create">
-            <CreateBranch />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branches/:id",
-        element: (
-          <RouteAccessGuard pathKey="branches/:id">
-            <BranchDetails />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branches/:id/edit",
-        element: (
-          <RouteAccessGuard pathKey="branches/:id/edit">
-            <EditBranch />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branch-requests",
-        element: (
-          <RouteAccessGuard pathKey="branch-requests">
-            <BranchRequests />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branch-requests/create",
-        element: (
-          <RouteAccessGuard pathKey="branch-requests/create">
-            <CreateBranchRequest />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "branch-requests/:id",
-        element: (
-          <RouteAccessGuard pathKey="branch-requests/:id">
-            <BranchRequestDetails />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "work-orders/review-queue",
-        element: (
-          <RouteAccessGuard pathKey="work-orders/review-queue">
-            <WorkOrdersReviewQueue />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "work-orders/:id",
-        element: (
-          <RouteAccessGuard pathKey="work-orders/:id">
-            <WorkOrderDetails />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "internal-work-orders",
-        element: (
-          <RouteAccessGuard pathKey="internal-work-orders">
-            <InternalWorkOrders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "internal-work-orders/review-queue",
-        element: (
-          <RouteAccessGuard pathKey="internal-work-orders/review-queue">
-            <InternalWorkOrdersReviewQueue />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "internal-work-orders/:id",
-        element: (
-          <RouteAccessGuard pathKey="internal-work-orders/:id">
-            <InternalWorkOrderDetail />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "station-requests",
-        element: (
-          <RouteAccessGuard pathKey="station-requests">
-            <StationRequests />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "station-requests/create",
-        element: (
-          <RouteAccessGuard pathKey="station-requests/create">
-            <CreateMaintenanceRequest />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "station-requests/:id",
-        element: (
-          <RouteAccessGuard pathKey="station-requests/:id">
-            <StationRequestDetail />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "linked-providers",
-        element: (
-          <RouteAccessGuard pathKey="linked-providers">
-            <LinkedProviders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "station-job-orders",
-        element: (
-          <RouteAccessGuard pathKey="station-job-orders">
-            <StationJobOrders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "station-job-orders/:id",
-        element: (
-          <RouteAccessGuard pathKey="station-job-orders/:id">
-            <StationJobOrderDetail />
           </RouteAccessGuard>
         ),
       },
