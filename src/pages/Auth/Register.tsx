@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useRegisterV2Form, REGISTER_V2_FILE_KEYS, getRequiredFileKeys } from "@/hooks/Auth/useRegisterV2Form";
 import useGetCountries from "@/hooks/Location/useGetCountries";
 import useGetGovernorates from "@/hooks/Location/useGetGovernorates";
@@ -42,7 +42,7 @@ const STEP_LABELS = [
 ];
 
 export default function Register() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -54,7 +54,7 @@ export default function Register() {
     files,
     setFile,
     registrationSuccess,
-    completeRegistration,
+    // completeRegistration,
   } = useRegisterV2Form();
 
   const organizationType = watch("organizationType");
@@ -134,7 +134,7 @@ export default function Register() {
                 ) : null}
               </div>
             ) : null}
-            <Button
+            {/* <Button
               className="w-full gap-2 bg-slate-900 hover:bg-slate-800"
               onClick={() => {
                 completeRegistration();
@@ -142,7 +142,7 @@ export default function Register() {
               }}
             >
               Continue to dashboard
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
