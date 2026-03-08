@@ -92,13 +92,36 @@ export interface CreateQuoteBody {
   [key: string]: unknown;
 }
 
+/** ExternalRequest nested in provider job order list (from API) */
+export interface ProviderJobOrderExternalRequest {
+  id?: number;
+  status?: string;
+  branchId?: number | null;
+  formData?: {
+    title?: string;
+    priority?: string;
+    description?: string;
+    attachments?: unknown[];
+    [key: string]: unknown;
+  };
+}
+
 export interface ProviderJobOrderItem {
   id: number;
+  providerQuoteId?: number;
   externalRequestId?: number;
+  assignedBranchId?: number | null;
   status?: string;
-  paymentRecord?: PaymentRecordSummary;
+  activatedAt?: string | null;
+  expectedStartDate?: string | null;
+  expectedEndDate?: string | null;
+  cancellationReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  paymentRecord?: PaymentRecordSummary;
+  /** Nested from API (ExternalRequest) — request details + formData */
+  externalRequest?: ProviderJobOrderExternalRequest | null;
+  providerQuote?: { id?: number; status?: string; [key: string]: unknown } | null;
 }
 
 export interface PaymentRecordSummary {
