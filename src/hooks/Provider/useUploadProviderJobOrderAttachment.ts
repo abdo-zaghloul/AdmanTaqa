@@ -1,12 +1,40 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { uploadProviderJobOrderAttachment } from "@/api/services/providerService";
+import {
+  addProviderJobOrderAttachment,
+  uploadProviderJobOrderAttachment,
+} from "@/api/services/providerService";
+
+type AddByUrlPayload = {
+  jobOrderId: string | number;
+  fileUrl: string;
+  description?: string;
+};
+
+type UploadFilePayload = {
+  jobOrderId: string | number;
+  file: File;
+  description?: string;
+};
 
 export default function useUploadProviderJobOrderAttachment() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ jobOrderId, file }: { jobOrderId: string | number; file: File }) =>
-      uploadProviderJobOrderAttachment(jobOrderId, file),
-    onSuccess: (_, { jobOrderId }) => {
+    mutationFn: (payload: AddByUrlPayload | UploadFilePayload) => {
+      if ("file" in payload && payload.file instanceof File) {
+        return uploadProviderJobOrderAttachment(
+          payload.jobOrderId,
+          payload.file,
+          payload.description
+        );
+      }
+      const byUrl = payload as AddByUrlPayload;
+      return addProviderJobOrderAttachment(payload.jobOrderId, {
+        fileUrl: byUrl.fileUrl,
+        description: byUrl.description,
+      });
+    },
+    onSuccess: (_, payload) => {
+      const jobOrderId = payload.jobOrderId;
       queryClient.invalidateQueries({
         queryKey: ["provider-job-order-attachments", String(jobOrderId)],
       });

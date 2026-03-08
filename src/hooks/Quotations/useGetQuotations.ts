@@ -42,6 +42,10 @@ const toQuotation = (raw: unknown): QuotationItem | null => {
             typeof sr.fuelStationOrganizationId === "number"
               ? sr.fuelStationOrganizationId
               : undefined,
+          formData:
+            sr.formData && typeof sr.formData === "object"
+              ? (sr.formData as { priority?: string; description?: string })
+              : undefined,
           Branch: branch
             ? {
                 id: branch.id,

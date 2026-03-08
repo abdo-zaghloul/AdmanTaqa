@@ -23,6 +23,9 @@ export type QuotationRow = {
   submittedBy?: string | null;
   /** ServiceRequest.status (e.g. PENDING) */
   requestStatus?: string | null;
+  /** ServiceRequest.formData */
+  priority?: string | null;
+  description?: string | null;
 };
 
 type TableQuotationsProps = {
@@ -58,7 +61,8 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent">
-            <TableHead className="font-bold text-foreground">Service Request</TableHead>
+            <TableHead className="font-bold text-foreground">Priority</TableHead>
+            <TableHead className="font-bold text-foreground">Description</TableHead>
             <TableHead className="font-bold text-foreground">Provider</TableHead>
             <TableHead className="font-bold text-foreground">Branch / Station</TableHead>
             <TableHead className="font-bold text-foreground">Submitted by</TableHead>
@@ -69,7 +73,7 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
         <TableBody>
           {quotations.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                 No quotations found.
               </TableCell>
             </TableRow>
@@ -79,8 +83,11 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
                 key={quo.id}
                 className="hover:bg-muted/20 transition-all border-b last:border-0 border-muted/20"
               >
-                <TableCell className="font-mono text-xs text-muted-foreground">
-                  REQ-{quo.serviceRequestId}
+                <TableCell className="text-sm capitalize">
+                  {quo.priority ?? "—"}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate" title={quo.description ?? undefined}>
+                  {quo.description ?? "—"}
                 </TableCell>
                 <TableCell className="font-semibold text-sm">
                   {quo.providerName ?? (quo.serviceProviderOrganizationId != null ? `Org #${quo.serviceProviderOrganizationId}` : "N/A")}
@@ -97,7 +104,6 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
                 <TableCell className="font-bold text-slate-700">
                   {formatAmount(quo)}
                 </TableCell>
-                {/* <TableCell>{getStatusBadge(quo.status)}</TableCell> */}
                 <TableCell>
                   {quo.requestStatus ? getStatusBadge(quo.requestStatus) : "—"}
                 </TableCell>

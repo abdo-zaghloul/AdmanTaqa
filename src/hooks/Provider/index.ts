@@ -8,5 +8,6 @@ export { default as useWithdrawQuote } from "./useWithdrawQuote";
 export { default as useProviderJobOrders } from "./useProviderJobOrders";
 export { default as useProviderJobOrderById } from "./useProviderJobOrderById";
 export { default as useConfirmReceived } from "./useConfirmReceived";
+export { default as useGetOperators } from "./useGetOperators";
 export { default as useAssignProviderJobOrderOperator } from "./useAssignProviderJobOrderOperator";
 export { default as useUpdateProviderJobOrderStatus } from "./useUpdateProviderJobOrderStatus";

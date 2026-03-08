@@ -89,7 +89,6 @@ export default function ProviderJobOrders() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="font-bold">Job Order</TableHead>
                     <TableHead className="font-bold">Status</TableHead>
                     <TableHead className="font-bold">Title</TableHead>
                     <TableHead className="font-bold">Priority</TableHead>
@@ -105,7 +104,6 @@ export default function ProviderJobOrders() {
                     const description = formData.description?.trim() || "—";
                     return (
                       <TableRow key={jo.id} className="hover:bg-muted/20">
-                        <TableCell className="font-medium">#{jo.id}</TableCell>
                         <TableCell>
                           <Badge variant={jo.status === "COMPLETED" ? "default" : "secondary"} className="text-xs">
                             {jo.status ?? "—"}

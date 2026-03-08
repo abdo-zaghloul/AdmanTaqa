@@ -11,11 +11,14 @@ import {
   Clock,
   Shield,
   FileText,
+  Briefcase,
+  Mail,
+  Phone,
+  User,
 } from "lucide-react";
 import useGetOrganizationById from "@/hooks/Organization/useGetOrganizationById";
-import useGetOrganizationDocuments from "@/hooks/Organization/useGetOrganizationDocuments";
 import OrganizationActions from "./Component/OrganizationActions";
-
+import type { OrganizationByIdFull } from "@/types/organization";
 export default function OrganizationDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -25,10 +28,10 @@ export default function OrganizationDetails() {
   const backPath = isFuelStationContext ? "/fuel-stations" : "/organizations";
 
   const { data: org, isLoading: orgLoading, isError: orgError } = useGetOrganizationById(orgId);
-  const {
-    data: documents = [],
-    isLoading: documentsLoading,
-  } = useGetOrganizationDocuments(org?.id);
+  const orgFull = org as OrganizationByIdFull | null | undefined;
+  const documents = orgFull?.OrganizationDocuments ?? [];
+  const serviceProvider = orgFull?.ServiceProviderProfile;
+  const usersList = orgFull?.Users ?? [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -149,7 +152,7 @@ export default function OrganizationDetails() {
                 Profile Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="group">
@@ -185,6 +188,63 @@ export default function OrganizationDetails() {
                   )}
                 </div>
               </div>
+
+              {serviceProvider && (
+                <div className="border-t pt-6 space-y-4">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Service Provider Profile
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {serviceProvider.licenseNumber != null && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">License Number</p>
+                        <p className="font-medium">{serviceProvider.licenseNumber}</p>
+                      </div>
+                    )}
+                    {serviceProvider.yearsExperience != null && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Years Experience</p>
+                        <p className="font-medium">{serviceProvider.yearsExperience}</p>
+                      </div>
+                    )}
+                    {serviceProvider.street != null && serviceProvider.street !== "" && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Street</p>
+                        <p className="font-medium">{serviceProvider.street}</p>
+                      </div>
+                    )}
+                    {serviceProvider.amount != null && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Amount</p>
+                        <p className="font-medium">{serviceProvider.amount}</p>
+                      </div>
+                    )}
+                    {serviceProvider.Area && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Area</p>
+                        <p className="font-medium">{serviceProvider.Area.name}</p>
+                      </div>
+                    )}
+                    {serviceProvider.City && (
+                      <div>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">City</p>
+                        <p className="font-medium">{serviceProvider.City.name}</p>
+                      </div>
+                    )}
+                    {serviceProvider.serviceCategories && serviceProvider.serviceCategories.length > 0 && (
+                      <div className="md:col-span-2">
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Service Categories</p>
+                        <div className="flex flex-wrap gap-2">
+                          {serviceProvider.serviceCategories.map((cat, i) => (
+                            <Badge key={i} variant="outline">{cat}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -194,43 +254,85 @@ export default function OrganizationDetails() {
                 <FileText className="h-5 w-5 text-primary" />
                 Documents
               </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                Organization documents and Service Provider documents.
+              </p>
             </CardHeader>
             <CardContent className="pt-6">
-              {documentsLoading ? (
-                <p className="text-sm text-muted-foreground">Loading documents...</p>
-              ) : documents.length === 0 ? (
-                <p className="text-sm text-muted-foreground italic">No documents uploaded yet.</p>
-              ) : (
-                <ul className="space-y-3">
-                  {documents.map((doc) => (
-                    <li key={doc.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-800">
-                          {doc.fileName ?? getDocTypeLabel(doc.documentType)}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {getDocTypeLabel(doc.documentType)}
-                          {doc.createdAt ? ` • ${new Date(doc.createdAt).toLocaleDateString()}` : ""}
-                        </p>
-                      </div>
-                      <a
-                        href={getDocUrl(doc.url, doc.fileUrl)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        View
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {(() => {
+                const orgDocs = documents.map((doc) => ({ ...doc, _source: "org" as const, _key: doc.id }));
+                const spDocs = (serviceProvider?.ServiceProviderDocuments ?? []).map((doc) => ({ ...doc, _source: "sp" as const, _key: `sp-${doc.id}` }));
+                const allDocs = [...orgDocs, ...spDocs];
+                if (allDocs.length === 0) {
+                  return <p className="text-sm text-muted-foreground italic">No documents uploaded yet.</p>;
+                }
+                return (
+                  <ul className="space-y-3">
+                    {allDocs.map((doc) => (
+                      <li key={doc._key} className="flex items-center justify-between rounded-lg border border-slate-200 px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-800">
+                            {doc.fileName ?? getDocTypeLabel(doc.documentType)}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {getDocTypeLabel(doc.documentType)}
+                            {doc.status ? ` • ${doc.status}` : ""}
+                            {"createdAt" in doc && doc.createdAt ? ` • ${new Date(doc.createdAt).toLocaleDateString()}` : ""}
+                          </p>
+                        </div>
+                        <a
+                          href={getDocUrl(undefined, doc.fileUrl ?? undefined)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-primary hover:underline shrink-0"
+                        >
+                          View
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
             </CardContent>
           </Card>
 
         </div>
 
         <div className="space-y-6">
+          {usersList.length > 0 && (
+            <Card className="border-none shadow-sm shadow-slate-200/50">
+              <CardHeader className="border-b bg-slate-50/50 py-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <User className="h-5 w-5 text-primary" />
+                  Contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                {usersList.map((u) => (
+                  <div key={u.id} className="p-4 rounded-xl border bg-slate-50/50 border-slate-100 space-y-2">
+                    {u.fullName && (
+                      <p className="font-semibold text-sm flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        {u.fullName}
+                      </p>
+                    )}
+                    {u.email && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Mail className="h-4 w-4 shrink-0" />
+                        <a href={`mailto:${u.email}`} className="text-primary hover:underline">{u.email}</a>
+                      </p>
+                    )}
+                    {u.phone && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Phone className="h-4 w-4 shrink-0" />
+                        <a href={`tel:${u.phone}`} className="text-primary hover:underline">{u.phone}</a>
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
           <Card className="border-none shadow-sm shadow-slate-200/50">
             <CardHeader className="border-b bg-slate-50/50 py-4">
               <CardTitle className="text-lg">Status</CardTitle>

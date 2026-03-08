@@ -20,6 +20,89 @@ export interface OrganizationResponse {
     message?: string;
 }
 
+/** User in GET /organizations/:id response (Users array) */
+export interface OrganizationByIdUser {
+    id: number;
+    organizationId: number;
+    email: string;
+    fullName: string;
+    phone?: string | null;
+    isActive: boolean;
+    supervisorUserId?: number | null;
+    preferences?: unknown;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Document in GET /organizations/:id response (OrganizationDocuments array) */
+export interface OrganizationByIdDocument {
+    id: number;
+    organizationId: number;
+    documentType: string;
+    fileUrl?: string | null;
+    fileName?: string | null;
+    uploadedByUserId?: number | null;
+    issuedAt?: string | null;
+    expiresAt?: string | null;
+    approvedAt?: string | null;
+    approvedByUserId?: number | null;
+    status?: string;
+    rejectionReason?: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/** Service provider doc in GET /organizations/:id → ServiceProviderProfile.ServiceProviderDocuments */
+export interface ServiceProviderDocumentItem {
+    id: number;
+    documentType: string;
+    fileUrl?: string | null;
+    fileName?: string | null;
+    status?: string;
+    expiresAt?: string | null;
+    createdAt?: string;
+}
+
+/** ServiceProviderProfile nested in GET /organizations/:id */
+export interface OrganizationByIdServiceProviderProfile {
+    id?: number;
+    organizationId?: number;
+    licenseNumber?: string | null;
+    serviceCategories?: string[] | null;
+    yearsExperience?: number | null;
+    areaId?: number | null;
+    cityId?: number | null;
+    street?: string | null;
+    amount?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+    Area?: { id: number; name: string } | null;
+    City?: { id: number; name: string } | null;
+    ServiceProviderDocuments?: ServiceProviderDocumentItem[];
+}
+
+/** Full organization from GET /api/organizations/:id */
+export interface OrganizationByIdFull {
+    id: number;
+    name: string;
+    type: string;
+    status: string;
+    rejectionReason?: string | null;
+    approvedAt?: string | null;
+    approvedByUserId?: number | null;
+    createdAt: string;
+    updatedAt: string;
+    Users?: OrganizationByIdUser[];
+    OrganizationDocuments?: OrganizationByIdDocument[];
+    ServiceProviderProfile?: OrganizationByIdServiceProviderProfile | null;
+}
+
+export interface OrganizationByIdResponse {
+    success: boolean;
+    data: OrganizationByIdFull;
+    message?: string;
+}
+
 /** List organizations (Authority). GET /api/organizations?status=&type=&page=&limit= */
 export interface OrganizationsListData {
     items: OrganizationProfile[];

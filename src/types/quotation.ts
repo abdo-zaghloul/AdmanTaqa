@@ -14,12 +14,13 @@ export interface QuotationItem {
   createdAt: string;
   updatedAt?: string;
   QuotationPricing?: QuotationPricing | null;
-  /** From API: ServiceRequest with Branch, Organization */
+  /** From API: ServiceRequest with Branch, Organization, formData */
   ServiceRequest?: {
     id?: number;
     status?: string;
     branchId?: number;
     fuelStationOrganizationId?: number;
+    formData?: { priority?: string; description?: string; [key: string]: unknown };
     Branch?: { id?: number; nameEn?: string; nameAr?: string };
     Organization?: { id?: number; name?: string };
   };

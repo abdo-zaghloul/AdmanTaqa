@@ -1,9 +1,9 @@
 import axiosInstance from "@/api/config";
 import { useQuery } from "@tanstack/react-query";
-import type { OrganizationResponse } from "@/types/organization";
+import type { OrganizationByIdResponse } from "@/types/organization";
 
 const getOrganizationById = async (id: number | string) => {
-  const response = await axiosInstance.get<OrganizationResponse>(`organizations/${id}`);
+  const response = await axiosInstance.get<OrganizationByIdResponse>(`organizations/${id}`);
   return response.data?.data ?? null;
 };
 

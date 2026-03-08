@@ -1,5 +1,14 @@
 /** Provider (Service Provider) — RFQs, quotes, job orders, confirm received */
 
+/** Operator — from GET /api/operators (service provider organization) */
+export interface ProviderOperator {
+  id: number;
+  organizationId?: number;
+  name?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** formData from GET /requests (RFQ) — doc: title, description, requiredTimeline */
 export interface ProviderRfqFormData {
   title?: string;
@@ -122,6 +131,15 @@ export interface ProviderJobOrderItem {
   /** Nested from API (ExternalRequest) — request details + formData */
   externalRequest?: ProviderJobOrderExternalRequest | null;
   providerQuote?: { id?: number; status?: string; [key: string]: unknown } | null;
+  /** Nested from API (ExecutionDetails) — attachments uploaded for this job order */
+  executionDetails?: {
+    attachments?: Array<{
+      fileUrl?: string;
+      uploadedAt?: string;
+      description?: string | null;
+      uploadedByUserId?: number;
+    }>;
+  } | null;
 }
 
 export interface PaymentRecordSummary {
@@ -194,6 +212,8 @@ export interface ProviderAttachmentItem {
   id: number;
   name?: string;
   url?: string;
+  fileUrl?: string;
+  description?: string | null;
   createdAt?: string;
 }
 

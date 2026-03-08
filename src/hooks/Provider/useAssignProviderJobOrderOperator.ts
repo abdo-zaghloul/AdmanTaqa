@@ -6,11 +6,11 @@ export default function useAssignProviderJobOrderOperator() {
   return useMutation({
     mutationFn: ({
       jobOrderId,
-      userId,
+      operatorId,
     }: {
       jobOrderId: number | string;
-      userId: number;
-    }) => assignProviderJobOrderOperator(jobOrderId, { userId }),
+      operatorId: number;
+    }) => assignProviderJobOrderOperator(jobOrderId, { operatorId }),
     onSuccess: (_, { jobOrderId }) => {
       queryClient.invalidateQueries({ queryKey: ["provider-job-order", jobOrderId] });
       queryClient.invalidateQueries({ queryKey: ["provider-job-orders"] });

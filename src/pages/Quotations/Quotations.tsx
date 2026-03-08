@@ -88,6 +88,8 @@ export default function Quotations() {
     fuelStationName: item.ServiceRequest?.Organization?.name ?? null,
     submittedBy: item.User?.fullName ?? null,
     requestStatus: item.ServiceRequest?.status ?? null,
+    priority: item.ServiceRequest?.formData?.priority ?? null,
+    description: item.ServiceRequest?.formData?.description ?? null,
   }));
 
   return (

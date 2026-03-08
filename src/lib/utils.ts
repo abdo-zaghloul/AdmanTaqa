@@ -13,5 +13,5 @@ export function getApiErrorMessage(error: unknown, fallback = "An error occurred
   };
   const msg = err.response?.data?.message;
   const detail = err.response?.data?.errors?.detail;
-  return (typeof msg === "string" && msg) || (typeof detail === "string" && detail) || (err as Error)?.message ?? fallback;
+  return ((typeof msg === "string" && msg) || (typeof detail === "string" && detail) || (err as Error)?.message) ?? fallback;
 }

@@ -15,6 +15,7 @@ import type {
   ProviderAttachmentItem,
   ProviderReportItem,
   CreateProviderReportBody,
+  ProviderOperator,
 } from "@/types/provider";
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -26,13 +27,14 @@ function getErrorMessage(err: unknown, fallback: string): string {
       : fallback;
 }
 
-/** Normalize job order from API: backend may return PascalCase (PaymentRecord, ExternalRequest, ...). */
+/** Normalize job order from API: backend may return PascalCase (PaymentRecord, ExternalRequest, ExecutionDetails, ...). */
 function normalizeProviderJobOrder(raw: Record<string, unknown>): Record<string, unknown> {
   const out = { ...raw };
   if (raw.PaymentRecord !== undefined) out.paymentRecord = raw.PaymentRecord;
   if (raw.ExternalRequest !== undefined) out.externalRequest = raw.ExternalRequest;
   if (raw.ProviderQuote !== undefined) out.providerQuote = raw.ProviderQuote;
   if (raw.ExternalJobAssignments !== undefined) out.externalJobAssignments = raw.ExternalJobAssignments;
+  if (raw.ExecutionDetails !== undefined) out.executionDetails = raw.ExecutionDetails;
   return out;
 }
 
@@ -130,6 +132,15 @@ export async function fetchProviderJobOrders(params?: {
 }
 
 /**
+ * GET /api/operators — list operators for the current organization (service provider). Requires operators:read.
+ */
+export async function fetchOperators(): Promise<ProviderOperator[]> {
+  const response = await axiosInstance.get<{ success?: boolean; data?: ProviderOperator[] }>("operators");
+  const data = response.data?.data;
+  return Array.isArray(data) ? data : [];
+}
+
+/**
  * Doc (work-order-flow): تفاصيل أمر عمل للمزود = GET /api/provider/job-orders/:id
  */
 export async function fetchProviderJobOrderById(
@@ -205,7 +216,13 @@ export async function confirmJobOrderPaymentReceived(
   return response.data;
 }
 
-/** Doc (7.1): تعيين عامل — الـ API يتوقع body.operatorId (رقم). نرسل userId من الواجهة كـ operatorId. */
+/**
+ * POST /api/provider/job-orders/:id/assign-operator
+ * تعيين عامل (Operator) على أمر الشغل. مزود الخدمة فقط.
+ * صلاحيات: PROVIDER_JOB_ORDERS_ASSIGN_OPERATOR أو PROVIDER_JOBS_EXECUTE.
+ * مستندات المزود لازم تكون سارية. الـ Operator لازم يكون تابع لنفس منظمة المزود.
+ * Body: { operatorId: number } — رقم العامل (موجب).
+ */
 export async function assignProviderJobOrderOperator(
   jobOrderId: number | string,
   body: { operatorId?: number; userId?: number }
@@ -347,7 +364,7 @@ export async function createProviderJobOrderVisitCheckin(
   return response.data;
 }
 
-/** GET /api/provider/job-orders/:id/attachments — list attachments (if supported) */
+/** GET /api/provider/job-orders/:id/attachments — list attachments */
 export async function fetchProviderJobOrderAttachments(
   jobOrderId: number | string
 ): Promise<ProviderAttachmentItem[]> {
@@ -359,22 +376,40 @@ export async function fetchProviderJobOrderAttachments(
   return Array.isArray(data) ? data : [];
 }
 
-/** POST /api/provider/job-orders/:id/attachments/upload — multipart upload (file); backend uploads to storage then adds attachment. */
+/**
+ * POST /api/provider/job-orders/:id/attachments — نفس الـ endpoint يدعم طريقتين:
+ *
+ * 1) JSON: إرسال رابط جاهز. Body: { fileUrl: string, description?: string }.
+ *    الـ file يرفع على سيرفر/Cloudinary أولاً ثم نرسل الـ URL.
+ *
+ * 2) Multipart: رفع ملف مباشرة. Body form-data: file (مطلوب)، description (اختياري).
+ *    لا نضع Content-Type يدوياً؛ الـ client يضعه تلقائياً مع boundary.
+ */
+export async function addProviderJobOrderAttachment(
+  jobOrderId: number | string,
+  body: { fileUrl: string; description?: string }
+): Promise<unknown> {
+  const response = await axiosInstance.post(
+    `provider/job-orders/${jobOrderId}/attachments`,
+    { fileUrl: body.fileUrl, ...(body.description != null && body.description !== "" && { description: body.description }) }
+  );
+  return response.data;
+}
+
+/** POST /api/provider/job-orders/:id/attachments — رفع ملف (multipart). Body: file (مطلوب)، description (اختياري). PDF أو صورة، حد أقصى 5 MB. */
 export async function uploadProviderJobOrderAttachment(
   jobOrderId: number | string,
   file: File,
   description?: string
-): Promise<{ id?: number; url?: string }> {
+): Promise<unknown> {
   const formData = new FormData();
   formData.append("file", file);
   if (description != null && description !== "") formData.append("description", description);
-  const response = await axiosInstance.post<{ success?: boolean; data?: { jobOrder?: unknown; fileUrl?: string; publicId?: string } }>(
-    `provider/job-orders/${jobOrderId}/attachments/upload`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
+  const response = await axiosInstance.post(
+    `provider/job-orders/${jobOrderId}/attachments`,
+    formData
   );
-  const data = response.data?.data;
-  return data?.fileUrl ? { url: data.fileUrl } : {};
+  return response.data;
 }
 
 /** Doc (7.13): GET /api/provider/job-orders/:id/timeline — تايملاين النشاطات */
