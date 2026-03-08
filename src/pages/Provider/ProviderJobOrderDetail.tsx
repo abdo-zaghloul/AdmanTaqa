@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
 import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
 import useAssignProviderJobOrderOperator from "@/hooks/Provider/useAssignProviderJobOrderOperator";
@@ -83,7 +84,7 @@ export default function ProviderJobOrderDetail() {
           toast.success("Operator assigned.");
           setSelectedUserId("");
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Assign failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Assign failed.")),
       }
     );
   };
@@ -108,7 +109,7 @@ export default function ProviderJobOrderDetail() {
           setNewStatus("");
           setCancellationReason("");
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Update failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Update failed.")),
       }
     );
   };
@@ -119,7 +120,7 @@ export default function ProviderJobOrderDetail() {
       { jobOrderId: id },
       {
         onSuccess: () => toast.success("Visit check-in recorded."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Check-in failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Check-in failed.")),
       }
     );
   };
@@ -134,7 +135,7 @@ export default function ProviderJobOrderDetail() {
           toast.success("Attachment uploaded.");
           e.target.value = "";
         },
-        onError: (err) => toast.error(err instanceof Error ? err.message : "Upload failed."),
+        onError: (err) => toast.error(getApiErrorMessage(err, "Upload failed.")),
       }
     );
   };
@@ -145,7 +146,7 @@ export default function ProviderJobOrderDetail() {
       { jobOrderId: id, body: completionNote ? { completionNote } : undefined },
       {
         onSuccess: () => toast.success("Job order submitted for station review."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Submit failed.")),
       }
     );
   };
@@ -163,7 +164,7 @@ export default function ProviderJobOrderDetail() {
           setReportTitle("");
           setReportContent("");
         },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Create report failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Create report failed.")),
       }
     );
   };
@@ -174,7 +175,7 @@ export default function ProviderJobOrderDetail() {
       { jobOrderId: id, reportId },
       {
         onSuccess: () => toast.success("Report submitted for review."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit report failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Submit report failed.")),
       }
     );
   };
@@ -195,7 +196,7 @@ export default function ProviderJobOrderDetail() {
       {
         onSuccess: () =>
           toast.success(confirm ? "Payment received confirmed." : "Payment rejected."),
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Action failed."),
+        onError: (e) => toast.error(getApiErrorMessage(e, "Action failed.")),
       }
     );
   };

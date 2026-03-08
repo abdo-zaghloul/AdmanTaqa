@@ -63,7 +63,7 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["audit:read"],
   },
   users: {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "users/:id": {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
@@ -81,7 +81,7 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
   },
   "roles/:id/edit": {
-    orgTypes: [ "FUEL_STATION"],
+    orgTypes: [ "SERVICE_PROVIDER","FUEL_STATION"],
   },
   branches: {
     orgTypes: ["FUEL_STATION"],
