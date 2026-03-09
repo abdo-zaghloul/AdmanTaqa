@@ -541,31 +541,24 @@ export default function ProviderJobOrderDetail() {
                 )}
                 <div className="space-y-2 rounded border p-3 bg-muted/20">
                   <Label className="text-xs">New report</Label>
-                  {!hasCompletedVisit && (
-                    <p className="text-xs text-amber-600 font-medium">
-                      At least one completed visit is required before creating a report. Complete a visit in the Visits section above first.
-                    </p>
-                  )}
                   <Input
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
                     placeholder="Report title"
                     className="h-8"
-                    disabled={!hasCompletedVisit}
                   />
                   <Textarea
                     value={reportContent}
                     onChange={(e) => setReportContent(e.target.value)}
                     placeholder="Content (optional)"
                     className="min-h-[60px] text-sm"
-                    disabled={!hasCompletedVisit}
                   />
                   <Button
                     size="sm"
                     variant="outline"
                     className="gap-1"
                     onClick={handleCreateReport}
-                    disabled={!hasCompletedVisit || createReportMutation.isPending || !reportTitle.trim()}
+                    disabled={createReportMutation.isPending || !reportTitle.trim()}
                   >
                     <FileText className="h-3.5 w-3.5" /> Create report
                   </Button>
