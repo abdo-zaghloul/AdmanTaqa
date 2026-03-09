@@ -73,24 +73,29 @@ export default function Quotations() {
     );
   };
 
-  const rows = (data?.items ?? []).map((item) => ({
-    id: item.id,
-    serviceRequestId: item.serviceRequestId,
-    serviceProviderOrganizationId: item.serviceProviderOrganizationId,
-    pricing: item.QuotationPricing ?? null,
-    status: item.status,
-    submittedAt: item.createdAt,
-    providerName: item.Organization?.name ?? null,
-    branchName:
-      item.ServiceRequest?.Branch?.nameEn ??
-      item.ServiceRequest?.Branch?.nameAr ??
-      null,
-    fuelStationName: item.ServiceRequest?.Organization?.name ?? null,
-    submittedBy: item.User?.fullName ?? null,
-    requestStatus: item.ServiceRequest?.status ?? null,
-    priority: item.ServiceRequest?.formData?.priority ?? null,
-    description: item.ServiceRequest?.formData?.description ?? null,
-  }));
+  const rows = (data?.items ?? []).map((item) => {
+    const pricing = item.QuotationPricing;
+    return {
+      id: item.id,
+      serviceRequestId: item.serviceRequestId,
+      serviceProviderOrganizationId: item.serviceProviderOrganizationId,
+      pricing: pricing ?? null,
+      status: item.status,
+      submittedAt: item.createdAt,
+      providerName: item.Organization?.name ?? null,
+      branchName:
+        item.ServiceRequest?.Branch?.nameEn ??
+        item.ServiceRequest?.Branch?.nameAr ??
+        null,
+      fuelStationName: item.ServiceRequest?.Organization?.name ?? null,
+      submittedBy: item.User?.fullName ?? null,
+      requestStatus: item.ServiceRequest?.status ?? null,
+      priority: item.ServiceRequest?.formData?.priority ?? null,
+      description: item.ServiceRequest?.formData?.description ?? null,
+      amount: pricing?.amount != null ? String(pricing.amount) : null,
+      currency: pricing?.currency ?? null,
+    };
+  });
 
   return (
     <PendingApprovalGuard organization={organization} isLoading={orgLoading}>
@@ -181,7 +186,10 @@ export default function Quotations() {
             {error instanceof Error ? error.message : "Failed to load quotations."}
           </div>
         ) : (
-          <TableQuotations quotations={rows} />
+          <TableQuotations
+            quotations={rows}
+            showAmountColumn={organization?.type !== "AUTHORITY"}
+          />
         )}
         <div className="px-6 pb-6 flex items-center justify-between">
           <div />

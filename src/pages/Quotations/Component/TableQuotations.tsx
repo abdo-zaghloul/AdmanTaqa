@@ -26,10 +26,15 @@ export type QuotationRow = {
   /** ServiceRequest.formData */
   priority?: string | null;
   description?: string | null;
+  /** From QuotationPricing — amount & currency for Service Provider */
+  amount?: string | number | null;
+  currency?: string | null;
 };
 
 type TableQuotationsProps = {
   quotations: QuotationRow[];
+  /** When false (e.g. Authority), Amount column is hidden. Default true. */
+  showAmountColumn?: boolean;
 };
 
 function getStatusBadge(status: string) {
@@ -46,7 +51,8 @@ function getStatusBadge(status: string) {
   );
 }
 
-export default function TableQuotations({ quotations }: TableQuotationsProps) {
+export default function TableQuotations({ quotations, showAmountColumn = true }: TableQuotationsProps) {
+  const colSpan = showAmountColumn ? 7 : 6;
   return (
     <CardContent className="p-0">
       <Table>
@@ -54,6 +60,9 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
           <TableRow className="hover:bg-transparent">
             <TableHead className="font-bold text-foreground">Priority</TableHead>
             <TableHead className="font-bold text-foreground">Description</TableHead>
+            {showAmountColumn && (
+              <TableHead className="font-bold text-foreground">Amount</TableHead>
+            )}
             <TableHead className="font-bold text-foreground">Provider</TableHead>
             <TableHead className="font-bold text-foreground">Branch / Station</TableHead>
             <TableHead className="font-bold text-foreground">Submitted by</TableHead>
@@ -63,7 +72,7 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
         <TableBody>
           {quotations.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={colSpan} className="text-center py-8 text-muted-foreground">
                 No quotations found.
               </TableCell>
             </TableRow>
@@ -79,6 +88,11 @@ export default function TableQuotations({ quotations }: TableQuotationsProps) {
                 <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate" title={quo.description ?? undefined}>
                   {quo.description ?? "—"}
                 </TableCell>
+                {showAmountColumn && (
+                  <TableCell className="text-sm font-medium">
+                    {quo.amount != null && quo.amount !== "" ? String(quo.amount) : "—"}
+                  </TableCell>
+                )}
                 <TableCell className="font-semibold text-sm">
                   {quo.providerName ?? (quo.serviceProviderOrganizationId != null ? `Org #${quo.serviceProviderOrganizationId}` : "N/A")}
                 </TableCell>

@@ -12,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send, FileText } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
@@ -23,9 +22,6 @@ import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJ
 import useSubmitJobOrderForCompletion from "@/hooks/Provider/useSubmitJobOrderForCompletion";
 import useProviderJobOrderVisits from "@/hooks/Provider/useProviderJobOrderVisits";
 import useProviderJobOrderVisitCheckin from "@/hooks/Provider/useProviderJobOrderVisitCheckin";
-import useProviderJobOrderReports from "@/hooks/Provider/useProviderJobOrderReports";
-import useCreateJobOrderReport from "@/hooks/Provider/useCreateJobOrderReport";
-import useSubmitJobOrderReport from "@/hooks/Provider/useSubmitJobOrderReport";
 import useGetOperators from "@/hooks/Provider/useGetOperators";
 import useProviderJobOrderAttachments from "@/hooks/Provider/useProviderJobOrderAttachments";
 import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
@@ -40,9 +36,6 @@ export default function ProviderJobOrderDetail() {
   const { data: visits = [] } = useProviderJobOrderVisits(id);
   const checkinMutation = useProviderJobOrderVisitCheckin();
   const submitCompletionMutation = useSubmitJobOrderForCompletion();
-  const { data: reports = [] } = useProviderJobOrderReports(id);
-  const createReportMutation = useCreateJobOrderReport();
-  const submitReportMutation = useSubmitJobOrderReport();
   const { data: attachmentsList = [] } = useProviderJobOrderAttachments(id);
   const uploadAttachmentMutation = useUploadProviderJobOrderAttachment();
   const attachmentFileRef = useRef<HTMLInputElement>(null);
@@ -62,8 +55,6 @@ export default function ProviderJobOrderDetail() {
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
   const [newStatus, setNewStatus] = useState<string>("");
   const [cancellationReason, setCancellationReason] = useState("");
-  const [reportTitle, setReportTitle] = useState("");
-  const [reportContent, setReportContent] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
@@ -145,35 +136,6 @@ export default function ProviderJobOrderDetail() {
       {
         onSuccess: () => toast.success("Job order submitted for station review."),
         onError: (e) => toast.error(getApiErrorMessage(e, "Submit failed.")),
-      }
-    );
-  };
-
-  const handleCreateReport = () => {
-    if (!id || !reportTitle.trim()) {
-      toast.error("Report title is required.");
-      return;
-    }
-    createReportMutation.mutate(
-      { jobOrderId: id, body: { title: reportTitle.trim(), content: reportContent.trim() || undefined } },
-      {
-        onSuccess: () => {
-          toast.success("Report created.");
-          setReportTitle("");
-          setReportContent("");
-        },
-        onError: (e) => toast.error(getApiErrorMessage(e, "Create report failed.")),
-      }
-    );
-  };
-
-  const handleSubmitReport = (reportId: number) => {
-    if (!id) return;
-    submitReportMutation.mutate(
-      { jobOrderId: id, reportId },
-      {
-        onSuccess: () => toast.success("Report submitted for review."),
-        onError: (e) => toast.error(getApiErrorMessage(e, "Submit report failed.")),
       }
     );
   };
@@ -541,63 +503,6 @@ export default function ProviderJobOrderDetail() {
                     </Button>
                   </div>
                   <p className="text-[11px] text-muted-foreground">PDF or image, max 5 MB.</p>
-                </div>
-              </div>
-              )}
-              {!isCompleted && (
-              <div className="pt-4 border-t space-y-2">
-                <p className="text-sm font-medium flex items-center gap-1">
-                  <FileText className="h-4 w-4" /> Maintenance reports
-                </p>
-                {reports.length > 0 && (
-                  <ul className="text-xs space-y-2">
-                    {reports.map((r) => (
-                      <li key={r.id} className="rounded border p-2 flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <span className="font-medium">{r.title ?? `Report #${r.id}`}</span>
-                          <Badge variant="outline" className="ml-2 text-[10px]">{r.status ?? "DRAFT"}</Badge>
-                          {r.content && (
-                            <p className="text-muted-foreground mt-1 line-clamp-2">{r.content}</p>
-                          )}
-                        </div>
-                        {r.status !== "SUBMITTED" && r.status !== "APPROVED" && r.status !== "REJECTED" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1"
-                            onClick={() => handleSubmitReport(r.id)}
-                            disabled={submitReportMutation.isPending}
-                          >
-                            <Send className="h-3 w-3" /> Submit
-                          </Button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="space-y-2 rounded border p-3 bg-muted/20">
-                  <Label className="text-xs">New report</Label>
-                  <Input
-                    value={reportTitle}
-                    onChange={(e) => setReportTitle(e.target.value)}
-                    placeholder="Report title"
-                    className="h-8"
-                  />
-                  <Textarea
-                    value={reportContent}
-                    onChange={(e) => setReportContent(e.target.value)}
-                    placeholder="Content (optional)"
-                    className="min-h-[60px] text-sm"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    onClick={handleCreateReport}
-                    disabled={createReportMutation.isPending || !reportTitle.trim()}
-                  >
-                    <FileText className="h-3.5 w-3.5" /> Create report
-                  </Button>
                 </div>
               </div>
               )}

@@ -34,7 +34,6 @@ import CreateCustomRole from "./pages/Roles/CreateCustomRole";
 import RoleDetails from "./pages/Roles/RoleDetails";
 import EditRole from "./pages/Roles/EditRole";
 import ServiceCategories from "./pages/ServiceCategories/ServiceCategories";
-import ServiceOfferings from "./pages/ServiceOfferings/ServiceOfferings";
 import ProviderRfqs from "./pages/Provider/ProviderRfqs";
 import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
@@ -248,14 +247,6 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="roles/:id/edit">
             <EditRole />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "service-Offering",
-        element: (
-          <RouteAccessGuard pathKey="service-Offering">
-            <ServiceOfferings />
           </RouteAccessGuard>
         ),
       },
