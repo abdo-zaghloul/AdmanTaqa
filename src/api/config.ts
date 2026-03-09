@@ -27,8 +27,21 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error?.config;
+    const status = error?.response?.status;
+    const data = error?.response?.data;
 
-    if (error?.response?.status !== 401 || !originalRequest) {
+    // For any error response, use API message/detail so UI shows it instead of "Request failed with status code 500"
+    const apiMessage =
+      typeof data?.message === "string"
+        ? data.message
+        : typeof data?.errors?.detail === "string"
+          ? data.errors.detail
+          : null;
+    if (apiMessage && error instanceof Error) {
+      error.message = apiMessage;
+    }
+
+    if (status !== 401 || !originalRequest) {
       return Promise.reject(error);
     }
 
