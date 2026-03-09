@@ -29,7 +29,7 @@ import {
 import { Tag, Plus, Trash2, Sparkles, Pencil, Check, X } from "lucide-react";
 import useGetOrganizationServiceCategories from "@/hooks/Organization/useGetOrganizationServiceCategories";
 import useGetServiceCategories from "@/hooks/ServiceCategories/useGetServiceCategories";
-import useAddOrganizationServiceCategory from "@/hooks/Organization/useAddOrganizationServiceCategory";
+// import useAddOrganizationServiceCategory from "@/hooks/Organization/useAddOrganizationServiceCategory";
 import useRemoveOrganizationServiceCategory from "@/hooks/Organization/useRemoveOrganizationServiceCategory";
 import useProposeServiceCategory from "@/hooks/ServiceCategories/useProposeServiceCategory";
 import useCreateServiceCategory from "@/hooks/ServiceCategories/useCreateServiceCategory";
@@ -51,7 +51,7 @@ export default function ProfileServiceCategoriesCard({
 }: ProfileServiceCategoriesCardProps) {
     const { data: linkedCategories = [], isLoading } = useGetOrganizationServiceCategories(organizationId);
     const { data: allCategories = [], isLoading: allLoading } = useGetServiceCategories();
-    const addMutation = useAddOrganizationServiceCategory();
+    // const addMutation = useAddOrganizationServiceCategory();
     const removeMutation = useRemoveOrganizationServiceCategory();
     const proposeMutation = useProposeServiceCategory();
     const createMutation = useCreateServiceCategory();
@@ -100,21 +100,21 @@ export default function ProfileServiceCategoriesCard({
         return "secondary";
     };
 
-    const handleAdd = () => {
-        const id = Number(selectedCategoryId);
-        if (!id) return;
-        addMutation.mutate(
-            { organizationId, categoryId: id },
-            {
-                onSuccess: () => {
-                    toast.success("Category linked.");
-                    setSelectedCategoryId("");
-                },
-                onError: (err) =>
-                    toast.error((err as Error)?.message ?? "Failed to add category."),
-            }
-        );
-    };
+    // const handleAdd = () => {
+    //     const id = Number(selectedCategoryId);
+    //     if (!id) return;
+    //     addMutation.mutate(
+    //         { organizationId, categoryId: id },
+    //         {
+    //             onSuccess: () => {
+    //                 toast.success("Category linked.");
+    //                 setSelectedCategoryId("");
+    //             },
+    //             onError: (err) =>
+    //                 toast.error((err as Error)?.message ?? "Failed to add category."),
+    //         }
+    //     );
+    // };
 
     const handleRemove = (categoryId: number) => {
         removeMutation.mutate(
@@ -281,16 +281,7 @@ export default function ProfileServiceCategoriesCard({
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={handleAdd}
-                            disabled={!selectedCategoryId || addMutation.isPending}
-                        >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Link
-                        </Button>
+                     
                         <Button
                             type="button"
                             size="sm"
