@@ -34,7 +34,8 @@ const registerV2Schema = z
     amount: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.organizationType !== "SERVICE_PROVIDER") return;
+    const needsProfile = data.organizationType === "SERVICE_PROVIDER" || data.organizationType === "FUEL_STATION";
+    if (!needsProfile) return;
     if (!data.licenseNumber?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "License number is required", path: ["licenseNumber"] });
     if (data.yearsExperience == null || data.yearsExperience === "") ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Years of experience is required", path: ["yearsExperience"] });
     if (data.areaId == null || data.areaId === "") ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Area ID is required", path: ["areaId"] });
@@ -140,7 +141,7 @@ export function useRegisterV2Form() {
         phone: data.phone.trim(),
       };
 
-      if (data.organizationType === "SERVICE_PROVIDER") {
+      if (data.organizationType === "SERVICE_PROVIDER" || data.organizationType === "FUEL_STATION") {
         const y = data.yearsExperience != null && data.yearsExperience !== "" ? Number(data.yearsExperience) : undefined;
         const aId = data.areaId != null && data.areaId !== "" ? Number(data.areaId) : undefined;
         const cId = data.cityId != null && data.cityId !== "" ? Number(data.cityId) : undefined;

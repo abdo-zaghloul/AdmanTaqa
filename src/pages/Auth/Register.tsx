@@ -71,7 +71,7 @@ export default function Register() {
   const areas = useGetAreas(cityIdNum).data?.data ?? [];
   const isServiceProvider = organizationType === "SERVICE_PROVIDER";
 
-  const totalSteps = isServiceProvider ? 4 : 3;
+  const totalSteps = 4;
   const [step, setStep] = useState(1);
   const effectiveStep = step > totalSteps ? totalSteps : step;
 
@@ -226,9 +226,9 @@ export default function Register() {
             <p className="text-xs font-bold uppercase tracking-wider text-primary">
               {effectiveStep === 1 && STEP_LABELS[0]}
               {effectiveStep === 2 && isServiceProvider && STEP_LABELS[1]}
-              {effectiveStep === 2 && !isServiceProvider && STEP_LABELS[3]}
-              {effectiveStep === 3 && STEP_LABELS[2]}
-              {effectiveStep === 4 && STEP_LABELS[3]}
+              {effectiveStep === 2 && !isServiceProvider && "Fuel station profile"}
+              {effectiveStep === 3 && STEP_LABELS[3]}
+              {effectiveStep === 4 && STEP_LABELS[2]}
             </p>
           </div>
 
@@ -305,12 +305,12 @@ export default function Register() {
               </div>
             )}
 
-            {/* Step 2: Service provider profile (SP only) or Organization documents (Fuel) */}
-            {effectiveStep === 2 && isServiceProvider && (
+            {/* Step 2: Service provider profile (SP) / Station profile (Fuel) — same fields */}
+            {effectiveStep === 2 && (
               <div className="space-y-6 animate-in fade-in duration-200">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                   <MapPin className="h-3 w-3" />
-                  Service provider profile
+                  {isServiceProvider ? "Service provider profile" : "Fuel station profile"}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -406,8 +406,8 @@ export default function Register() {
               </div>
             )}
 
-            {/* Step 2 (Fuel) / Step 4 (SP): Service provider documents — same for both */}
-            {((effectiveStep === 4 && isServiceProvider) || (effectiveStep === 2 && !isServiceProvider)) && (
+            {/* Step 3: Service provider documents (first) */}
+            {effectiveStep === 3 && (
               <div className="space-y-6 animate-in fade-in duration-200">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                   <FileText className="h-3 w-3" />
@@ -430,14 +430,14 @@ export default function Register() {
               </div>
             )}
 
-            {/* Step 3 (Fuel) / Step 3 (SP): Organization documents */}
-            {effectiveStep === 3 ? (
+            {/* Step 4: Organization documents (second) */}
+            {effectiveStep === 4 && (
               <div className="space-y-6 animate-in fade-in duration-200">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                   <FileText className="h-3 w-3" />
                   Organization documents (all required) — PDF or images, max 5 MB
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(["org_license", "org_registration", "org_other"] as const).map((key) => (
                     <div key={key} className="space-y-2">
                       <Label className="text-xs font-bold text-slate-600">{FILE_LABELS[key]}</Label>
@@ -452,7 +452,7 @@ export default function Register() {
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
 
             {/* Navigation */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
