@@ -7,6 +7,11 @@ import { authService } from "@/api/services/authService";
 import type { RegisterV2Payload } from "@/api/services/authService";
 import type { RegisterV2Response } from "@/types/auth";
 import { toast } from "sonner";
+import {
+  isValidSaudiPhoneDigits,
+  toFullSaudiPhone,
+  SAUDI_PHONE_ERROR_MESSAGE,
+} from "@/lib/validation/phone";
 
 const FILE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 const ALLOWED_TYPES = [
@@ -24,7 +29,11 @@ const registerV2Schema = z
     email: z.string().min(1, "Email is required").email("Invalid email address"),
     password: z.string().min(8, "Password must be at least 8 characters").max(128),
     fullName: z.string().min(1, "Full name is required").max(255),
-    phone: z.string().min(1, "Phone is required").max(50),
+    phone: z
+      .string()
+      .min(9, "Enter 9 digits (starting with 5)")
+      .max(9, "Enter 9 digits only")
+      .refine(isValidSaudiPhoneDigits, { message: SAUDI_PHONE_ERROR_MESSAGE }),
     licenseNumber: z.string().max(100).optional().or(z.literal("")),
     yearsExperience: z.string().optional(),
     areaId: z.string().optional(),
@@ -138,7 +147,7 @@ export function useRegisterV2Form() {
         email: data.email.trim(),
         password: data.password,
         fullName: data.fullName.trim(),
-        phone: data.phone.trim(),
+        phone: toFullSaudiPhone(data.phone),
       };
 
       if (data.organizationType === "SERVICE_PROVIDER" || data.organizationType === "FUEL_STATION") {

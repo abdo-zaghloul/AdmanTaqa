@@ -21,6 +21,12 @@ import {
 import useUpdateUser from "@/hooks/Users/useUpdateUser";
 import useGetRoles from "@/hooks/Roles/useGetRoles";
 import type { UpdateUserBody, UserRoleRef } from "@/types/user";
+import {
+  isValidSaudiPhoneDigits,
+  toFullSaudiPhone,
+  parseDisplayToDigits,
+  SAUDI_PHONE_ERROR_MESSAGE,
+} from "@/lib/validation/phone";
 
 const STATION_OWNER_ROLE_NAME = "Station Owner";
 
@@ -59,17 +65,20 @@ export default function EditUserDialog({
     email: "",
     roleId: "" as string,
   });
+  const [phoneError, setPhoneError] = useState("");
 
   const initialRoleId = user.roles?.[0]?.id ?? null;
+  const initialPhoneDigits = parseDisplayToDigits(user.phone);
 
   useEffect(() => {
     if (open) {
       setForm({
         fullName: user.fullName,
-        phone: user.phone ?? "",
+        phone: initialPhoneDigits,
         email: user.email ?? "",
         roleId: initialRoleId != null ? String(initialRoleId) : "",
       });
+      setPhoneError("");
     }
   }, [
     open,
@@ -77,7 +86,15 @@ export default function EditUserDialog({
     user.phone,
     user.email,
     initialRoleId,
+    initialPhoneDigits,
   ]);
+
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 9);
+    setForm((p) => ({ ...p, phone: digits }));
+    if (digits === "") setPhoneError("");
+    else setPhoneError(isValidSaudiPhoneDigits(digits) ? "" : SAUDI_PHONE_ERROR_MESSAGE);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,8 +102,16 @@ export default function EditUserDialog({
     const body: UpdateUserBody = {};
     if (form.fullName.trim() !== user.fullName)
       body.fullName = form.fullName.trim();
-    if ((form.phone.trim() || null) !== (user.phone ?? null))
-      body.phone = form.phone.trim() || null;
+    const phoneTrimmed = form.phone.trim();
+    const currentPhoneFull = user.phone ? toFullSaudiPhone(initialPhoneDigits) : null;
+    const newPhoneFull = phoneTrimmed ? toFullSaudiPhone(phoneTrimmed) : null;
+    if (newPhoneFull !== currentPhoneFull) {
+      if (phoneTrimmed && !isValidSaudiPhoneDigits(phoneTrimmed)) {
+        setPhoneError(SAUDI_PHONE_ERROR_MESSAGE);
+        return;
+      }
+      body.phone = newPhoneFull;
+    }
     if ((form.email.trim() || "") !== (user.email ?? ""))
       body.email = form.email.trim() || undefined;
     const newRoleId =
@@ -135,14 +160,23 @@ export default function EditUserDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-phone">Phone</Label>
-            <Input
-              id="edit-phone"
-              placeholder="+966..."
-              value={form.phone}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, phone: e.target.value }))
-              }
-            />
+            <div className="flex rounded-md border border-input overflow-hidden">
+              <span className="inline-flex items-center px-3 text-sm text-muted-foreground border-r border-input bg-muted/30">
+                +966
+              </span>
+              <Input
+                id="edit-phone"
+                type="tel"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder="501234567"
+                value={form.phone}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                className="border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                aria-invalid={!!phoneError}
+              />
+            </div>
+            {phoneError && <p className="text-xs text-red-600 font-medium">{phoneError}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-email">Email</Label>

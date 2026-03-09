@@ -23,6 +23,11 @@ import { UserPlus } from "lucide-react";
 import useCreateUser from "@/hooks/Users/useCreateUser";
 import useGetRoles from "@/hooks/Roles/useGetRoles";
 import type { CreateUserBody } from "@/types/user";
+import {
+  isValidSaudiPhoneDigits,
+  toFullSaudiPhone,
+  SAUDI_PHONE_ERROR_MESSAGE,
+} from "@/lib/validation/phone";
 
 type CreateUserForm = {
   email: string;
@@ -48,16 +53,29 @@ type CreateUserDialogProps = {
 export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
+  const [phoneError, setPhoneError] = useState("");
   const createMutation = useCreateUser();
   const { data: roles = [], isLoading: rolesLoading } = useGetRoles();
 
+  const handlePhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 9);
+    setForm((p) => ({ ...p, phone: digits }));
+    if (digits === "") setPhoneError("");
+    else setPhoneError(isValidSaudiPhoneDigits(digits) ? "" : SAUDI_PHONE_ERROR_MESSAGE);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const phoneTrimmed = form.phone?.trim() ?? "";
+    if (phoneTrimmed && !isValidSaudiPhoneDigits(phoneTrimmed)) {
+      setPhoneError(SAUDI_PHONE_ERROR_MESSAGE);
+      return;
+    }
     const body: CreateUserBody = {
       email: form.email.trim(),
       fullName: form.fullName.trim(),
       password: form.password,
-      phone: form.phone?.trim() || undefined,
+      phone: phoneTrimmed ? toFullSaudiPhone(phoneTrimmed) : undefined,
       roleId: form.roleId ? Number(form.roleId) : undefined,
     };
     createMutation.mutate(body, {
@@ -71,7 +89,10 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
   };
  
   const handleOpenChange = (next: boolean) => {
-    if (!next) setForm(initialForm);
+    if (!next) {
+      setForm(initialForm);
+      setPhoneError("");
+    }
     setOpen(next);
   };
 
@@ -129,12 +150,23 @@ export default function CreateUserDialog({ trigger }: CreateUserDialogProps) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="create-phone">Phone (optional)</Label>
-            <Input
-              id="create-phone"
-              placeholder="+966..."
-              value={form.phone ?? ""}
-              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-            />
+            <div className="flex rounded-md border border-input overflow-hidden">
+              <span className="inline-flex items-center px-3 text-sm text-muted-foreground border-r border-input bg-muted/30">
+                +966
+              </span>
+              <Input
+                id="create-phone"
+                type="tel"
+                inputMode="numeric"
+                maxLength={9}
+                placeholder="501234567"
+                value={form.phone ?? ""}
+                onChange={(e) => handlePhoneChange(e.target.value)}
+                className="border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                aria-invalid={!!phoneError}
+              />
+            </div>
+            {phoneError && <p className="text-xs text-red-600 font-medium">{phoneError}</p>}
           </div>
           <div className="space-y-2">
             <Label>Role (optional)</Label>

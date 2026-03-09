@@ -278,7 +278,19 @@ export default function Register() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-xs font-bold text-slate-600">Phone *</Label>
-                      <Input id="phone" placeholder="+966501234567" className="h-11 bg-white" {...register("phone")} />
+                      <div className="flex h-11 rounded-md border border-input bg-white overflow-hidden">
+                        <span className="inline-flex items-center px-3 text-sm text-muted-foreground border-r border-input bg-muted/30">+966</span>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={9}
+                          placeholder="501234567"
+                          className="h-11 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                          aria-invalid={!!errors.phone}
+                          {...register("phone")}
+                        />
+                      </div>
                       {errors.phone?.message && <p className="text-xs text-red-600 font-medium">{errors.phone.message}</p>}
                     </div>
                   </div>
