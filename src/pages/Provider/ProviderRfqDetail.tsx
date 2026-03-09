@@ -44,7 +44,6 @@ export default function ProviderRfqDetail() {
   const [totalAmount, setTotalAmount] = useState("");
   const [laborCost, setLaborCost] = useState("");
   const [materialCost, setMaterialCost] = useState("");
-  const [currency, setCurrency] = useState("EGP");
   const [technicalProposal, setTechnicalProposal] = useState("");
   const [scopeOfWork, setScopeOfWork] = useState("");
   const [timeline, setTimeline] = useState("");
@@ -65,7 +64,7 @@ export default function ProviderRfqDetail() {
     const materialNum = materialCost.trim() ? Number(materialCost) : undefined;
     const pricingJson: Record<string, unknown> = {
       amount: amountNum,
-      currency: currency.trim() || "EGP",
+      currency: "SAR",
       validUntil: validUntil.trim() || undefined,
       laborCost: laborNum != null && !Number.isNaN(laborNum) ? laborNum : undefined,
       materialCost: materialNum != null && !Number.isNaN(materialNum) ? materialNum : undefined,
@@ -385,9 +384,9 @@ export default function ProviderRfqDetail() {
                           <Label htmlFor="currency">Currency</Label>
                           <Input
                             id="currency"
-                            value={currency}
-                            onChange={(e) => setCurrency(e.target.value)}
-                            placeholder="EGP"
+                            value="SAR"
+                            readOnly
+                            className="bg-muted cursor-not-allowed"
                           />
                         </div>
                       </CardContent>

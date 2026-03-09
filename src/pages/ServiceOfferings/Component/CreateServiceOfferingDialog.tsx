@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ const initialCreateForm: OfferingForm = {
   governorateId: "",
   cityId: "",
   amount: "",
-  currency: "USD",
+  currency: "SAR",
 };
 
 type CreateServiceOfferingDialogProps = {
@@ -63,6 +63,20 @@ export default function CreateServiceOfferingDialog({
   const { data: countriesResponse } = useGetCountries();
   const countries = countriesResponse?.data ?? [];
   const selectedCountryId = countryId ? Number(countryId) : null;
+
+  // Default to Saudi Arabia and SAR when dialog opens for Service Offerings
+  useEffect(() => {
+    if (!open || countries.length === 0 || countryId) return;
+    const saudi = countries.find(
+      (c) =>
+        (c.name && (c.name.includes("Saudi") || c.name.includes("السعود") || c.name.includes("Kingdom"))) ||
+        (c.code && (c.code === "SA" || c.code === "SAU"))
+    );
+    if (saudi) {
+      setCountryId(String(saudi.id));
+      setForm((p) => ({ ...p, currency: "SAR" }));
+    }
+  }, [open, countries, countryId]);
   const { data: governoratesResponse } = useGetGovernorates(selectedCountryId);
   const governorates = governoratesResponse?.data ?? [];
   const createGovernorateNum = form.governorateId
@@ -104,7 +118,7 @@ export default function CreateServiceOfferingDialog({
           governorateId: Number(form.governorateId),
           cityId: Number(form.cityId),
           amount,
-          currency: form.currency || "USD",
+          currency: form.currency || "SAR",
         },
       },
       {
@@ -230,7 +244,7 @@ export default function CreateServiceOfferingDialog({
 
           <Input
             maxLength={3}
-            placeholder="Currency (default USD)"
+            placeholder="Currency (default SAR)"
             value={form.currency}
             onChange={(e) =>
               setForm((p) => ({
