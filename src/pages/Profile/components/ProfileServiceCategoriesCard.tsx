@@ -182,8 +182,9 @@ export default function ProfileServiceCategoriesCard({
                     setEditOpen(false);
                     setEditTarget(null);
                 },
-                onError: (err) =>
-                    toast.error((err as Error)?.message ?? "Failed to update category."),
+                onError: (err: unknown  ) =>
+                    toast.error((err instanceof Error ? err.message : "Failed to update category."),
+                    ),
             }
         );
     };

@@ -70,8 +70,10 @@ export default function ProviderJobOrderDetail() {
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
   const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const isUnderReview = order?.status === "UNDER_REVIEW";
+  const isCompleted = order?.status === "COMPLETED";
   const isActive = order?.status === "ACTIVE" || order?.status === "IN_PROGRESS" || order?.status === "WAITING_PARTS" || order?.status === "UNDER_REVIEW" || order?.status === "REWORK_REQUIRED";
   const canAssignOrUpdateStatus = isActive && !paymentRejected;
+  const showOrderActionsAndDetails = canAssignOrUpdateStatus || isCompleted;
   const canSubmitForReview =
     !paymentRejected &&
     !isCancelled &&
@@ -296,8 +298,9 @@ export default function ProviderJobOrderDetail() {
             </div>
           )}
 
-          {canAssignOrUpdateStatus && (
+          {showOrderActionsAndDetails && (
             <>
+              {canAssignOrUpdateStatus && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Assign operator
@@ -327,6 +330,7 @@ export default function ProviderJobOrderDetail() {
                   </Button>
                 </div>
               </div>
+              )}
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> Visits
@@ -341,6 +345,7 @@ export default function ProviderJobOrderDetail() {
                     ))}
                   </ul>
                 )}
+                {canAssignOrUpdateStatus && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -350,7 +355,33 @@ export default function ProviderJobOrderDetail() {
                 >
                   <MapPin className="h-3.5 w-3.5" /> Check-in visit
                 </Button>
+                )}
               </div>
+              <div className="pt-4 border-t space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <UserPlus className="h-4 w-4" /> Operators
+                </p>
+                {operators.length > 0 ? (
+                  <ul className="text-xs space-y-2">
+                    {operators.map((op) => {
+                      const linked = (op as { LinkedUser?: { fullName?: string; email?: string; phone?: string } }).LinkedUser;
+                      const name = linked?.fullName ?? op.name ?? `Operator #${op.id}`;
+                      const email = linked?.email;
+                      const phone = linked?.phone;
+                      return (
+                        <li key={op.id} className="rounded border px-3 py-2 flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{name}</span>
+                          {email && <span className="text-muted-foreground">{email}</span>}
+                          {phone && <span className="text-muted-foreground">{phone}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No operators in your organization.</p>
+                )}
+              </div>
+              {canAssignOrUpdateStatus && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <RefreshCw className="h-4 w-4" /> Update status
@@ -391,7 +422,8 @@ export default function ProviderJobOrderDetail() {
                   </Button>
                 </div>
               </div>
-              {showSubmitForReviewSection && (
+              )}
+              {!isCompleted && showSubmitForReviewSection && (
                 <div className="pt-4 border-t space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
                     <Send className="h-4 w-4" /> Submit for station review
@@ -421,6 +453,7 @@ export default function ProviderJobOrderDetail() {
                   </div>
                 </div>
               )}
+              {!isCompleted && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <Paperclip className="h-4 w-4" /> Attachments
@@ -510,6 +543,8 @@ export default function ProviderJobOrderDetail() {
                   <p className="text-[11px] text-muted-foreground">PDF or image, max 5 MB.</p>
                 </div>
               </div>
+              )}
+              {!isCompleted && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <FileText className="h-4 w-4" /> Maintenance reports
@@ -565,6 +600,7 @@ export default function ProviderJobOrderDetail() {
                   </Button>
                 </div>
               </div>
+              )}
             </>
           )}
         </CardContent>
