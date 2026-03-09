@@ -72,7 +72,6 @@ export default function ProviderJobOrderDetail() {
   const isUnderReview = order?.status === "UNDER_REVIEW";
   const isActive = order?.status === "ACTIVE" || order?.status === "IN_PROGRESS" || order?.status === "WAITING_PARTS" || order?.status === "UNDER_REVIEW" || order?.status === "REWORK_REQUIRED";
   const canAssignOrUpdateStatus = isActive && !paymentRejected;
-  const hasCompletedVisit = visits.some((v) => (v.status ?? "").toUpperCase() === "COMPLETED");
   const canSubmitForReview =
     !paymentRejected &&
     !isCancelled &&
@@ -81,6 +80,7 @@ export default function ProviderJobOrderDetail() {
       order?.status === "WAITING_PARTS" ||
       order?.status === "COMPLETED") &&
     !isUnderReview;
+  const showSubmitForReviewSection = canSubmitForReview || isUnderReview;
 
   const handleAssign = () => {
     const operatorId = Number(selectedOperatorId);
@@ -391,7 +391,7 @@ export default function ProviderJobOrderDetail() {
                   </Button>
                 </div>
               </div>
-              {canSubmitForReview && (
+              {showSubmitForReviewSection && (
                 <div className="pt-4 border-t space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
                     <Send className="h-4 w-4" /> Submit for station review
@@ -407,13 +407,14 @@ export default function ProviderJobOrderDetail() {
                         value={completionNote}
                         onChange={(e) => setCompletionNote(e.target.value)}
                         className="h-8"
+                        readOnly={isUnderReview}
                       />
                     </div>
                     <Button
                       size="sm"
                       className="gap-1"
                       onClick={handleSubmitForReview}
-                      disabled={submitCompletionMutation.isPending}
+                      disabled={submitCompletionMutation.isPending || isUnderReview}
                     >
                       <Send className="h-3.5 w-3.5" /> Submit for review
                     </Button>
