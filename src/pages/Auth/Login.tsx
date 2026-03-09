@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useLoginForm } from "@/hooks/Auth/useLoginForm"
 import {
     Mail,
@@ -15,6 +15,8 @@ import {
 } from "lucide-react"
 
 export default function Login() {
+    const location = useLocation();
+    const accessDenied = (location.state as { message?: string } | null)?.message === "access_denied";
     const { register, handleSubmit, formState: { errors }, isLoading, apiError } = useLoginForm();
 
     return (
@@ -93,6 +95,11 @@ export default function Login() {
                         <p className="text-slate-500 font-medium">Enter your credentials to access the control panel.</p>
                     </div>
 
+                    {accessDenied && (
+                        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm font-medium text-amber-800">
+                            Access denied. Only approved Service Provider and Authority organizations can access this site.
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
                             <div className="space-y-2 group">

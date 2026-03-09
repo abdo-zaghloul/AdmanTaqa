@@ -5,9 +5,12 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+const ALLOWED_ORG_TYPES = ["SERVICE_PROVIDER", "AUTHORITY"] as const;
+
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, organization, logout } = useAuth();
   const location = useLocation();
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -18,6 +21,23 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Only APPROVED organizations with type SERVICE_PROVIDER or AUTHORITY can access the site (not FUEL_STATION)
+  const isAllowedOrg =
+    organization?.status === "APPROVED" &&
+    organization?.type != null &&
+    ALLOWED_ORG_TYPES.includes(organization.type as (typeof ALLOWED_ORG_TYPES)[number]);
+
+  if (!isAllowedOrg) {
+    logout();
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location, message: "access_denied" }}
+        replace
+      />
+    );
   }
 
   return <>{children}</>;
