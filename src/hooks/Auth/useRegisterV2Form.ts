@@ -63,7 +63,7 @@ const SP_REQUIRED_FILE_KEYS = [
   "sp_insurance_certificate",
 ] as const;
 
-export function getRequiredFileKeys(organizationType: "SERVICE_PROVIDER" | "FUEL_STATION") {
+export function getRequiredFileKeys(_organizationType: "SERVICE_PROVIDER" | "FUEL_STATION") {
   return [...ORG_REQUIRED_FILE_KEYS, ...SP_REQUIRED_FILE_KEYS] as const;
 }
 
