@@ -52,6 +52,6 @@ export interface CreateUserBody {
 export interface UpdateUserBody {
   fullName?: string;
   phone?: string | null;
-  isActive?: boolean;
-  password?: string;
+  email?: string;
+  roleId?: number | null;
 }

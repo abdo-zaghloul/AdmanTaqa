@@ -161,7 +161,8 @@ export default function UserDetails() {
                 id: user.id,
                 fullName: user.fullName,
                 phone: user.phone,
-                isActive: user.isActive,
+                email: user.email,
+                roles: user.roles,
               }}
             />
 

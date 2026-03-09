@@ -9,6 +9,29 @@ export interface ProviderOperator {
   updatedAt?: string;
 }
 
+/** Operator nested in ExternalJobAssignment (GET provider/job-orders/:id) */
+export interface ProviderJobOrderOperator {
+  id: number;
+  organizationId?: number;
+  name?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Assignment from GET provider/job-orders/:id — data.ExternalJobAssignments[] */
+export interface ProviderJobOrderAssignment {
+  id: number;
+  externalJobOrderId?: number;
+  operatorId?: number;
+  arrivalTime?: string | null;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  /** API returns PascalCase */
+  Operator?: ProviderJobOrderOperator;
+  operator?: ProviderJobOrderOperator;
+}
+
 /** formData from GET /requests (RFQ) — doc: title, description, requiredTimeline */
 export interface ProviderRfqFormData {
   title?: string;
@@ -140,6 +163,8 @@ export interface ProviderJobOrderItem {
       uploadedByUserId?: number;
     }>;
   } | null;
+  /** Nested from API (ExternalJobAssignments) — operators assigned to this job order */
+  externalJobAssignments?: ProviderJobOrderAssignment[];
 }
 
 export interface PaymentRecordSummary {

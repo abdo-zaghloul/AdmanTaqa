@@ -25,6 +25,7 @@ import useProviderJobOrderVisitCheckin from "@/hooks/Provider/useProviderJobOrde
 import useGetOperators from "@/hooks/Provider/useGetOperators";
 import useProviderJobOrderAttachments from "@/hooks/Provider/useProviderJobOrderAttachments";
 import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
+import type { ProviderJobOrderAssignment } from "@/types/provider";
 
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,10 @@ export default function ProviderJobOrderDetail() {
   const requestTitle = formData?.title?.trim() || order?.title;
   const requestPriority = formData?.priority?.trim();
   const requestDescription = formData?.description?.trim() || order?.description;
+
+  const orderWithAssignments = order as { externalJobAssignments?: ProviderJobOrderAssignment[]; ExternalJobAssignments?: ProviderJobOrderAssignment[] } | null | undefined;
+  const assignmentsRaw = orderWithAssignments?.externalJobAssignments ?? orderWithAssignments?.ExternalJobAssignments ?? [];
+  const jobOrderOperatorsList = assignmentsRaw.map((a) => ({ assignmentId: a.id, operator: a.Operator ?? a.operator })).filter((x): x is { assignmentId: number; operator: NonNullable<ProviderJobOrderAssignment["Operator"]> } => x.operator != null);
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
@@ -323,24 +328,16 @@ export default function ProviderJobOrderDetail() {
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Operators
                 </p>
-                {operators.length > 0 ? (
+                {jobOrderOperatorsList.length > 0 ? (
                   <ul className="text-xs space-y-2">
-                    {operators.map((op) => {
-                      const linked = (op as { LinkedUser?: { fullName?: string; email?: string; phone?: string } }).LinkedUser;
-                      const name = linked?.fullName ?? op.name ?? `Operator #${op.id}`;
-                      const email = linked?.email;
-                      const phone = linked?.phone;
-                      return (
-                        <li key={op.id} className="rounded border px-3 py-2 flex flex-wrap items-center gap-2">
-                          <span className="font-medium">{name}</span>
-                          {email && <span className="text-muted-foreground">{email}</span>}
-                          {phone && <span className="text-muted-foreground">{phone}</span>}
-                        </li>
-                      );
-                    })}
+                    {jobOrderOperatorsList.map(({ assignmentId, operator }) => (
+                      <li key={assignmentId} className="rounded border px-3 py-2 flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{operator.name ?? `Operator #${operator.id}`}</span>
+                      </li>
+                    ))}
                   </ul>
                 ) : (
-                  <p className="text-xs text-muted-foreground">No operators in your organization.</p>
+                  <p className="text-xs text-muted-foreground">No operators assigned to this job order.</p>
                 )}
               </div>
               {canAssignOrUpdateStatus && (

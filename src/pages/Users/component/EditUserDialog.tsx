@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -19,7 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import useUpdateUser from "@/hooks/Users/useUpdateUser";
-import type { UpdateUserBody } from "@/types/user";
+import useGetRoles from "@/hooks/Roles/useGetRoles";
+import type { UpdateUserBody, UserRoleRef } from "@/types/user";
+
+const STATION_OWNER_ROLE_NAME = "Station Owner";
 
 type EditUserDialogProps = {
   open: boolean;
@@ -28,7 +31,8 @@ type EditUserDialogProps = {
     id: number | string;
     fullName: string;
     phone?: string | null;
-    isActive?: boolean;
+    email?: string;
+    roles?: UserRoleRef[];
   };
 };
 
@@ -38,23 +42,42 @@ export default function EditUserDialog({
   user,
 }: EditUserDialogProps) {
   const updateMutation = useUpdateUser();
+  const { data: allRoles = [], isLoading: rolesLoading } = useGetRoles();
+
+  const assignableRoles = useMemo(
+    () =>
+      allRoles.filter(
+        (r) =>
+          r.name.trim().toLowerCase() !== STATION_OWNER_ROLE_NAME.toLowerCase()
+      ),
+    [allRoles]
+  );
+
   const [form, setForm] = useState({
     fullName: "",
     phone: "",
-    isActive: "true",
-    password: "",
+    email: "",
+    roleId: "" as string,
   });
+
+  const initialRoleId = user.roles?.[0]?.id ?? null;
 
   useEffect(() => {
     if (open) {
       setForm({
         fullName: user.fullName,
         phone: user.phone ?? "",
-        isActive: user.isActive === false ? "false" : "true",
-        password: "",
+        email: user.email ?? "",
+        roleId: initialRoleId != null ? String(initialRoleId) : "",
       });
     }
-  }, [open, user.fullName, user.phone, user.isActive]);
+  }, [
+    open,
+    user.fullName,
+    user.phone,
+    user.email,
+    initialRoleId,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +87,12 @@ export default function EditUserDialog({
       body.fullName = form.fullName.trim();
     if ((form.phone.trim() || null) !== (user.phone ?? null))
       body.phone = form.phone.trim() || null;
-    const newActive = form.isActive === "true";
-    if (newActive !== (user.isActive !== false)) body.isActive = newActive;
-    if (form.password.trim()) body.password = form.password.trim();
+    if ((form.email.trim() || "") !== (user.email ?? ""))
+      body.email = form.email.trim() || undefined;
+    const newRoleId =
+      form.roleId === "" ? null : Number(form.roleId);
+    const currentRoleId = user.roles?.[0]?.id ?? null;
+    if (newRoleId !== currentRoleId) body.roleId = newRoleId;
 
     if (Object.keys(body).length === 0) {
       toast.info("No changes to save.");
@@ -119,36 +145,41 @@ export default function EditUserDialog({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-isActive">Status</Label>
-            <Select
-              value={form.isActive}
-              onValueChange={(v) => setForm((p) => ({ ...p, isActive: v }))}
-            >
-              <SelectTrigger id="edit-isActive">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-password">
-              New Password{" "}
-              <span className="text-muted-foreground font-normal">
-                (leave empty to keep current)
-              </span>
-            </Label>
+            <Label htmlFor="edit-email">Email</Label>
             <Input
-              id="edit-password"
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
+              id="edit-email"
+              type="email"
+              placeholder="user@example.com"
+              value={form.email}
               onChange={(e) =>
-                setForm((p) => ({ ...p, password: e.target.value }))
+                setForm((p) => ({ ...p, email: e.target.value }))
               }
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-role">Role</Label>
+            <Select
+              value={form.roleId || "none"}
+              onValueChange={(v) =>
+                setForm((p) => ({ ...p, roleId: v === "none" ? "" : v }))
+              }
+            >
+              <SelectTrigger id="edit-role">
+                <SelectValue
+                  placeholder={
+                    rolesLoading ? "Loading roles..." : "Select role"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No role</SelectItem>
+                {assignableRoles.map((role) => (
+                  <SelectItem key={role.id} value={String(role.id)}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter className="pt-4">
             <Button

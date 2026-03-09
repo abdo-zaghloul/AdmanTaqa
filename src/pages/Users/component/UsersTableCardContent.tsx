@@ -16,6 +16,7 @@ import { CheckCircle2, MoreHorizontal, Eye, Pencil, UserX } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import EditUserDialog from "./EditUserDialog";
 import DeactivateUserDialog from "./DeactivateUserDialog";
+import type { UserRoleRef } from "@/types/user";
 
 export type UserRow = {
   id: number | string;
@@ -23,6 +24,7 @@ export type UserRow = {
   email: string;
   phone?: string;
   role?: string;
+  roles?: UserRoleRef[];
   orgName?: string;
   status?: string;
   isActive?: boolean;
@@ -220,7 +222,8 @@ export default function UsersTableCardContent({ users }: UsersTableCardContentPr
             id: editUser.id,
             fullName: editUser.fullName,
             phone: editUser.phone,
-            isActive: editUser.isActive,
+            email: editUser.email,
+            roles: editUser.roles,
           }}
         />
       )}

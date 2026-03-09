@@ -23,6 +23,7 @@ function toUserRow(u: ApiUser): UserRow {
     email: u.email,
     phone: u.phone ?? "",
     role: getRoleDisplayLabel(u) || undefined,
+    roles: u.roles,
     orgName: u.organization?.name,
     status: u.isActive === false ? "INACTIVE" : "ACTIVE",
     isActive: u.isActive !== false,
