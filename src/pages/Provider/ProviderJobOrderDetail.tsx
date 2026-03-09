@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, Paperclip, Send } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
@@ -66,7 +66,7 @@ export default function ProviderJobOrderDetail() {
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
   const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const isUnderReview = order?.status === "UNDER_REVIEW";
-  const isCompleted = order?.status === "COMPLETED";
+  const isCompleted = order?.status === "COMPLETED" || order?.status === "CLOSED";
   const isActive = order?.status === "ACTIVE" || order?.status === "IN_PROGRESS" || order?.status === "WAITING_PARTS" || order?.status === "UNDER_REVIEW" || order?.status === "REWORK_REQUIRED";
   const canAssignOrUpdateStatus = isActive && !paymentRejected;
   const showOrderActionsAndDetails = canAssignOrUpdateStatus || isCompleted;
@@ -76,7 +76,8 @@ export default function ProviderJobOrderDetail() {
     (order?.status === "ACTIVE" ||
       order?.status === "IN_PROGRESS" ||
       order?.status === "WAITING_PARTS" ||
-      order?.status === "COMPLETED") &&
+      order?.status === "COMPLETED" ||
+      order?.status === "CLOSED") &&
     !isUnderReview;
   const showSubmitForReviewSection = canSubmitForReview || isUnderReview;
 
@@ -144,6 +145,20 @@ export default function ProviderJobOrderDetail() {
       }
     );
   };
+  // Kept for when "Submit for review" / "Attachments" sections are uncommented
+  void [
+    setCompletionNote,
+    showSubmitForReviewSection,
+    handleSubmitForReview,
+    attachmentsList,
+    uploadAttachmentMutation,
+    attachmentFileRef,
+    attachmentDescription,
+    setAttachmentDescription,
+    selectedAttachmentFile,
+    setSelectedAttachmentFile,
+    executionAttachments,
+  ];
 
   const handleConfirm = (confirm: boolean) => {
     if (!id) return;
@@ -355,6 +370,7 @@ export default function ProviderJobOrderDetail() {
                       <SelectItem value="WAITING_PARTS">Waiting parts</SelectItem>
                       <SelectItem value="UNDER_REVIEW">Under review</SelectItem>
                       <SelectItem value="COMPLETED">Completed</SelectItem>
+                      <SelectItem value="CLOSED">Closed</SelectItem>
                       <SelectItem value="CANCELLED">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
@@ -382,6 +398,7 @@ export default function ProviderJobOrderDetail() {
                 </div>
               </div>
               )}
+              {/* Submit for station review — commented out
               {!isCompleted && showSubmitForReviewSection && (
                 <div className="pt-4 border-t space-y-2">
                   <p className="text-sm font-medium flex items-center gap-1">
@@ -412,6 +429,8 @@ export default function ProviderJobOrderDetail() {
                   </div>
                 </div>
               )}
+              */}
+              {/* Attachments — commented out
               {!isCompleted && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
@@ -503,6 +522,7 @@ export default function ProviderJobOrderDetail() {
                 </div>
               </div>
               )}
+              */}
             </>
           )}
         </CardContent>
