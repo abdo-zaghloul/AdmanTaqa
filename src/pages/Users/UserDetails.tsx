@@ -11,12 +11,13 @@ import {
   Shield,
   Building2,
   Pencil,
-  Trash2,
+  UserX,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import useGetUserById from "@/hooks/Users/useGetUserById";
 import { getRoleDisplayLabel } from "@/types/user";
 import EditUserDialog from "./component/EditUserDialog";
-import DeleteUserDialog from "./component/DeleteUserDialog";
+import DeactivateUserDialog from "./component/DeactivateUserDialog";
 
 function getRoleBadge(role?: string) {
   if (!role) return <Badge variant="secondary">—</Badge>;
@@ -38,10 +39,13 @@ function getRoleBadge(role?: string) {
 export default function UserDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user: currentUser, hasPermission } = useAuth();
   const { data: user, isLoading, isError } = useGetUserById(id);
   const status = user?.isActive === false ? "INACTIVE" : "ACTIVE";
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const isCurrentUser = currentUser != null && user && String(user.id) === String(currentUser.id);
+  const canDeactivate = hasPermission("team.deactivate") && !isCurrentUser && user?.isActive !== false;
 
   return (
     <div className="p-4 md:p-8">
@@ -90,10 +94,12 @@ export default function UserDetails() {
                         <Pencil className="h-4 w-4" />
                         Edit
                     </Button>
-                    <Button variant="destructive" className="gap-2 shadow-lg" onClick={() => setDeleteOpen(true)}>
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                    </Button>
+                    {canDeactivate && (
+                      <Button variant="destructive" className="gap-2 shadow-lg" onClick={() => setDeactivateOpen(true)}>
+                        <UserX className="h-4 w-4" />
+                        Deactivate
+                      </Button>
+                    )}
                 </div>
             </div>
 
@@ -159,12 +165,9 @@ export default function UserDetails() {
               }}
             />
 
-            <DeleteUserDialog
-              open={deleteOpen}
-              onOpenChange={(open) => {
-                setDeleteOpen(open);
-                if (!open) navigate("/users");
-              }}
+            <DeactivateUserDialog
+              open={deactivateOpen}
+              onOpenChange={setDeactivateOpen}
               user={{ id: user.id, fullName: user.fullName }}
             />
         </div>

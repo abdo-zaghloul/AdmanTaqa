@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import useGetOrganizationFull from "@/hooks/Organization/useGetOrganizationFull";
 import useDeleteServiceProviderProfile from "@/hooks/Organization/useDeleteServiceProviderProfile";
-import { MoreVertical, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { MoreVertical, AlertCircle, Pencil, Trash2, UserX } from "lucide-react";
+// import DeleteAccountDialog from "./components/DeleteAccountDialog";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,13 +16,16 @@ import {
 import { toast } from "sonner";
 import EditOrganizationModal from "./components/EditOrganizationModal";
 import UnifiedProfileCard from "./components/UnifiedProfileCard";
+import DeleteAccountDialog from "../Users/component/DeleteAccountDialog";
 
 export default function Profile() {
+    const { user: currentUser } = useAuth();
     const { data: organizationResponse, isLoading } = useGetOrganizationFull();
     const organization = organizationResponse?.data;
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const deleteMutation = useDeleteServiceProviderProfile();
 
@@ -99,6 +104,16 @@ export default function Profile() {
                                     <Trash2 className="h-4 w-4" /> Delete
                                 </button>
                             )}
+                            <button
+                                type="button"
+                                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-accent"
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    setDeleteAccountOpen(true);
+                                }}
+                            >
+                                <UserX className="h-4 w-4" /> Delete my account
+                            </button>
                         </div>
                     )}
                 </div>
@@ -151,6 +166,14 @@ export default function Profile() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {currentUser && (
+                <DeleteAccountDialog
+                    open={deleteAccountOpen}
+                    onOpenChange={setDeleteAccountOpen}
+                    userId={currentUser.id}
+                />
+            )}
         </div>
     );
 }

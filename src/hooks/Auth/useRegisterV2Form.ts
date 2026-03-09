@@ -40,8 +40,6 @@ const registerV2Schema = z
     if (data.areaId == null || data.areaId === "") ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Area ID is required", path: ["areaId"] });
     if (data.cityId == null || data.cityId === "") ctx.addIssue({ code: z.ZodIssueCode.custom, message: "City ID is required", path: ["cityId"] });
     if (!data.street?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Street is required", path: ["street"] });
-    if (!data.serviceCategoriesStr?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Service categories is required", path: ["serviceCategoriesStr"] });
-    if (data.amount == null || data.amount === "") ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Default amount is required", path: ["amount"] });
   });
 
 export type RegisterV2FormValues = z.infer<typeof registerV2Schema>;
@@ -65,9 +63,7 @@ const SP_REQUIRED_FILE_KEYS = [
 ] as const;
 
 export function getRequiredFileKeys(organizationType: "SERVICE_PROVIDER" | "FUEL_STATION") {
-  return organizationType === "SERVICE_PROVIDER"
-    ? ([...ORG_REQUIRED_FILE_KEYS, ...SP_REQUIRED_FILE_KEYS] as const)
-    : ORG_REQUIRED_FILE_KEYS;
+  return [...ORG_REQUIRED_FILE_KEYS, ...SP_REQUIRED_FILE_KEYS] as const;
 }
 
 function getErrorMessage(err: unknown): string | null {

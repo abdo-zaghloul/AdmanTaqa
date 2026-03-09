@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, MoreHorizontal, Eye, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, MoreHorizontal, Eye, Pencil, UserX } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import EditUserDialog from "./EditUserDialog";
-import DeleteUserDialog from "./DeleteUserDialog";
+import DeactivateUserDialog from "./DeactivateUserDialog";
 
 export type UserRow = {
   id: number | string;
@@ -56,8 +57,9 @@ export default function UsersTableCardContent({ users }: UsersTableCardContentPr
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
+  const { user: currentUser, hasPermission } = useAuth();
   const [editUser, setEditUser] = useState<UserRow | null>(null);
-  const [deleteUser, setDeleteUser] = useState<UserRow | null>(null);
+  const [deactivateUser, setDeactivateUser] = useState<UserRow | null>(null);
 
   useEffect(() => {
     if (!dropdownPlacement) return;
@@ -159,6 +161,8 @@ export default function UsersTableCardContent({ users }: UsersTableCardContentPr
         (() => {
           const user = users.find((u) => String(u.id) === dropdownPlacement.userId);
           if (!user) return null;
+          const isCurrentUser = currentUser != null && String(user.id) === String(currentUser.id);
+          const canDeactivate = hasPermission("team.deactivate") && !isCurrentUser && user.isActive !== false;
           const menu = (
             <div
               ref={dropdownRef}
@@ -190,17 +194,19 @@ export default function UsersTableCardContent({ users }: UsersTableCardContentPr
                 <Pencil className="h-3.5 w-3.5 mr-2" />
                 Edit
               </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-sm h-9 px-3 py-1 text-red-600 hover:text-red-600 hover:bg-red-50"
-                onClick={() => {
-                  setDeleteUser(user);
-                  setDropdownPlacement(null);
-                }}
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                Delete
-              </Button>
+              {canDeactivate && (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-sm h-9 px-3 py-1 text-red-600 hover:text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    setDeactivateUser(user);
+                    setDropdownPlacement(null);
+                  }}
+                >
+                  <UserX className="h-3.5 w-3.5 mr-2" />
+                  Deactivate
+                </Button>
+              )}
             </div>
           );
           return createPortal(menu, document.body);
@@ -219,10 +225,10 @@ export default function UsersTableCardContent({ users }: UsersTableCardContentPr
         />
       )}
 
-      <DeleteUserDialog
-        open={!!deleteUser}
-        onOpenChange={(open) => { if (!open) setDeleteUser(null); }}
-        user={deleteUser}
+      <DeactivateUserDialog
+        open={!!deactivateUser}
+        onOpenChange={(open) => { if (!open) setDeactivateUser(null); }}
+        user={deactivateUser}
       />
     </CardContent>
   );

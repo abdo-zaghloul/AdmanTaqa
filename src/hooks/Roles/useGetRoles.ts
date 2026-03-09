@@ -4,7 +4,7 @@ import type { RoleItem, RolesListResponse } from "@/types/role";
 import { normalizeRolesList } from "./utils";
 
 const getRoles = async (): Promise<RoleItem[]> => {
-  const response = await axiosInstance.get<RolesListResponse>("roles");
+  const response = await axiosInstance.get<RolesListResponse>("rbac/roles");
   return normalizeRolesList(response.data);
 };
 

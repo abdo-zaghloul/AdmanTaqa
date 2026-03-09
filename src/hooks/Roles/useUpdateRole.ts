@@ -10,7 +10,7 @@ const updateRole = async ({
   body: UpdateRoleBody;
 }) => {
   try {
-    const response = await axiosInstance.patch(`roles/${id}`, body);
+    const response = await axiosInstance.patch(`rbac/roles/${id}`, body);
     return response.data;
   } catch (err) {
     const withResponse = err as { response?: { data?: { message?: string } } };

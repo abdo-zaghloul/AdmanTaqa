@@ -149,7 +149,7 @@ export default function ProviderRfqDetail() {
       return;
     }
     if (!confirm && !rejectionReason.trim()) {
-      toast.error("سبب الرفض مطلوب.");
+      toast.error("Rejection reason is required.");
       return;
     }
     confirmReceivedMutation.mutate(
@@ -161,12 +161,12 @@ export default function ProviderRfqDetail() {
       },
       {
         onSuccess: () => {
-          toast.success(confirm ? "تم تأكيد استلام الدفع." : "تم رفض استلام الدفع.");
+          toast.success(confirm ? "Payment receipt confirmed." : "Payment receipt rejected.");
           setRejectionReason("");
           queryClient.invalidateQueries({ queryKey: ["provider-rfq", id] });
         },
         onError: (e) =>
-          toast.error(e instanceof Error ? e.message : "فشل تأكيد الاستلام."),
+          toast.error(e instanceof Error ? e.message : "Failed to confirm receipt."),
       }
     );
   };
@@ -275,7 +275,7 @@ export default function ProviderRfqDetail() {
             </CardHeader>
             {canConfirmReceived && (
               <div className="ms-6 pt-2 pb-2 border-b space-y-2">
-                <p className="text-sm font-medium">تأكيد استلام الدفع</p>
+                <p className="text-sm font-medium">Confirm payment received</p>
                 <div className="flex flex-wrap gap-2 items-end">
                   <Button
                     size="sm"
@@ -283,18 +283,18 @@ export default function ProviderRfqDetail() {
                     onClick={() => handleConfirmReceived(true)}
                     disabled={confirmReceivedMutation.isPending}
                   >
-                    <CheckCircle className="h-4 w-4" /> تأكيد الاستلام
+                    <CheckCircle className="h-4 w-4" /> Confirm receipt
                   </Button>
                   <div className="flex flex-1 min-w-[200px] gap-2 items-end">
                     <div className="flex-1 space-y-1">
                       <Label htmlFor="rejectionReason" className="text-xs">
-                        سبب الرفض (إن رفضت)
+                        Rejection reason (if rejecting)
                       </Label>
                       <Input
                         id="rejectionReason"
                         value={rejectionReason}
                         onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="سبب الرفض"
+                        placeholder="Rejection reason"
                       />
                     </div>
                     <Button
@@ -306,7 +306,7 @@ export default function ProviderRfqDetail() {
                         confirmReceivedMutation.isPending || !rejectionReason.trim()
                       }
                     >
-                      <XCircle className="h-4 w-4" /> رفض
+                      <XCircle className="h-4 w-4" /> Reject
                     </Button>
                   </div>
                 </div>
@@ -314,9 +314,9 @@ export default function ProviderRfqDetail() {
             )}
             {awaitingPayment && !jobOrderId && !paymentRejected && (
               <p className="text-sm text-muted-foreground ms-6 py-2">
-                يمكنك تأكيد استلام الدفع من صفحة أمر العمل المرتبط.{" "}
+                You can confirm payment receipt from the related job order page.{" "}
                 <Link to="/provider-job-orders" className="text-primary underline">
-                  عرض أوامر العمل
+                  View job orders
                 </Link>
               </p>
             )}

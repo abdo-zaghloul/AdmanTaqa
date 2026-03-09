@@ -71,7 +71,7 @@ export default function Register() {
   const areas = useGetAreas(cityIdNum).data?.data ?? [];
   const isServiceProvider = organizationType === "SERVICE_PROVIDER";
 
-  const totalSteps = isServiceProvider ? 4 : 2;
+  const totalSteps = isServiceProvider ? 4 : 3;
   const [step, setStep] = useState(1);
   const effectiveStep = step > totalSteps ? totalSteps : step;
 
@@ -226,7 +226,7 @@ export default function Register() {
             <p className="text-xs font-bold uppercase tracking-wider text-primary">
               {effectiveStep === 1 && STEP_LABELS[0]}
               {effectiveStep === 2 && isServiceProvider && STEP_LABELS[1]}
-              {effectiveStep === 2 && !isServiceProvider && STEP_LABELS[2]}
+              {effectiveStep === 2 && !isServiceProvider && STEP_LABELS[3]}
               {effectiveStep === 3 && STEP_LABELS[2]}
               {effectiveStep === 4 && STEP_LABELS[3]}
             </p>
@@ -402,46 +402,12 @@ export default function Register() {
                     <Input id="street" placeholder="Main Street" className="h-11 bg-white" {...register("street")} />
                     {errors.street?.message && <p className="text-xs text-red-600 font-medium">{errors.street.message}</p>}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="serviceCategoriesStr" className="text-xs font-bold text-slate-600">Service categories (IDs or names, comma-separated) *</Label>
-                    <Input id="serviceCategoriesStr" placeholder="1, 2 or Maintenance, Inspection" className="h-11 bg-white" {...register("serviceCategoriesStr")} />
-                    {errors.serviceCategoriesStr?.message && <p className="text-xs text-red-600 font-medium">{errors.serviceCategoriesStr.message}</p>}
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="amount" className="text-xs font-bold text-slate-600">Default amount (≥ 0) *</Label>
-                    <Input id="amount" type="number" min={0} placeholder="0" className="h-11 bg-white" {...register("amount")} />
-                    {errors.amount?.message && <p className="text-xs text-red-600 font-medium">{errors.amount.message}</p>}
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* Step 2 (Fuel) / Step 3 (SP): Organization documents */}
-            {(effectiveStep === 2 && !isServiceProvider) || effectiveStep === 3 ? (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                  <FileText className="h-3 w-3" />
-                  Organization documents (all required) — PDF or images, max 5 MB
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {(["org_license", "org_registration", "org_other"] as const).map((key) => (
-                    <div key={key} className="space-y-2">
-                      <Label className="text-xs font-bold text-slate-600">{FILE_LABELS[key]}</Label>
-                      <Input
-                        type="file"
-                        accept={FILE_ACCEPT}
-                        className="h-11 bg-white text-sm"
-                        onChange={(e) => setFile(key, e.target.files?.[0] ?? null)}
-                      />
-                      {files[key] && <p className="text-xs text-slate-500 truncate">{files[key]?.name}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {/* Step 4: Service provider documents — SP only */}
-            {effectiveStep === 4 && isServiceProvider && (
+            {/* Step 2 (Fuel) / Step 4 (SP): Service provider documents — same for both */}
+            {((effectiveStep === 4 && isServiceProvider) || (effectiveStep === 2 && !isServiceProvider)) && (
               <div className="space-y-6 animate-in fade-in duration-200">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
                   <FileText className="h-3 w-3" />
@@ -463,6 +429,30 @@ export default function Register() {
                 </div>
               </div>
             )}
+
+            {/* Step 3 (Fuel) / Step 3 (SP): Organization documents */}
+            {effectiveStep === 3 ? (
+              <div className="space-y-6 animate-in fade-in duration-200">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                  <FileText className="h-3 w-3" />
+                  Organization documents (all required) — PDF or images, max 5 MB
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {(["org_license", "org_registration", "org_other"] as const).map((key) => (
+                    <div key={key} className="space-y-2">
+                      <Label className="text-xs font-bold text-slate-600">{FILE_LABELS[key]}</Label>
+                      <Input
+                        type="file"
+                        accept={FILE_ACCEPT}
+                        className="h-11 bg-white text-sm"
+                        onChange={(e) => setFile(key, e.target.files?.[0] ?? null)}
+                      />
+                      {files[key] && <p className="text-xs text-slate-500 truncate">{files[key]?.name}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {/* Navigation */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">

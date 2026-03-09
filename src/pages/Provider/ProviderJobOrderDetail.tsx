@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,8 @@ import useProviderJobOrderReports from "@/hooks/Provider/useProviderJobOrderRepo
 import useCreateJobOrderReport from "@/hooks/Provider/useCreateJobOrderReport";
 import useSubmitJobOrderReport from "@/hooks/Provider/useSubmitJobOrderReport";
 import useGetOperators from "@/hooks/Provider/useGetOperators";
+import useProviderJobOrderAttachments from "@/hooks/Provider/useProviderJobOrderAttachments";
+import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
 
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +43,11 @@ export default function ProviderJobOrderDetail() {
   const { data: reports = [] } = useProviderJobOrderReports(id);
   const createReportMutation = useCreateJobOrderReport();
   const submitReportMutation = useSubmitJobOrderReport();
+  const { data: attachmentsList = [] } = useProviderJobOrderAttachments(id);
+  const uploadAttachmentMutation = useUploadProviderJobOrderAttachment();
+  const attachmentFileRef = useRef<HTMLInputElement>(null);
+  const [attachmentDescription, setAttachmentDescription] = useState("");
+  const [selectedAttachmentFile, setSelectedAttachmentFile] = useState<File | null>(null);
   const executionAttachments =
     (order as { executionDetails?: { attachments?: Array<{ fileUrl?: string; uploadedAt?: string; description?: string | null }> } })?.executionDetails?.attachments ??
     (order as { ExecutionDetails?: { attachments?: Array<{ fileUrl?: string; uploadedAt?: string; description?: string | null }> } })?.ExecutionDetails?.attachments ??
@@ -417,16 +424,36 @@ export default function ProviderJobOrderDetail() {
                 <p className="text-sm font-medium flex items-center gap-1">
                   <Paperclip className="h-4 w-4" /> Attachments
                 </p>
-                {executionAttachments.length > 0 ? (
+                {(attachmentsList.length > 0 || executionAttachments.length > 0) ? (
                   <ul className="text-xs space-y-1.5">
+                    {attachmentsList.map((a) => {
+                      const href = a.url ?? a.fileUrl;
+                      const label = a.name ?? a.description?.trim() ?? `Attachment ${a.id}`;
+                      return (
+                        <li key={a.id} className="flex flex-wrap items-center gap-2">
+                          {href ? (
+                            <a href={href} target="_blank" rel="noreferrer" className="text-primary underline">
+                              {label}
+                            </a>
+                          ) : (
+                            <span>{label}</span>
+                          )}
+                          {a.createdAt && (
+                            <span className="text-muted-foreground">
+                              {new Date(a.createdAt).toLocaleString()}
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
                     {executionAttachments.map((a, i) => (
-                      <li key={i} className="flex flex-wrap items-center gap-2">
+                      <li key={`exec-${i}`} className="flex flex-wrap items-center gap-2">
                         {a.fileUrl ? (
                           <a href={a.fileUrl} target="_blank" rel="noreferrer" className="text-primary underline">
-                            {a.description && a.description.trim() ? a.description.trim() : `Attachment ${i + 1}`}
+                            {a.description?.trim() || `Attachment ${i + 1}`}
                           </a>
                         ) : (
-                          <span>{a.description && a.description.trim() ? a.description.trim() : `Attachment ${i + 1}`}</span>
+                          <span>{a.description?.trim() || `Attachment ${i + 1}`}</span>
                         )}
                         {a.uploadedAt && (
                           <span className="text-muted-foreground">
@@ -439,6 +466,48 @@ export default function ProviderJobOrderDetail() {
                 ) : (
                   <p className="text-xs text-muted-foreground">No attachments.</p>
                 )}
+                <div className="rounded border p-3 bg-muted/20 space-y-2">
+                  <Label className="text-xs">Upload file or image</Label>
+                  <div className="flex flex-wrap items-end gap-2">
+                    <Input
+                      type="file"
+                      ref={attachmentFileRef}
+                      accept="image/*,.pdf,application/pdf"
+                      className="max-w-[220px] text-xs"
+                      onChange={(e) => setSelectedAttachmentFile(e.target.files?.[0] ?? null)}
+                    />
+                    <Input
+                      placeholder="Description (optional)"
+                      value={attachmentDescription}
+                      onChange={(e) => setAttachmentDescription(e.target.value)}
+                      className="h-8 max-w-[180px] text-xs"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={!id || uploadAttachmentMutation.isPending || !selectedAttachmentFile}
+                      onClick={() => {
+                        if (!id || !selectedAttachmentFile) return;
+                        uploadAttachmentMutation.mutate(
+                          { jobOrderId: id, file: selectedAttachmentFile, description: attachmentDescription.trim() || undefined },
+                          {
+                            onSuccess: () => {
+                              toast.success("Attachment uploaded.");
+                              setAttachmentDescription("");
+                              setSelectedAttachmentFile(null);
+                              if (attachmentFileRef.current) attachmentFileRef.current.value = "";
+                            },
+                            onError: (e) => toast.error(getApiErrorMessage(e, "Upload failed.")),
+                          }
+                        );
+                      }}
+                    >
+                      {uploadAttachmentMutation.isPending ? "Uploading..." : "Upload"}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">PDF or image, max 5 MB.</p>
+                </div>
               </div>
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
