@@ -97,7 +97,7 @@ export default function Login() {
 
                     {accessDenied && (
                         <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm font-medium text-amber-800">
-                            Access denied. Only approved Service Provider and Authority organizations can access this site.
+                            Access denied. Only approved organizations (Service Provider, Authority, Fuel Station) can access this site.
                         </div>
                     )}
                     <form onSubmit={handleSubmit} className="space-y-6">

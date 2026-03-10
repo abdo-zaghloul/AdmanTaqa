@@ -1,12 +1,9 @@
 import {
   Building2,
   Fuel,
-  MapPin,
-  GitBranch,
   ShieldCheck,
   Users,
   Tags,
-  FileOutput,
   Briefcase,
   // SearchCheck,
   History,
@@ -92,20 +89,12 @@ const navGroups: NavGroup[] = [
       { label: "Registrations", path: "/registrations", icon: FileText },
       { label: "Onboarding", path: "/onboarding", icon: BookOpen },
       { label: "Profile", path: "/profile", icon: UserCog },
-      
-      { label: "Branches", path: "/branches", icon: GitBranch },
-      { label: "Branch Requests", path: "/branch-requests", icon: GitBranch },
-      { label: "Locations", path: "/locations", icon: MapPin },
+
       { label: "Service Categories", path: "/service-categories", icon: Tags },
       { label: "Job Orders", path: "/job-orders", icon: Briefcase },
-      { label: "Internal Work Orders", path: "/internal-work-orders", icon: Briefcase },
-      { label: "External Requests", path: "/station-requests", icon: Briefcase },
-      { label: "Station Job Orders", path: "/station-job-orders", icon: Briefcase },
-      { label: "Linked Providers", path: "/linked-providers", icon: Briefcase },
       { label: "RFQs", path: "/provider-rfqs", icon: Briefcase },
       { label: "Provider Job Orders", path: "/provider-job-orders", icon: Briefcase },
-      { label: "Quotations", path: "/quotations", icon: FileOutput },
-      
+
       // { label: "Inspections", path: "/inspections", icon: SearchCheck },
       { label: "Audit Log", path: "/audit-log", icon: History },
     ],

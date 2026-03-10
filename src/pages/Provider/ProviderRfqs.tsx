@@ -3,6 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -13,22 +20,64 @@ import {
 import useProviderRfqs from "@/hooks/Provider/useProviderRfqs";
 import type { ProviderRfqItem } from "@/types/provider";
 
+/** EXTERNAL_REQUEST_STATUS values supported by GET /api/provider/rfqs?status= */
+const STATUS_ALL = "all";
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: STATUS_ALL, label: "All" },
+  { value: "SUBMITTED_BY_STATION", label: "Submitted by station" },
+  { value: "TRIAGED_BY_OPERATOR", label: "Triaged by operator" },
+  { value: "SENT_TO_PROVIDERS", label: "Sent to providers" },
+  { value: "QUOTING_OPEN", label: "Quoting open" },
+  { value: "QUOTE_SELECTED", label: "Quote selected" },
+  { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
 function rfqTitle(rfq: ProviderRfqItem): string {
   return rfq.formData?.title ?? rfq.title ?? `RFQ #${rfq.id}`;
 }
 
 export default function ProviderRfqs() {
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<string>(STATUS_ALL);
   const limit = 20;
-  const { data, isLoading } = useProviderRfqs({ page, limit });
+  const { data, isLoading } = useProviderRfqs({
+    page,
+    limit,
+    status: status === STATUS_ALL ? undefined : status,
+  });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+
+  const handleStatusChange = (value: string) => {
+    setStatus(value);
+    setPage(1);
+  };
 
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">RFQs</h1>
         <p className="text-muted-foreground">Requests for quote — submit your offers.</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Status</span>
+          <Select value={status} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <Card className="p-4">
         {isLoading ? (

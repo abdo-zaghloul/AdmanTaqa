@@ -39,6 +39,7 @@ import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 import Locations from "./pages/Locations/Locations";
+import LinkedProviders from "./pages/Station/LinkedProviders";
 
 // ---------- Shared (مشترك: Authority + Service Provider) ----------
 import Quotations from "./pages/Quotations/Quotations";
@@ -295,6 +296,14 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="locations">
             <Locations />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "linked-providers",
+        element: (
+          <RouteAccessGuard pathKey="linked-providers">
+            <LinkedProviders />
           </RouteAccessGuard>
         ),
       },

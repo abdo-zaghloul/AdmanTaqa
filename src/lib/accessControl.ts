@@ -63,25 +63,25 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["audit:read"],
   },
   users: {
-    orgTypes: ["AUTHORITY","SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY","SERVICE_PROVIDER", ],
   },
   "users/:id": {
-    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "users/:id/edit": {
-    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   roles: {
-    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/create": {
-    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/:id": {
-    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
+    orgTypes: ["FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/:id/edit": {
-    orgTypes: [ "AUTHORITY" ,"SERVICE_PROVIDER",],
+    orgTypes: [ "FUEL_STATION","AUTHORITY" ,"SERVICE_PROVIDER",],
   },
   branches: {
     orgTypes: ["FUEL_STATION"],

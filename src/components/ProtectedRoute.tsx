@@ -5,7 +5,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-const ALLOWED_ORG_TYPES = ["SERVICE_PROVIDER", "AUTHORITY"] as const;
+const ALLOWED_ORG_TYPES = ["SERVICE_PROVIDER", "AUTHORITY", "FUEL_STATION"] as const;
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, organization, logout } = useAuth();
@@ -23,7 +23,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Only APPROVED organizations with type SERVICE_PROVIDER or AUTHORITY can access the site (not FUEL_STATION)
+  // Only APPROVED organizations with type SERVICE_PROVIDER, AUTHORITY, or FUEL_STATION can access the site
   const isAllowedOrg =
     organization?.status === "APPROVED" &&
     organization?.type != null &&
