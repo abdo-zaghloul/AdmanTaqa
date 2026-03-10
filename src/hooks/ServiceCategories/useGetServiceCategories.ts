@@ -10,7 +10,12 @@ const getServiceCategories = async (): Promise<ServiceCategory[]> => {
   try {
     const response =
       await axiosInstance.get<ServiceCategoriesListResponse>("service-categories");
-    return normalizeServiceCategoriesList(response.data);
+    const list = normalizeServiceCategoriesList(response.data);
+    return [...list].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   } catch (err) {
     const withResponse = err as { response?: { data?: { message?: string } } };
     const message =
