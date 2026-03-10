@@ -180,6 +180,11 @@ export default function AppSidebar() {
     items: group.items.filter((item) => canSeeItem(item)),
   }));
 
+  const getItemLabel = (item: NavItem): string => {
+    if (item.path === "/quotations" && organization?.type === "AUTHORITY") return "Service offers";
+    return item.label;
+  };
+
   const renderItem = (item: NavItem) => {
     if (item.isDropdown) {
       const isOpen = openDropdowns[item.label];
@@ -231,7 +236,7 @@ export default function AppSidebar() {
           >
             <Link to={item.path} className="flex items-center gap-3">
               <item.icon className={`h-4 w-4 transition-colors ${isItemActive(item) ? 'text-primary' : 'text-slate-500 group-hover/btn:text-primary'}`} />
-              <span className="font-semibold text-sm">{item.label}</span>
+              <span className="font-semibold text-sm">{getItemLabel(item)}</span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>

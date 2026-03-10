@@ -22,6 +22,11 @@ import QuotationsTableHeader from "./Component/QuotationsTableHeader";
 import TableQuotations from "./Component/TableQuotations";
 import { useAuth } from "@/context/AuthContext";
 
+const PAGE_TITLE_AUTHORITY = "Service offers";
+const PAGE_TITLE_DEFAULT = "financial offers";
+const PAGE_DESC_AUTHORITY = "Review and manage service offers for service requests.";
+const PAGE_DESC_DEFAULT = "Review and manage financial offers for service requests.";
+
 export default function Quotations() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -30,8 +35,11 @@ export default function Quotations() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
   const { data: orgResponse, isLoading: orgLoading } = useGetOrganization();
-  const { permissions } = useAuth();
-  const organization = orgResponse?.data;
+  const { permissions, organization: authOrg } = useAuth();
+  const organization = orgResponse?.data ?? authOrg;
+  const isAuthority = organization?.type === "AUTHORITY";
+  const pageTitle = isAuthority ? PAGE_TITLE_AUTHORITY : PAGE_TITLE_DEFAULT;
+  const pageDescription = isAuthority ? PAGE_DESC_AUTHORITY : PAGE_DESC_DEFAULT;
   const { data, isLoading, isError, error } = useGetQuotations(page, limit);
   const createQuotation = useCreateQuotation();
 
@@ -102,9 +110,9 @@ export default function Quotations() {
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">financial offers</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
           <p className="text-muted-foreground">
-            Review and manage financial offers for service requests.
+            {pageDescription}
           </p>
         </div>
         <div className="flex items-center gap-2">
