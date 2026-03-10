@@ -58,8 +58,6 @@ export default function ProviderJobOrderDetail() {
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
-  const [newStatus, setNewStatus] = useState<string>("");
-  const [cancellationReason, setCancellationReason] = useState("");
   const [completionNote, setCompletionNote] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
@@ -100,26 +98,12 @@ export default function ProviderJobOrderDetail() {
     );
   };
 
-  const handleUpdateStatus = () => {
-    if (!id || !newStatus) {
-      toast.error("Select a status.");
-      return;
-    }
-    if (newStatus === "CANCELLED" && !cancellationReason.trim()) {
-      toast.error("Cancellation reason is required.");
-      return;
-    }
+  const handleMarkCompleted = () => {
+    if (!id) return;
     statusMutation.mutate(
+      { jobOrderId: id, body: { status: "COMPLETED" } },
       {
-        jobOrderId: id,
-        body: newStatus === "CANCELLED" ? { status: newStatus, cancellationReason: cancellationReason.trim() } : { status: newStatus },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Status updated.");
-          setNewStatus("");
-          setCancellationReason("");
-        },
+        onSuccess: () => toast.success("Status updated to Completed."),
         onError: (e) => toast.error(getApiErrorMessage(e, "Update failed.")),
       }
     );
@@ -430,47 +414,19 @@ export default function ProviderJobOrderDetail() {
                   <p className="text-xs text-muted-foreground">No maintenance reports.</p>
                 )}
               </div>
-              {canAssignOrUpdateStatus && (
+              {canAssignOrUpdateStatus && !isCompleted && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <RefreshCw className="h-4 w-4" /> Update status
                 </p>
-                <div className="flex flex-wrap gap-2 items-end">
-                  <Select value={newStatus} onValueChange={setNewStatus}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="IN_PROGRESS">In progress</SelectItem>
-                      <SelectItem value="WAITING_PARTS">Waiting parts</SelectItem>
-                      <SelectItem value="UNDER_REVIEW">Under review</SelectItem>
-                      <SelectItem value="COMPLETED">Completed</SelectItem>
-                      <SelectItem value="CLOSED">Closed</SelectItem>
-                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {newStatus === "CANCELLED" && (
-                    <div className="space-y-1 min-w-[200px]">
-                      <Label className="text-xs">Reason (required)</Label>
-                      <Input
-                        value={cancellationReason}
-                        onChange={(e) => setCancellationReason(e.target.value)}
-                        placeholder="Cancellation reason"
-                      />
-                    </div>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={handleUpdateStatus}
-                    disabled={
-                      statusMutation.isPending ||
-                      !newStatus ||
-                      (newStatus === "CANCELLED" && !cancellationReason.trim())
-                    }
-                  >
-                    Update
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  onClick={handleMarkCompleted}
+                  disabled={statusMutation.isPending}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Completed
+                </Button>
               </div>
               )}
               {/* Submit for station review — commented out
