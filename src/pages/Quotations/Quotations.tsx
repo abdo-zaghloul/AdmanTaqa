@@ -102,7 +102,7 @@ export default function Quotations() {
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quotations</h1>
+          <h1 className="text-3xl font-bold tracking-tight">financial offers</h1>
           <p className="text-muted-foreground">
             Review and manage financial offers for service requests.
           </p>
