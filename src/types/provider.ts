@@ -33,6 +33,13 @@ export interface ProviderJobOrderAssignment {
 }
 
 /** Visit from GET provider/job-orders/:id — data.ExternalJobVisits[] */
+/** User ref nested in ExternalJobVisits (CreatedByUser, OperatorUser) */
+export interface ProviderJobOrderVisitUser {
+  id?: number;
+  fullName?: string | null;
+  email?: string | null;
+}
+
 export interface ProviderJobOrderVisit {
   id: number;
   externalJobOrderId?: number;
@@ -47,6 +54,8 @@ export interface ProviderJobOrderVisit {
   completionNote?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  OperatorUser?: ProviderJobOrderVisitUser | null;
+  CreatedByUser?: ProviderJobOrderVisitUser | null;
 }
 
 /** Maintenance report from GET provider/job-orders/:id — data.MaintenanceReports[] */

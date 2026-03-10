@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
@@ -69,7 +69,7 @@ export default function ProviderJobOrderDetail() {
   const isCompleted = order?.status === "COMPLETED" || order?.status === "CLOSED";
   const isCancelledOrder = order?.status === "CANCELLED";
   const isActive = order?.status === "ACTIVE" || order?.status === "IN_PROGRESS" || order?.status === "WAITING_PARTS" || order?.status === "UNDER_REVIEW" || order?.status === "REWORK_REQUIRED";
-  const canAssignOrUpdateStatus = isActive && !paymentRejected;
+  const canAssignOrUpdateStatus = (isActive || isCompleted || isCancelledOrder) && !paymentRejected;
   const showOrderActionsAndDetails = canAssignOrUpdateStatus || isCompleted || isCancelledOrder;
   const canSubmitForReview =
     !paymentRejected &&
@@ -271,7 +271,7 @@ export default function ProviderJobOrderDetail() {
 
           {showOrderActionsAndDetails && (
             <>
-              {canAssignOrUpdateStatus && (
+              {/* {canAssignOrUpdateStatus && ( */}
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Assign operator
@@ -301,24 +301,65 @@ export default function ProviderJobOrderDetail() {
                   </Button>
                 </div>
               </div>
-              )}
+              {/* )} */}
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> Visits
                 </p>
                 {jobOrderVisitsList.length > 0 ? (
-                  <ul className="text-xs space-y-1 text-muted-foreground">
-                    {jobOrderVisitsList.map((v) => (
-                      <li key={v.id}>
-                        {v.visitDate ?? v.createdAt} — {v.status ?? "—"}
-                        {v.notes ? ` · ${v.notes}` : ""}
-                      </li>
-                    ))}
+                  <ul className="text-xs space-y-2">
+                    {jobOrderVisitsList.map((v) => {
+                      const createdBy = (v as { CreatedByUser?: { id?: number; fullName?: string; email?: string } }).CreatedByUser ?? (v as { createdByUser?: { id?: number; fullName?: string; email?: string } }).createdByUser;
+                      const operatorUser = (v as { OperatorUser?: { id?: number; fullName?: string; email?: string } }).OperatorUser ?? (v as { operatorUser?: { id?: number; fullName?: string; email?: string } }).operatorUser;
+                      return (
+                        <li key={v.id} className="rounded border px-3 py-2 space-y-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium">{v.visitDate ?? v.createdAt} — {v.status ?? "—"}</span>
+                            {v.notes ? <span className="text-muted-foreground">· {v.notes}</span> : null}
+                          </div>
+                          {createdBy && (createdBy.fullName || createdBy.email) && (
+                            <p className="text-muted-foreground">
+                              Created by: {createdBy.fullName ?? ""}{createdBy.email ? ` (${createdBy.email})` : ""}
+                            </p>
+                          )}
+                          {operatorUser && (operatorUser.fullName || operatorUser.email) && (
+                            <p className="text-muted-foreground">
+                              Operator: {operatorUser.fullName ?? ""}{operatorUser.email ? ` (${operatorUser.email})` : ""}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-xs text-muted-foreground">No visits recorded.</p>
                 )}
               </div>
+              {executionAttachments.length > 0 && (
+              <div className="pt-4 border-t space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <Paperclip className="h-4 w-4" /> Execution attachments
+                </p>
+                <ul className="text-xs space-y-1.5">
+                  {executionAttachments.map((a, i) => (
+                    <li key={i} className="flex flex-wrap items-center gap-2">
+                      {a.fileUrl ? (
+                        <a href={a.fileUrl} target="_blank" rel="noreferrer" className="text-primary underline">
+                          {a.description?.trim() || `Attachment ${i + 1}`}
+                        </a>
+                      ) : (
+                        <span>{a.description?.trim() || `Attachment ${i + 1}`}</span>
+                      )}
+                      {a.uploadedAt && (
+                        <span className="text-muted-foreground">
+                          {new Date(a.uploadedAt).toLocaleString()}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              )}
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <UserPlus className="h-4 w-4" /> Operators

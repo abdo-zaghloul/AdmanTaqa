@@ -63,40 +63,40 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["audit:read"],
   },
   users: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY","SERVICE_PROVIDER", ],
   },
   "users/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "users/:id/edit": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   roles: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/create": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/:id": {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
+    orgTypes: ["AUTHORITY" ,"SERVICE_PROVIDER", ],
   },
   "roles/:id/edit": {
-    orgTypes: [ "SERVICE_PROVIDER","FUEL_STATION"],
+    orgTypes: [ "AUTHORITY" ,"SERVICE_PROVIDER",],
   },
   branches: {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "branches/create": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "branches/:id": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "branches/:id/edit": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   locations: {
-    orgTypes: ["AUTHORITY",  "FUEL_STATION"],
+    orgTypes: ["AUTHORITY",  ],
   },
   "service-Offering": {
     orgTypes: ["SERVICE_PROVIDER", "AUTHORITY"],
@@ -117,49 +117,49 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["job-orders:read"],
   },
   "work-orders/:id": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
     anyPermissions: ["workorders.read"],
   },
   "work-orders/review-queue": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
     anyPermissions: ["workorders.approve", "internal_tasks.review"],
   },
   "branch-requests": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "branch-requests/create": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "branch-requests/:id": {
-    orgTypes: ["FUEL_STATION", "AUTHORITY"],
+    orgTypes: ["AUTHORITY"],
   },
   // Station (Fuel Station): internal work orders, external requests
   "internal-work-orders": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "internal-work-orders/review-queue": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "internal-work-orders/:id": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "station-requests": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "station-requests/create": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "station-requests/:id": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "linked-providers": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "station-job-orders": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   "station-job-orders/:id": {
-    orgTypes: ["FUEL_STATION"],
+    orgTypes: [],
   },
   // Provider (Service Provider): RFQs, job orders
   "provider-rfqs": {
