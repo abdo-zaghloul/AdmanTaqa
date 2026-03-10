@@ -31,7 +31,6 @@ export default function OrganizationDetails() {
   const orgFull = org as OrganizationByIdFull | null | undefined;
   const documents = orgFull?.OrganizationDocuments ?? [];
   const serviceProvider = orgFull?.ServiceProviderProfile;
-  const usersList = orgFull?.Users ?? [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -299,37 +298,35 @@ export default function OrganizationDetails() {
         </div>
 
         <div className="space-y-6">
-          {usersList.length > 0 && (
+          {orgFull?.owner && (
             <Card className="border-none shadow-sm shadow-slate-200/50">
               <CardHeader className="border-b bg-slate-50/50 py-4">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <User className="h-5 w-5 text-primary" />
-                  Contact
+                  Owner
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                {usersList.map((u) => (
-                  <div key={u.id} className="p-4 rounded-xl border bg-slate-50/50 border-slate-100 space-y-2">
-                    {u.fullName && (
-                      <p className="font-semibold text-sm flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        {u.fullName}
-                      </p>
-                    )}
-                    {u.email && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Mail className="h-4 w-4 shrink-0" />
-                        <a href={`mailto:${u.email}`} className="text-primary hover:underline">{u.email}</a>
-                      </p>
-                    )}
-                    {u.phone && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Phone className="h-4 w-4 shrink-0" />
-                        <a href={`tel:${u.phone}`} className="text-primary hover:underline">{u.phone}</a>
-                      </p>
-                    )}
-                  </div>
-                ))}
+              <CardContent className="pt-6">
+                <div className="p-4 rounded-xl border bg-slate-50/50 border-slate-100 space-y-2">
+                  {orgFull.owner.fullName && (
+                    <p className="font-semibold text-sm flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      {orgFull.owner.fullName}
+                    </p>
+                  )}
+                  {orgFull.owner.email && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Mail className="h-4 w-4 shrink-0" />
+                      <a href={`mailto:${orgFull.owner.email}`} className="text-primary hover:underline">{orgFull.owner.email}</a>
+                    </p>
+                  )}
+                  {orgFull.owner.phone && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <Phone className="h-4 w-4 shrink-0" />
+                      <a href={`tel:${orgFull.owner.phone}`} className="text-primary hover:underline">{orgFull.owner.phone}</a>
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}

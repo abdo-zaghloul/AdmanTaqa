@@ -221,6 +221,7 @@ export interface OrganizationByIdFull {
     Users?: OrganizationByIdUser[];
     OrganizationDocuments?: OrganizationByIdDocument[];
     ServiceProviderProfile?: OrganizationByIdServiceProviderProfile | null;
+    owner?: OrganizationMeFullOwner | null;
 }
 
 export interface OrganizationByIdResponse {
