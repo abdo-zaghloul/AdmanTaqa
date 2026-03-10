@@ -59,6 +59,9 @@ export const normalizeRole = (raw: unknown): RoleItem | null => {
   const rawPermissionsFromApi = Array.isArray(rec.Permissions)
     ? rec.Permissions
     : [];
+  const rawPermissionKeys = Array.isArray(rec.permissionKeys)
+    ? (rec.permissionKeys as unknown[]).filter((k): k is string => typeof k === "string")
+    : [];
 
   let permissions: string[];
   let permissionIds: number[];
@@ -68,6 +71,14 @@ export const normalizeRole = (raw: unknown): RoleItem | null => {
     permissionsList = normalizePermissions(rawPermissionsFromApi);
     permissions = permissionsList.map((p) => p.code);
     permissionIds = permissionsList.map((p) => p.id).filter((id) => id >= 0);
+  } else if (rawPermissionKeys.length > 0) {
+    permissions = rawPermissionKeys;
+    permissionIds = rawPermissionKeys.map((_, i) => i);
+    permissionsList = rawPermissionKeys.map((code, i) => ({
+      id: i,
+      code,
+      name: code,
+    }));
   } else {
     permissions = rawPermissions
       .map(toPermissionCode)

@@ -4,7 +4,7 @@ import type { RoleItem, RoleResponse } from "@/types/role";
 import { normalizeRole } from "./utils";
 
 const getRoleById = async (id: string | number): Promise<RoleItem> => {
-  const response = await axiosInstance.get<RoleResponse>(`roles/${id}`);
+  const response = await axiosInstance.get<RoleResponse>(`rbac/roles/${id}`);
   const role = normalizeRole(response.data?.data ?? response.data);
   if (!role) {
     throw new Error("Role not found.");
