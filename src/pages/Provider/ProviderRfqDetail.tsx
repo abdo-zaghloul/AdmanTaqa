@@ -265,12 +265,12 @@ export default function ProviderRfqDetail() {
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground mt-1">
+              {/* <p className="text-xs text-muted-foreground mt-1">
                 ID {rfq.id}
                 {rfq.branchId != null && ` · Branch ${rfq.branchId}`}
                 {rfq.fuelStationOrganizationId != null && ` · Station org ${rfq.fuelStationOrganizationId}`}
                 {rfq.areaId != null && ` · Area ${rfq.areaId}`}
-              </p>
+              </p> */}
 
             </CardHeader>
             {canConfirmReceived && (
