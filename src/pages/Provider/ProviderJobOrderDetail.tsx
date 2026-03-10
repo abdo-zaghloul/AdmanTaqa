@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin } from "lucide-react";
+import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
@@ -20,12 +20,10 @@ import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
 import useAssignProviderJobOrderOperator from "@/hooks/Provider/useAssignProviderJobOrderOperator";
 import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJobOrderStatus";
 import useSubmitJobOrderForCompletion from "@/hooks/Provider/useSubmitJobOrderForCompletion";
-import useProviderJobOrderVisits from "@/hooks/Provider/useProviderJobOrderVisits";
-import useProviderJobOrderVisitCheckin from "@/hooks/Provider/useProviderJobOrderVisitCheckin";
 import useGetOperators from "@/hooks/Provider/useGetOperators";
-import useProviderJobOrderAttachments from "@/hooks/Provider/useProviderJobOrderAttachments";
 import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
-import type { ProviderJobOrderAssignment } from "@/types/provider";
+import useProviderJobOrderReports from "@/hooks/Provider/useProviderJobOrderReports";
+import type { ProviderJobOrderAssignment, ProviderJobOrderVisit } from "@/types/provider";
 
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -34,10 +32,7 @@ export default function ProviderJobOrderDetail() {
   const assignMutation = useAssignProviderJobOrderOperator();
   const statusMutation = useUpdateProviderJobOrderStatus();
   const { data: operators = [] } = useGetOperators();
-  const { data: visits = [] } = useProviderJobOrderVisits(id);
-  const checkinMutation = useProviderJobOrderVisitCheckin();
   const submitCompletionMutation = useSubmitJobOrderForCompletion();
-  const { data: attachmentsList = [] } = useProviderJobOrderAttachments(id);
   const uploadAttachmentMutation = useUploadProviderJobOrderAttachment();
   const attachmentFileRef = useRef<HTMLInputElement>(null);
   const [attachmentDescription, setAttachmentDescription] = useState("");
@@ -56,6 +51,11 @@ export default function ProviderJobOrderDetail() {
   const assignmentsRaw = orderWithAssignments?.externalJobAssignments ?? orderWithAssignments?.ExternalJobAssignments ?? [];
   const jobOrderOperatorsList = assignmentsRaw.map((a) => ({ assignmentId: a.id, operator: a.Operator ?? a.operator })).filter((x): x is { assignmentId: number; operator: NonNullable<ProviderJobOrderAssignment["Operator"]> } => x.operator != null);
 
+  const orderWithVisits = order as { externalJobVisits?: ProviderJobOrderVisit[]; ExternalJobVisits?: ProviderJobOrderVisit[] } | null | undefined;
+  const jobOrderVisitsList = orderWithVisits?.externalJobVisits ?? orderWithVisits?.ExternalJobVisits ?? [];
+
+  const { data: reportsList = [] } = useProviderJobOrderReports(id);
+
   const [rejectionReason, setRejectionReason] = useState("");
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
   const [newStatus, setNewStatus] = useState<string>("");
@@ -67,9 +67,10 @@ export default function ProviderJobOrderDetail() {
   const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const isUnderReview = order?.status === "UNDER_REVIEW";
   const isCompleted = order?.status === "COMPLETED" || order?.status === "CLOSED";
+  const isCancelledOrder = order?.status === "CANCELLED";
   const isActive = order?.status === "ACTIVE" || order?.status === "IN_PROGRESS" || order?.status === "WAITING_PARTS" || order?.status === "UNDER_REVIEW" || order?.status === "REWORK_REQUIRED";
   const canAssignOrUpdateStatus = isActive && !paymentRejected;
-  const showOrderActionsAndDetails = canAssignOrUpdateStatus || isCompleted;
+  const showOrderActionsAndDetails = canAssignOrUpdateStatus || isCompleted || isCancelledOrder;
   const canSubmitForReview =
     !paymentRejected &&
     !isCancelled &&
@@ -124,17 +125,6 @@ export default function ProviderJobOrderDetail() {
     );
   };
 
-  const handleCheckin = () => {
-    if (!id) return;
-    checkinMutation.mutate(
-      { jobOrderId: id },
-      {
-        onSuccess: () => toast.success("Visit check-in recorded."),
-        onError: (e) => toast.error(getApiErrorMessage(e, "Check-in failed.")),
-      }
-    );
-  };
-
   const handleSubmitForReview = () => {
     if (!id) return;
     submitCompletionMutation.mutate(
@@ -150,7 +140,6 @@ export default function ProviderJobOrderDetail() {
     setCompletionNote,
     showSubmitForReviewSection,
     handleSubmitForReview,
-    attachmentsList,
     uploadAttachmentMutation,
     attachmentFileRef,
     attachmentDescription,
@@ -317,26 +306,17 @@ export default function ProviderJobOrderDetail() {
                 <p className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> Visits
                 </p>
-                {visits.length > 0 && (
+                {jobOrderVisitsList.length > 0 ? (
                   <ul className="text-xs space-y-1 text-muted-foreground">
-                    {visits.map((v) => (
+                    {jobOrderVisitsList.map((v) => (
                       <li key={v.id}>
                         {v.visitDate ?? v.createdAt} — {v.status ?? "—"}
                         {v.notes ? ` · ${v.notes}` : ""}
                       </li>
                     ))}
                   </ul>
-                )}
-                {canAssignOrUpdateStatus && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1"
-                  onClick={handleCheckin}
-                  disabled={checkinMutation.isPending}
-                >
-                  <MapPin className="h-3.5 w-3.5" /> Check-in visit
-                </Button>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No visits recorded.</p>
                 )}
               </div>
               <div className="pt-4 border-t space-y-2">
@@ -353,6 +333,60 @@ export default function ProviderJobOrderDetail() {
                   </ul>
                 ) : (
                   <p className="text-xs text-muted-foreground">No operators assigned to this job order.</p>
+                )}
+              </div>
+              <div className="pt-4 border-t space-y-2">
+                <p className="text-sm font-medium flex items-center gap-1">
+                  <FileText className="h-4 w-4" /> Maintenance Reports
+                </p>
+                {reportsList.length > 0 ? (
+                  <ul className="text-xs space-y-3">
+                    {reportsList.map((r) => (
+                      <li key={r.id} className="rounded border px-3 py-2 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">{r.title ?? `Report #${r.id}`}</span>
+                          {r.status != null && r.status !== "" && (
+                            <span className="text-muted-foreground">{r.status}</span>
+                          )}
+                          {r.Visit?.visitDate && (
+                            <span className="text-muted-foreground">Visit: {r.Visit.visitDate}</span>
+                          )}
+                          {r.SubmittedBy?.fullName && (
+                            <span className="text-muted-foreground">By: {r.SubmittedBy.fullName}</span>
+                          )}
+                          {r.createdAt && (
+                            <span className="text-muted-foreground">
+                              {new Date(r.createdAt).toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        {r.findings != null && r.findings !== "" && (
+                          <p className="text-muted-foreground"><span className="font-medium text-foreground">Findings:</span> {r.findings}</p>
+                        )}
+                        {r.actionsTaken != null && r.actionsTaken !== "" && (
+                          <p className="text-muted-foreground"><span className="font-medium text-foreground">Actions taken:</span> {r.actionsTaken}</p>
+                        )}
+                        {r.recommendations != null && r.recommendations !== "" && (
+                          <p className="text-muted-foreground"><span className="font-medium text-foreground">Recommendations:</span> {r.recommendations}</p>
+                        )}
+                        {r.attachments != null && r.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {r.attachments.map((a, i) => (
+                              a.fileUrl ? (
+                                <a key={i} href={a.fileUrl} target="_blank" rel="noreferrer" className="text-primary underline text-xs">
+                                  {a.category ?? `Attachment ${i + 1}`}
+                                </a>
+                              ) : (
+                                <span key={i} className="text-muted-foreground text-xs">{a.category ?? `Attachment ${i + 1}`}</span>
+                              )
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No maintenance reports.</p>
                 )}
               </div>
               {canAssignOrUpdateStatus && (

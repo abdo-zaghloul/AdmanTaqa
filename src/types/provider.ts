@@ -32,6 +32,37 @@ export interface ProviderJobOrderAssignment {
   operator?: ProviderJobOrderOperator;
 }
 
+/** Visit from GET provider/job-orders/:id — data.ExternalJobVisits[] */
+export interface ProviderJobOrderVisit {
+  id: number;
+  externalJobOrderId?: number;
+  type?: string;
+  visitDate?: string | null;
+  status?: string | null;
+  scheduledAt?: string | null;
+  operatorUserId?: number | null;
+  notes?: string | null;
+  checkedInAt?: string | null;
+  completedAt?: string | null;
+  completionNote?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Maintenance report from GET provider/job-orders/:id — data.MaintenanceReports[] */
+export interface ProviderJobOrderMaintenanceReport {
+  id: number;
+  jobOrderId?: number;
+  externalJobOrderId?: number;
+  title?: string | null;
+  content?: string | null;
+  status?: string | null;
+  submittedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
 /** formData from GET /requests (RFQ) — doc: title, description, requiredTimeline */
 export interface ProviderRfqFormData {
   title?: string;
@@ -165,6 +196,10 @@ export interface ProviderJobOrderItem {
   } | null;
   /** Nested from API (ExternalJobAssignments) — operators assigned to this job order */
   externalJobAssignments?: ProviderJobOrderAssignment[];
+  /** Nested from API (ExternalJobVisits) — visits for this job order */
+  externalJobVisits?: ProviderJobOrderVisit[];
+  /** Nested from API (MaintenanceReports) — maintenance reports for this job order */
+  maintenanceReports?: ProviderJobOrderMaintenanceReport[];
 }
 
 export interface PaymentRecordSummary {
@@ -242,16 +277,31 @@ export interface ProviderAttachmentItem {
   createdAt?: string;
 }
 
-/** Maintenance report (provider job order) */
+/** Maintenance report (provider job order) — list item from GET job-orders/:id/reports */
 export interface ProviderReportItem {
   id: number;
   jobOrderId?: number;
+  externalJobOrderId?: number;
+  visitId?: number;
+  submittedByUserId?: number;
+  status?: string;
   title?: string;
   content?: string | null;
-  status?: string;
+  findings?: string | null;
+  actionsTaken?: string | null;
+  recommendations?: string | null;
+  checklistJson?: Array<{ item?: string; checked?: boolean; note?: string | null }> | null;
+  attachments?: Array<{ fileUrl?: string; publicId?: string; category?: string; uploadedAt?: string }> | null;
   submittedAt?: string | null;
+  reviewedByUserId?: number | null;
+  reviewedAt?: string | null;
+  reviewNote?: string | null;
+  rejectionReason?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  Visit?: { id?: number; type?: string; status?: string; visitDate?: string } | null;
+  SubmittedBy?: { id?: number; fullName?: string } | null;
+  ReviewedBy?: { id?: number | null; fullName?: string | null } | null;
 }
 
 export interface CreateProviderReportBody {

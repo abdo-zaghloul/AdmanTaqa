@@ -34,6 +34,8 @@ function normalizeProviderJobOrder(raw: Record<string, unknown>): Record<string,
   if (raw.ExternalRequest !== undefined) out.externalRequest = raw.ExternalRequest;
   if (raw.ProviderQuote !== undefined) out.providerQuote = raw.ProviderQuote;
   if (raw.ExternalJobAssignments !== undefined) out.externalJobAssignments = raw.ExternalJobAssignments;
+  if (raw.ExternalJobVisits !== undefined) out.externalJobVisits = raw.ExternalJobVisits;
+  if (raw.MaintenanceReports !== undefined) out.maintenanceReports = raw.MaintenanceReports;
   if (raw.ExecutionDetails !== undefined) out.executionDetails = raw.ExecutionDetails;
   return out;
 }
