@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Building2, ShieldCheck, CalendarDays, Wrench } from "lucide-react";
+import { Building2, ShieldCheck, CalendarDays, Wrench, User } from "lucide-react";
 import type { OrganizationMeFullData } from "@/types/organization";
 
 interface OrganizationDetailsCardProps {
@@ -42,6 +42,29 @@ const organizationDetailsContent = (organization: OrganizationMeFullData | null 
                             </div>
                         </div>
                     </div>
+
+                    {organization?.owner && (
+                        <div className="border-t pt-6 space-y-3">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <User className="h-4 w-4" />
+                                <Label className="text-xs uppercase font-semibold">Owner</Label>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                <div className="p-3 rounded-lg bg-background border space-y-0.5">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Full Name</p>
+                                    <p className="font-medium">{organization.owner.fullName ?? "—"}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-background border space-y-0.5">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Email</p>
+                                    <p className="font-medium">{organization.owner.email ?? "—"}</p>
+                                </div>
+                                <div className="p-3 rounded-lg bg-background border space-y-0.5">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Phone</p>
+                                    <p className="font-medium">{organization.owner.phone ?? "—"}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {organization?.type === "SERVICE_PROVIDER" && organization?.ServiceProviderProfile && (
                         <div className="border-t pt-6 space-y-3">

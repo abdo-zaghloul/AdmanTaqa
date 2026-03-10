@@ -116,6 +116,13 @@ export interface OrganizationMeFullServiceProviderProfile extends ServiceProvide
     ServiceProviderDocuments?: ServiceProviderDocumentItem[];
 }
 
+/** Owner summary in GET /organizations/me/full (owner) */
+export interface OrganizationMeFullOwner {
+    fullName: string;
+    email: string;
+    phone?: string | null;
+}
+
 /** GET /organizations/me/full — organization + nested User, Users, Branches, Approvals, Roles, etc. */
 export interface OrganizationMeFullData extends OrganizationProfile {
     User?: OrganizationMeFullUser | null;
@@ -130,6 +137,7 @@ export interface OrganizationMeFullData extends OrganizationProfile {
     LinkedAsServiceProvider?: LinkedAsServiceProviderItem[];
     EmployeeInvitations?: OrganizationMeFullEmployeeInvitation[];
     BranchRequests?: unknown[];
+    owner?: OrganizationMeFullOwner | null;
 }
 
 export interface OrganizationMeFullResponse {
