@@ -84,19 +84,19 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: [ "AUTHORITY" ,"SERVICE_PROVIDER",],
   },
   branches: {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/create": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/:id": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "branches/:id/edit": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   locations: {
-    orgTypes: ["AUTHORITY",  ],
+    orgTypes: ["AUTHORITY",  "FUEL_STATION"],
   },
   "service-Offering": {
     orgTypes: ["SERVICE_PROVIDER", "AUTHORITY"],
@@ -117,49 +117,49 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     anyPermissions: ["job-orders:read"],
   },
   "work-orders/:id": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
     anyPermissions: ["workorders.read"],
   },
   "work-orders/review-queue": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
     anyPermissions: ["workorders.approve", "internal_tasks.review"],
   },
   "branch-requests": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "branch-requests/create": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "branch-requests/:id": {
-    orgTypes: ["AUTHORITY"],
+    orgTypes: ["FUEL_STATION", "AUTHORITY"],
   },
   // Station (Fuel Station): internal work orders, external requests
   "internal-work-orders": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "internal-work-orders/review-queue": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "internal-work-orders/:id": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "station-requests": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "station-requests/create": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "station-requests/:id": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "linked-providers": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "station-job-orders": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   "station-job-orders/:id": {
-    orgTypes: [],
+    orgTypes: ["FUEL_STATION"],
   },
   // Provider (Service Provider): RFQs, job orders
   "provider-rfqs": {
