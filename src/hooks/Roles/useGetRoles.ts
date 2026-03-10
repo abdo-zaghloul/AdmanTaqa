@@ -7,7 +7,7 @@ import { normalizeRolesList } from "./utils";
 /** SERVICE_PROVIDER (and others) → GET /api/rbac/roles; AUTHORITY → GET /api/roles */
 const ROLES_ENDPOINT_BY_ORG_TYPE: Record<string, string> = {
   AUTHORITY: "roles",
-  SERVICE_PROVIDER: "rbac/roles",
+  SERVICE_PROVIDER: "roles",
   FUEL_STATION: "rbac/roles",
 };
 

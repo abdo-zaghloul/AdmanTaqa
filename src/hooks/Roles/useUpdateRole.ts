@@ -6,7 +6,7 @@ import type { UpdateRoleBody } from "@/types/role";
 /** AUTHORITY → roles; SERVICE_PROVIDER / FUEL_STATION → rbac/roles */
 const ROLES_ENDPOINT_BY_ORG_TYPE: Record<string, string> = {
   AUTHORITY: "roles",
-  SERVICE_PROVIDER: "rbac/roles",
+  SERVICE_PROVIDER: "roles",
   FUEL_STATION: "rbac/roles",
 };
 
