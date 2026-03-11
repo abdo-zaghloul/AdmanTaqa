@@ -6,12 +6,15 @@ export default function RegistrationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data, isLoading, isError, error } = useGetOrganizations({
     status: "APPROVED",
+    type: "SERVICE_PROVIDER",
     page: 1,
     limit: 20,
   });
 
   const filteredOrgs = useMemo(() => {
-    const list = (data?.data?.items ?? []).filter((org) => org.status === "APPROVED");
+    const list = (data?.data?.items ?? []).filter(
+      (org) => org.status === "APPROVED" && org.type === "SERVICE_PROVIDER"
+    );
     if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase();
     return list.filter(
@@ -24,9 +27,9 @@ export default function RegistrationsPage() {
   return (
     <div className="p-4 md:p-8 space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Approved Registrations</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Approved Service Provider Registrations</h1>
         <p className="text-muted-foreground">
-          View approved organizations with the same structure as Organizations.
+          View approved service provider organizations.
         </p>
       </div>
 

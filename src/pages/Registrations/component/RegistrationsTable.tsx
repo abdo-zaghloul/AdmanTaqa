@@ -35,8 +35,13 @@ export default function RegistrationsTable() {
   const loadData = async (page: number) => {
     try {
       setLoading(true);
-      const response = await fetchRegistrations('approved', page, pageSize);
-      setRegistrations(response.data);
+      const response = await fetchRegistrations('approved', page, pageSize, 'SERVICE_PROVIDER');
+      const list = response.data ?? [];
+      const hasTypeField = list.some((r) => (r.organizationType ?? r.type) != null && (r.organizationType ?? r.type) !== '');
+      const filtered = hasTypeField
+        ? list.filter((r) => (r.organizationType ?? r.type ?? '').toUpperCase() === 'SERVICE_PROVIDER')
+        : list;
+      setRegistrations(filtered);
       setTotalPages(response.totalPages);
       setTotalItems(response.total);
       setCurrentPage(response.page);

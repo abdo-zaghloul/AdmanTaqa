@@ -13,6 +13,8 @@ export interface Registration {
   phone: string;
   address?: string;
   documents: RegistrationDocument[];
+  organizationType?: string;
+  type?: string;
 }
 
 interface FetchRegistrationsResponse {
@@ -25,11 +27,12 @@ interface FetchRegistrationsResponse {
 export async function fetchRegistrations(
   status: string,
   page: number,
-  pageSize: number
+  pageSize: number,
+  organizationType?: string
 ): Promise<FetchRegistrationsResponse> {
-  const { data } = await axiosInstance.get("/registrations", {
-    params: { status, page, pageSize },
-  });
+  const params: Record<string, string | number> = { status, page, pageSize };
+  if (organizationType) params.organizationType = organizationType;
+  const { data } = await axiosInstance.get("/registrations", { params });
   return data;
 }
 
