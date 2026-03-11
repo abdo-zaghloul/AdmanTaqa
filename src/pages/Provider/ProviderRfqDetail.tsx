@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, DollarSign, FileText, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, DollarSign, FileText, Clock, CheckCircle, XCircle, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import useProviderRfqById from "@/hooks/Provider/useProviderRfqById";
@@ -319,6 +319,16 @@ export default function ProviderRfqDetail() {
                   View job orders
                 </Link>
               </p>
+            )}
+            {alreadyConfirmed && externalJobOrder?.id != null && (
+              <div className="ms-6 pt-2 pb-2 border-b">
+                <Button size="sm" variant="outline" className="gap-2" asChild>
+                  <Link to={`/provider-job-orders/${externalJobOrder.id}`}>
+                    <Briefcase className="h-4 w-4" />
+                    Job Order
+                  </Link>
+                </Button>
+              </div>
             )}
             <CardContent className="space-y-4">
               {description && rfq.status !== "AWAITING_PAYMENT" && (
