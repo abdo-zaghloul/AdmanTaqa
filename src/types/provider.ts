@@ -130,7 +130,7 @@ export interface ProviderRfqExternalJobOrder {
   id: number;
   status?: string;
   /** API returns PaymentRecord (capital P) */
-  PaymentRecord?: { status?: string; rejectionReason?: string | null };
+  PaymentRecord?: { status?: string; rejectionReason?: string | null; receiptFileUrl?: string | null };
 }
 
 /** Detail API may return ProviderQuotes (capital P) */

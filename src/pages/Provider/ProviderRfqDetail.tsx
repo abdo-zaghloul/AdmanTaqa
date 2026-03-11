@@ -172,9 +172,11 @@ export default function ProviderRfqDetail() {
   };
 
   const awaitingPayment = rfq?.status === "AWAITING_PAYMENT";
-  const paymentRecordStatus = externalJobOrder?.PaymentRecord?.status;
+  const paymentRecord = externalJobOrder?.PaymentRecord;
+  const paymentRecordStatus = paymentRecord?.status;
   const paymentRejected = paymentRecordStatus === "REJECTED";
   const alreadyConfirmed = paymentRecordStatus === "PROVIDER_CONFIRMED_RECEIVED";
+  const receiptFileUrl = (paymentRecord as { receiptFileUrl?: string | null } | undefined)?.receiptFileUrl;
   const canConfirmReceived =
     awaitingPayment &&
     !paymentRejected &&
@@ -328,6 +330,28 @@ export default function ProviderRfqDetail() {
                     Job Order
                   </Link>
                 </Button>
+              </div>
+            )}
+            {receiptFileUrl && (
+              <div className="ms-6 pt-2 pb-2 border-b space-y-2">
+                <p className="text-sm font-medium">Payment receipt</p>
+                <a
+                  href={receiptFileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block rounded-lg border overflow-hidden bg-muted/30 max-w-[280px]"
+                >
+                  <img
+                    src={receiptFileUrl}
+                    alt="Payment receipt"
+                    className="w-full h-auto object-contain max-h-64"
+                  />
+                </a>
+                <p className="text-xs text-muted-foreground">
+                  <a href={receiptFileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    Open receipt in new tab
+                  </a>
+                </p>
               </div>
             )}
             <CardContent className="space-y-4">
