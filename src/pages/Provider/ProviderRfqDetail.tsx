@@ -13,14 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, CheckCircle, XCircle, Briefcase, CreditCard, Info } from "lucide-react";
+import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, Briefcase, CreditCard, Info } from "lucide-react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import useProviderRfqById from "@/hooks/Provider/useProviderRfqById";
 import useReviseQuote from "@/hooks/Provider/useReviseQuote";
 import useWithdrawQuote from "@/hooks/Provider/useWithdrawQuote";
-import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
-import useProviderJobOrders from "@/hooks/Provider/useProviderJobOrders";
 import { getQuotePaymentTerms } from "@/types/provider";
 
 function formatDate(s: string | undefined): string {
@@ -42,23 +39,13 @@ function paymentTriggerLabel(trigger: string | undefined): string {
 
 export default function ProviderRfqDetail() {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
   const { data: rfq, isLoading } = useProviderRfqById(id ?? null);
-  const { data: jobOrdersData } = useProviderJobOrders(
-    rfq?.status === "AWAITING_PAYMENT" ? { status: "AWAITING_PAYMENT" } : undefined
-  );
   const reviseQuoteMutation = useReviseQuote();
   const withdrawQuoteMutation = useWithdrawQuote();
-  const confirmReceivedMutation = useConfirmReceived();
-
   const quotes = rfq?.ProviderQuotes ?? rfq?.quotes ?? [];
   const selectedQuote = quotes.find((q) => q.status === "SELECTED");
   const externalJobOrder = selectedQuote?.ExternalJobOrder;
-  const jobOrderId =
-    externalJobOrder?.id ??
-    jobOrdersData?.items?.find((jo) => jo.externalRequestId === rfq?.id)?.id;
 
-  const [rejectionReason, setRejectionReason] = useState("");
   const [editingQuoteId, setEditingQuoteId] = useState<number | null>(null);
   const [reviseAmount, setReviseAmount] = useState("");
   const [reviseValidUntil, setReviseValidUntil] = useState("");
@@ -111,45 +98,10 @@ export default function ProviderRfqDetail() {
     });
   };
 
-  const handleConfirmReceived = (confirm: boolean) => {
-    if (jobOrderId == null) {
-      toast.error("Job order not found for this RFQ.");
-      return;
-    }
-    if (!confirm && !rejectionReason.trim()) {
-      toast.error("Rejection reason is required.");
-      return;
-    }
-    confirmReceivedMutation.mutate(
-      {
-        jobOrderId,
-        body: confirm
-          ? { confirm: true }
-          : { confirm: false, rejectionReason: rejectionReason.trim() },
-      },
-      {
-        onSuccess: () => {
-          toast.success(confirm ? "Payment receipt confirmed." : "Payment receipt rejected.");
-          setRejectionReason("");
-          queryClient.invalidateQueries({ queryKey: ["provider-rfq", id] });
-        },
-        onError: (e) =>
-          toast.error(e instanceof Error ? e.message : "Failed to confirm receipt."),
-      }
-    );
-  };
-
-  const awaitingPayment = rfq?.status === "AWAITING_PAYMENT";
   const paymentRecord = externalJobOrder?.PaymentRecord;
   const paymentRecordStatus = paymentRecord?.status;
-  const paymentRejected = paymentRecordStatus === "REJECTED";
   const alreadyConfirmed = paymentRecordStatus === "PROVIDER_CONFIRMED_RECEIVED";
   const receiptFileUrl = (paymentRecord as { receiptFileUrl?: string | null } | undefined)?.receiptFileUrl;
-  const canConfirmReceived =
-    awaitingPayment &&
-    !paymentRejected &&
-    !alreadyConfirmed &&
-    jobOrderId != null;
 
   return (
     <div className="p-4 md:p-8">
@@ -243,53 +195,6 @@ export default function ProviderRfqDetail() {
               </p> */}
 
             </CardHeader>
-            {canConfirmReceived && (
-              <div className="ms-6 pt-2 pb-2 border-b space-y-2">
-                <p className="text-sm font-medium">Confirm payment received</p>
-                <div className="flex flex-wrap gap-2 items-end">
-                  <Button
-                    size="sm"
-                    className="gap-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => handleConfirmReceived(true)}
-                    disabled={confirmReceivedMutation.isPending}
-                  >
-                    <CheckCircle className="h-4 w-4" /> Confirm receipt
-                  </Button>
-                  <div className="flex flex-1 min-w-[200px] gap-2 items-end">
-                    <div className="flex-1 space-y-1">
-                      <Label htmlFor="rejectionReason" className="text-xs">
-                        Rejection reason (if rejecting)
-                      </Label>
-                      <Input
-                        id="rejectionReason"
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
-                        placeholder="Rejection reason"
-                      />
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="gap-1"
-                      onClick={() => handleConfirmReceived(false)}
-                      disabled={
-                        confirmReceivedMutation.isPending || !rejectionReason.trim()
-                      }
-                    >
-                      <XCircle className="h-4 w-4" /> Reject
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-            {awaitingPayment && !jobOrderId && !paymentRejected && (
-              <p className="text-sm text-muted-foreground ms-6 py-2">
-                You can confirm payment receipt from the related job order page.{" "}
-                <Link to="/provider-job-orders" className="text-primary underline">
-                  View job orders
-                </Link>
-              </p>
-            )}
             {alreadyConfirmed && externalJobOrder?.id != null && (
               <div className="ms-6 pt-2 pb-2 border-b">
                 <Button size="sm" variant="outline" className="gap-2" asChild>

@@ -3,8 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,11 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, XCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip } from "lucide-react";
+import { ChevronLeft, CheckCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
-import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
 import useAssignProviderJobOrderOperator from "@/hooks/Provider/useAssignProviderJobOrderOperator";
 import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJobOrderStatus";
 import useSubmitJobOrderForCompletion from "@/hooks/Provider/useSubmitJobOrderForCompletion";
@@ -28,7 +25,6 @@ import type { ProviderJobOrderAssignment, ProviderJobOrderVisit } from "@/types/
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: order, isLoading } = useProviderJobOrderById(id ?? null);
-  const confirmMutation = useConfirmReceived();
   const assignMutation = useAssignProviderJobOrderOperator();
   const statusMutation = useUpdateProviderJobOrderStatus();
   const { data: operators = [] } = useGetOperators();
@@ -56,13 +52,11 @@ export default function ProviderJobOrderDetail() {
 
   const { data: reportsList = [] } = useProviderJobOrderReports(id);
 
-  const [rejectionReason, setRejectionReason] = useState("");
   const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
   const [completionNote, setCompletionNote] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
   const paymentRejected = order?.paymentRecord?.status === "REJECTED";
-  const awaitingPayment = order?.status === "AWAITING_PAYMENT";
   const isUnderReview = order?.status === "UNDER_REVIEW";
   const isCompleted = order?.status === "COMPLETED" || order?.status === "CLOSED";
   const isCancelledOrder = order?.status === "CANCELLED";
@@ -133,27 +127,6 @@ export default function ProviderJobOrderDetail() {
     executionAttachments,
   ];
 
-  const handleConfirm = (confirm: boolean) => {
-    if (!id) return;
-    if (!confirm && !rejectionReason.trim()) {
-      toast.error("Rejection reason is required.");
-      return;
-    }
-    confirmMutation.mutate(
-      {
-        jobOrderId: id,
-        body: confirm
-          ? { confirm: true }
-          : { confirm: false, rejectionReason: rejectionReason.trim() },
-      },
-      {
-        onSuccess: () =>
-          toast.success(confirm ? "Payment received confirmed." : "Payment rejected."),
-        onError: (e) => toast.error(getApiErrorMessage(e, "Action failed.")),
-      }
-    );
-  };
-
   return (
     <div className="p-4 md:p-8">
       {isLoading || !id ? (
@@ -214,44 +187,6 @@ export default function ProviderJobOrderDetail() {
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-
-          {awaitingPayment && !paymentRejected && !isCancelled && (
-            <div className="pt-4 border-t space-y-3">
-              <p className="text-sm font-medium">Confirm payment received</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => handleConfirm(true)}
-                  disabled={confirmMutation.isPending}
-                >
-                  <CheckCircle className="h-4 w-4" /> Confirm received
-                </Button>
-                <div className="flex flex-1 min-w-[200px] gap-2 items-end">
-                  <div className="flex-1 space-y-1">
-                    <Label htmlFor="rejectionReason" className="text-xs">
-                      Rejection reason (if rejecting)
-                    </Label>
-                    <Input
-                      id="rejectionReason"
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Reason"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="gap-1"
-                    onClick={() => handleConfirm(false)}
-                    disabled={confirmMutation.isPending || !rejectionReason.trim()}
-                  >
-                    <XCircle className="h-4 w-4" /> Reject
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {showOrderActionsAndDetails && (
             <>
