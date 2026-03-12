@@ -109,7 +109,7 @@ const navGroups: NavGroup[] = [
       { label: "Branch Requests", path: "/branch-requests", icon: GitBranch },
       { label: "Locations", path: "/locations", icon: MapPin },
       { label: "Service Categories", path: "/service-categories", icon: Tags },
-      { label: "Job Orders", path: "/job-orders", icon: Briefcase },
+      { label: "External Job Orders", path: "/external-job-orders", icon: Briefcase },
       { label: "Internal Work Orders", path: "/internal-work-orders", icon: Briefcase },
       { label: "External Requests", path: "/station-requests", icon: Briefcase },
       { label: "Station Job Orders", path: "/station-job-orders", icon: Briefcase },

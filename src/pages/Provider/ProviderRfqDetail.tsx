@@ -4,21 +4,40 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, DollarSign, FileText, Clock, CheckCircle, XCircle, Briefcase } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ChevronLeft, Pencil, LogOut, Building2, MapPin, Calendar, Hash, CheckCircle, XCircle, Briefcase, CreditCard, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import useProviderRfqById from "@/hooks/Provider/useProviderRfqById";
-import useCreateQuote from "@/hooks/Provider/useCreateQuote";
 import useReviseQuote from "@/hooks/Provider/useReviseQuote";
 import useWithdrawQuote from "@/hooks/Provider/useWithdrawQuote";
 import useConfirmReceived from "@/hooks/Provider/useConfirmReceived";
 import useProviderJobOrders from "@/hooks/Provider/useProviderJobOrders";
+import { getQuotePaymentTerms } from "@/types/provider";
 
 function formatDate(s: string | undefined): string {
   if (!s) return "—";
   return new Date(s).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+/** Human-readable label for payment trigger (from backend). */
+function paymentTriggerLabel(trigger: string | undefined): string {
+  if (!trigger) return "—";
+  const map: Record<string, string> = {
+    ON_APPROVAL: "On quote approval (when station selects this quote)",
+    ON_JOB_START: "When job starts",
+    ON_COMPLETION_SUBMITTED: "When completion is submitted",
+    ON_JOB_CLOSED: "When job is closed",
+  };
+  return map[trigger] ?? trigger;
 }
 
 export default function ProviderRfqDetail() {
@@ -28,7 +47,6 @@ export default function ProviderRfqDetail() {
   const { data: jobOrdersData } = useProviderJobOrders(
     rfq?.status === "AWAITING_PAYMENT" ? { status: "AWAITING_PAYMENT" } : undefined
   );
-  const createQuoteMutation = useCreateQuote();
   const reviseQuoteMutation = useReviseQuote();
   const withdrawQuoteMutation = useWithdrawQuote();
   const confirmReceivedMutation = useConfirmReceived();
@@ -41,59 +59,9 @@ export default function ProviderRfqDetail() {
     jobOrdersData?.items?.find((jo) => jo.externalRequestId === rfq?.id)?.id;
 
   const [rejectionReason, setRejectionReason] = useState("");
-  const [totalAmount, setTotalAmount] = useState("");
-  const [laborCost, setLaborCost] = useState("");
-  const [materialCost, setMaterialCost] = useState("");
-  const [technicalProposal, setTechnicalProposal] = useState("");
-  const [scopeOfWork, setScopeOfWork] = useState("");
-  const [timeline, setTimeline] = useState("");
-  const [warranty, setWarranty] = useState("");
-  const [validUntil, setValidUntil] = useState("");
   const [editingQuoteId, setEditingQuoteId] = useState<number | null>(null);
   const [reviseAmount, setReviseAmount] = useState("");
   const [reviseValidUntil, setReviseValidUntil] = useState("");
-
-  const handleSubmitQuote = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amountNum = Number(totalAmount);
-    if (!id || Number.isNaN(amountNum) || amountNum <= 0) {
-      toast.error("Enter a valid total amount.");
-      return;
-    }
-    const laborNum = laborCost.trim() ? Number(laborCost) : undefined;
-    const materialNum = materialCost.trim() ? Number(materialCost) : undefined;
-    const pricingJson: Record<string, unknown> = {
-      amount: amountNum,
-      currency: "SAR",
-      validUntil: validUntil.trim() || undefined,
-      laborCost: laborNum != null && !Number.isNaN(laborNum) ? laborNum : undefined,
-      materialCost: materialNum != null && !Number.isNaN(materialNum) ? materialNum : undefined,
-      technicalProposal: technicalProposal.trim() || undefined,
-      scopeOfWork: scopeOfWork.trim() || undefined,
-      timeline: timeline.trim() || undefined,
-      warranty: warranty.trim() || undefined,
-    };
-    createQuoteMutation.mutate(
-      {
-        rfqId: id,
-        body: { pricingJson, submit: true },
-      },
-      {
-        onSuccess: () => {
-          toast.success("Quote submitted.");
-          setTotalAmount("");
-          setLaborCost("");
-          setMaterialCost("");
-          setTechnicalProposal("");
-          setScopeOfWork("");
-          setTimeline("");
-          setWarranty("");
-          setValidUntil("");
-        },
-        onError: (e) => toast.error(e instanceof Error ? e.message : "Submit quote failed."),
-      }
-    );
-  };
 
   const title = rfq?.formData?.title ?? rfq?.title ?? `RFQ #${rfq?.id}`;
   const description = rfq?.formData?.description ?? rfq?.description;
@@ -364,142 +332,6 @@ export default function ProviderRfqDetail() {
 
               {rfq.status !== "AWAITING_PAYMENT" && (
                 <>
-                  <form onSubmit={handleSubmitQuote} className="space-y-6 pt-4 border-t">
-                    <p className="text-sm font-medium">Submit quote — {title}</p>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" /> Pricing
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">Total amount and cost breakdown</p>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="space-y-1">
-                          <Label htmlFor="totalAmount">Total amount *</Label>
-                          <Input
-                            id="totalAmount"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={totalAmount}
-                            onChange={(e) => setTotalAmount(e.target.value)}
-                            placeholder="0"
-                            required
-                          />
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="space-y-1">
-                            <Label htmlFor="laborCost">Labor cost</Label>
-                            <Input
-                              id="laborCost"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={laborCost}
-                              onChange={(e) => setLaborCost(e.target.value)}
-                              placeholder="0"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="materialCost">Material cost</Label>
-                            <Input
-                              id="materialCost"
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={materialCost}
-                              onChange={(e) => setMaterialCost(e.target.value)}
-                              placeholder="0"
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="currency">Currency</Label>
-                          <Input
-                            id="currency"
-                            value="SAR"
-                            readOnly
-                            className="bg-muted cursor-not-allowed"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" /> Technical proposal
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">Describe your approach and scope of work</p>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="space-y-1">
-                          <Label htmlFor="technicalProposal">Technical approach</Label>
-                          <Textarea
-                            id="technicalProposal"
-                            value={technicalProposal}
-                            onChange={(e) => setTechnicalProposal(e.target.value)}
-                            placeholder="Describe your approach and solution..."
-                            className="min-h-[80px] resize-y"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="scopeOfWork">Scope of work</Label>
-                          <Textarea
-                            id="scopeOfWork"
-                            value={scopeOfWork}
-                            onChange={(e) => setScopeOfWork(e.target.value)}
-                            placeholder="Details of scope of work..."
-                            className="min-h-[80px] resize-y"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" /> Timeline & warranty
-                        </CardTitle>
-                        <p className="text-xs text-muted-foreground">Estimated duration and warranty terms</p>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="space-y-1">
-                          <Label htmlFor="timeline">Estimated timeline</Label>
-                          <Input
-                            id="timeline"
-                            value={timeline}
-                            onChange={(e) => setTimeline(e.target.value)}
-                            placeholder="e.g., 3–5 working days"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="warranty">Warranty</Label>
-                          <Input
-                            id="warranty"
-                            value={warranty}
-                            onChange={(e) => setWarranty(e.target.value)}
-                            placeholder="Warranty terms"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="validUntil">Valid until (optional)</Label>
-                          <Input
-                            id="validUntil"
-                            type="date"
-                            value={validUntil}
-                            onChange={(e) => setValidUntil(e.target.value)}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Button type="submit" disabled={createQuoteMutation.isPending}>
-                      {createQuoteMutation.isPending ? "Submitting..." : "Submit quote"}
-                    </Button>
-                  </form>
-
                   {quotes.length > 0 && (
                     <div className="pt-4 border-t">
                       <p className="text-sm font-medium mb-2">Your quotes</p>
@@ -507,74 +339,113 @@ export default function ProviderRfqDetail() {
                         {quotes.map((q) => {
                           const showActions = canReviseOrWithdraw(q);
                           const isEditing = editingQuoteId === q.id;
+                          const quotePaymentTerms = getQuotePaymentTerms(q);
                           return (
                             <li
                               key={q.id}
-                              className="flex flex-wrap items-center justify-between gap-2 rounded border px-3 py-2 text-sm"
+                              className="flex flex-col gap-2 rounded border px-3 py-2 text-sm"
                             >
-                              {!isEditing ? (
-                                <React.Fragment key="view">
-                                  <span>#{q.id} · {q.amount != null ? q.amount : ""}{q.validUntil ? ` · Valid until ${q.validUntil.slice(0, 10)}` : ""}</span>
-                                  <div className="flex items-center gap-2">
-                                    {showActions && (
-                                      <>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="gap-1 h-7"
-                                          onClick={() => handleStartRevise(q)}
-                                          disabled={reviseQuoteMutation.isPending}
-                                        >
-                                          <Pencil className="h-3 w-3" /> Revise
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="gap-1 text-destructive hover:text-destructive h-7"
-                                          onClick={() => handleWithdraw(q.id)}
-                                          disabled={withdrawQuoteMutation.isPending}
-                                        >
-                                          <LogOut className="h-3 w-3" /> Withdraw
-                                        </Button>
-                                      </>
-                                    )}
-                                    {q.status === "REJECTED" && <Badge variant="destructive">Rejected</Badge>}
-                                    {q.status === "WITHDRAWN" && <Badge variant="secondary">Withdrawn</Badge>}
-                                    {q.status === "ACCEPTED" && <Badge variant="default">Accepted</Badge>}
-                                    {q.status === "SELECTED" && <Badge variant="default">Selected</Badge>}
-                                  </div>
-                                </React.Fragment>
-                              ) : (
-                                <React.Fragment key="edit">
-                                  <div className="flex flex-wrap items-end gap-2">
-                                    <div className="space-y-1">
-                                      <Label className="text-xs">Amount</Label>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        value={reviseAmount}
-                                        onChange={(e) => setReviseAmount(e.target.value)}
-                                        className="h-8 w-24"
-                                      />
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                {!isEditing ? (
+                                  <React.Fragment key="view">
+                                    <span>#{q.id} · {q.amount != null ? q.amount : ""}{q.validUntil ? ` · Valid until ${q.validUntil.slice(0, 10)}` : ""}</span>
+                                    <div className="flex items-center gap-2">
+                                      {showActions && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="gap-1 h-7"
+                                            onClick={() => handleStartRevise(q)}
+                                            disabled={reviseQuoteMutation.isPending}
+                                          >
+                                            <Pencil className="h-3 w-3" /> Revise
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="gap-1 text-destructive hover:text-destructive h-7"
+                                            onClick={() => handleWithdraw(q.id)}
+                                            disabled={withdrawQuoteMutation.isPending}
+                                          >
+                                            <LogOut className="h-3 w-3" /> Withdraw
+                                          </Button>
+                                        </>
+                                      )}
+                                      {q.status === "REJECTED" && <Badge variant="destructive">Rejected</Badge>}
+                                      {q.status === "WITHDRAWN" && <Badge variant="secondary">Withdrawn</Badge>}
+                                      {q.status === "ACCEPTED" && <Badge variant="default">Accepted</Badge>}
+                                      {q.status === "SELECTED" && <Badge variant="default">Selected</Badge>}
                                     </div>
-                                    <div className="space-y-1">
-                                      <Label className="text-xs">Valid until</Label>
-                                      <Input
-                                        type="date"
-                                        value={reviseValidUntil}
-                                        onChange={(e) => setReviseValidUntil(e.target.value)}
-                                        className="h-8 w-36"
-                                      />
+                                  </React.Fragment>
+                                ) : (
+                                  <React.Fragment key="edit">
+                                    <div className="flex flex-wrap items-end gap-2">
+                                      <div className="space-y-1">
+                                        <Label className="text-xs">Amount</Label>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={reviseAmount}
+                                          onChange={(e) => setReviseAmount(e.target.value)}
+                                          className="h-8 w-24"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-xs">Valid until</Label>
+                                        <Input
+                                          type="date"
+                                          value={reviseValidUntil}
+                                          onChange={(e) => setReviseValidUntil(e.target.value)}
+                                          className="h-8 w-36"
+                                        />
+                                      </div>
+                                      <Button size="sm" onClick={handleSaveRevise} disabled={reviseQuoteMutation.isPending}>
+                                        Save
+                                      </Button>
+                                      <Button size="sm" variant="ghost" onClick={() => { setEditingQuoteId(null); setReviseAmount(""); setReviseValidUntil(""); }}>
+                                        Cancel
+                                      </Button>
                                     </div>
-                                    <Button size="sm" onClick={handleSaveRevise} disabled={reviseQuoteMutation.isPending}>
-                                      Save
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => { setEditingQuoteId(null); setReviseAmount(""); setReviseValidUntil(""); }}>
-                                      Cancel
-                                    </Button>
+                                  </React.Fragment>
+                                )}
+                              </div>
+                              
+                              {!isEditing && quotePaymentTerms.length > 0 && (
+                                <div className="w-full mt-1 pt-2 border-t border-muted/50 space-y-2">
+                                  <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                    <CreditCard className="h-3.5 w-3.5" />
+                                    Payment terms (installments)
+                                  </p>
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="border-muted/50 hover:bg-transparent">
+                                        <TableHead className="text-xs font-medium">#</TableHead>
+                                        <TableHead className="text-xs font-medium">Percent</TableHead>
+                                        <TableHead className="text-xs font-medium">When due</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {quotePaymentTerms
+                                        .slice()
+                                        .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
+                                        .map((term) => (
+                                          <TableRow key={term.id ?? term.sequence ?? 0} className="border-muted/50">
+                                            <TableCell className="text-xs py-1">{term.sequence ?? "—"}</TableCell>
+                                            <TableCell className="text-xs py-1">{term.percent ?? "—"}%</TableCell>
+                                            <TableCell className="text-xs py-1">{paymentTriggerLabel(term.trigger)}</TableCell>
+                                          </TableRow>
+                                        ))}
+                                    </TableBody>
+                                  </Table>
+                                  <div className="flex gap-1.5 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+                                    <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                    <span>
+                                      Payment is made in {quotePaymentTerms.length} installment{quotePaymentTerms.length !== 1 ? "s" : ""}. The fuel station confirms &quot;payment sent&quot; for each milestone; you then confirm &quot;received&quot; (or reject with a reason). Until both confirm, the job stays in AWAITING_PAYMENT.
+                                    </span>
                                   </div>
-                                </React.Fragment>
+                                </div>
                               )}
                             </li>
                           );

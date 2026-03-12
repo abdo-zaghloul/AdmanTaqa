@@ -22,6 +22,8 @@ import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
 import JobOrders from "./pages/JobOrders/JobOrders";
 import JobOrderDetails from "./pages/JobOrders/JobOrderDetails";
+import AuthorityExternalJobOrders from "./pages/Authority/ExternalJobOrders/AuthorityExternalJobOrders";
+import AuthorityExternalJobOrderDetail from "./pages/Authority/ExternalJobOrders/AuthorityExternalJobOrderDetail";
 import Inspections from "./pages/Inspections/Inspections";
 import AuditLog from "./pages/AuditLog/AuditLog";
 
@@ -174,6 +176,22 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="job-orders/:id">
             <JobOrderDetails />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "external-job-orders",
+        element: (
+          <RouteAccessGuard pathKey="external-job-orders">
+            <AuthorityExternalJobOrders />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "external-job-orders/:id",
+        element: (
+          <RouteAccessGuard pathKey="external-job-orders/:id">
+            <AuthorityExternalJobOrderDetail />
           </RouteAccessGuard>
         ),
       },

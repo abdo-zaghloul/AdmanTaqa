@@ -120,6 +120,39 @@
 
 ---
 
+# الدفع: دفعتين وتأكيد مرتين
+
+## الدفع على دفعتين (أو أكثر)
+
+- **في العرض السعري (Quote):** المزود عند إنشاء أو تعديل العرض يقدر يحدد **شروط الدفع (paymentTerms)** كدفعات (installments): مثلاً 50% عند الموافقة و 50% عند إغلاق العمل.
+- في الباكند: جدول **QuotePaymentTerm** (مرتبط بالـ ProviderQuote) — كل صف له: `sequence`، `percent`، `trigger` (مثل ON_APPROVAL، ON_JOB_START، ON_COMPLETION_SUBMITTED، ON_JOB_CLOSED). مجموع النسب = 100.
+- عند اختيار المحطة للعرض وإنشاء أمر العمل، الباكند ينشئ **JobOrderPaymentMilestone** من كل QuotePaymentTerm — كل milestone (دفعة) يُتتبع لحاله: هل المحطة أرسلت؟ هل المزود استلم؟
+- **في الويب (taqa-admin):** إنشاء العرض يتم عبر `POST /api/provider/rfqs/:id/quotes` مع body يحتوي `paymentTerms`: مصفوفة من `{ sequence, percent, trigger, note? }` (حسب schema الباكند). عرض تفاصيل الطلب/العرض قد يعرض دفعات العرض إن رجعها الـ API.
+
+## تأكيد الدفع مرتين (ثنائي الخطوة)
+
+المقصود: **تأكيد من طرفين** (ليس بالضرورة دفعتين ماديتين) — مرة من المحطة ومرة من المزود.
+
+| الخطوة | من | الـ API | ماذا يحدث |
+|--------|-----|--------|-----------|
+| **1** | **محطة الوقود** | `POST /api/station/job-orders/:id/confirm-sent` | المحطة تؤكد "تم إرسال المبلغ". يمكن إرسال (اختياري): `referenceNumber`، `receiptFileUrl`، `amount`، `method`. الحالة → **STATION_CONFIRMED_SENT**. |
+| **2** | **مزود الخدمة** | `POST /api/provider/job-orders/:id/confirm-received` مع `{ "confirm": true }` أو `{ "confirm": false, "rejectionReason": "..." }` | المزود يؤكد "تم استلام المبلغ" (قبول) أو يرفض مع سبب. إذا **قبول** → **PROVIDER_CONFIRMED_RECEIVED** وأمر العمل (ExternalJobOrder) يتحول إلى **ACTIVE**. إذا **رفض** → الحالة REJECTED والأمر يبقى AWAITING_PAYMENT. |
+
+- قبل التأكيدين، أمر العمل يبقى **AWAITING_PAYMENT** ولا يمكن للمزود البدء في التنفيذ (تعيين عامل، زيارات، إلخ).
+- **رفع إيصال (اختياري):** المحطة ترفع إيصالاً قبل أو مع confirm-sent عبر `POST /api/station/job-orders/:id/upload-receipt` (ملف)، ثم الـ API قد يرجع `receiptFileUrl` تضاف للطلب أو تُمرَّر في body الـ confirm-sent.
+
+### أين في taqa-admin
+
+| من | الصفحة | الإجراء |
+|----|--------|---------|
+| **المحطة** | تفاصيل الطلب `StationRequestDetail` أو تفاصيل أمر المحطة `StationJobOrderDetail` | قسم "الدفع (Payment)": رفع إيصال، إدخال رقم مرجعي/مبلغ/طريقة، ثم زر "تأكيد إرسال المبلغ (Confirm payment sent)". |
+| **المزود** | تفاصيل أمر المزود `ProviderJobOrderDetail` أو تفاصيل RFQ `ProviderRfqDetail` | قسم "Confirm payment received": أزرار "Confirm received" و "Reject" (مع سبب عند الرفض). |
+
+- الـ API للمحطة: `stationService.confirmJobOrderPaymentSent(jobOrderId, body)` و `stationService.uploadJobOrderReceipt(jobOrderId, file)`.
+- الـ API للمزود: `providerService.confirmJobOrderPaymentReceived(jobOrderId, { confirm, rejectionReason? })`.
+
+---
+
 # دورة SERVICE_PROVIDER
 
 ## 1. RFQs (طلبات عرض السعر)

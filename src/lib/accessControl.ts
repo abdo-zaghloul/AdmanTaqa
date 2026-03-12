@@ -116,6 +116,14 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: [  "AUTHORITY"],
     anyPermissions: ["job-orders:read"],
   },
+  "external-job-orders": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:read"],
+  },
+  "external-job-orders/:id": {
+    orgTypes: ["AUTHORITY"],
+    anyPermissions: ["organizations:read"],
+  },
   "work-orders/:id": {
     orgTypes: ["FUEL_STATION"],
     anyPermissions: ["workorders.read"],

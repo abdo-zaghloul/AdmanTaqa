@@ -153,6 +153,67 @@ npm run lint
 npm run preview
 ```
 
+---
+
+## What's Implemented (Summary)
+
+### What Currently Works in the App
+
+- **Auth:** Login, register, route protection, token refresh on 401.
+- **Profile:** View and edit user and organization data.
+- **Authorization:** Route-level access via `RouteAccessGuard` and `accessControl.ts`; sidebar items are hidden by organization type and permissions.
+- **Authority:**
+  - **Organizations:** List, rejected list, organization details, create/register organization.
+  - **Fuel Stations:** Approved, pending, rejected lists; details re-use the same organization page.
+  - **Registrations:** List page shows “approved service provider organizations” via organizations API + `TableOrganization`; detail page `/registrations/:id` shows “registration request” from registrations API (`RegistrationDetails`).
+  - **Onboarding:** List and detail pages.
+  - **Job Orders:** List and detail pages.
+  - **Inspections, Audit Log:** Routes are defined and working.
+- **Service Provider / Fuel Station:**
+  - **Users, Roles:** List, details, create, edit.
+  - **Service Categories:** Service categories management.
+  - **Provider RFQs, Provider Job Orders:** RFQ and job order list/detail.
+  - **Locations:** Countries, governorates, cities, areas.
+  - **Linked Providers:** Linked providers list.
+  - **Quotations:** Financial offers (shared).
+- **Infrastructure:** Axios + React Query, registration form with Zod, Radix + Tailwind UI, hash router.
+
+---
+
+## Unused or Not Wired
+
+### 1. Components and Pages Written but Not Used
+
+| Item | File | Description |
+|------|------|-------------|
+| **RegistrationsTable** | `src/pages/Registrations/component/RegistrationsTable.tsx` | Table that shows registrations from API `/registrations` with pagination, Approve/Reject actions, and links to `/registrations/:id`. **Not imported anywhere**; the list page `RegistrationsPage` uses `TableOrganization` + organizations API instead. |
+| **fetchRegistrations** (list only) | `src/api/api.ts` | Fetches the registrations list from `/registrations`. Only used inside the unused `RegistrationsTable`. `fetchRegistrationById`, `approveRegistration`, and `rejectRegistration` are used in `RegistrationDetails`. |
+
+### 2. Sidebar Links and Routes
+
+The sidebar in `AppSidebar.tsx` points to these paths. They are **now defined** in `src/router.tsx`:
+
+| Sidebar label | Path | Status |
+|---------------|------|--------|
+| Branches | `/branches` | Route added |
+| Branch Requests | `/branch-requests` | Route added |
+| Internal Work Orders | `/internal-work-orders` | Route added |
+| External Requests | `/station-requests` | Route added |
+| Station Job Orders | `/station-job-orders` | Route added |
+
+Access rules for these paths exist in `src/lib/accessControl.ts`; the router now includes the corresponding routes.
+
+### 3. Pages That Had No Route (Now Wired)
+
+These pages/components were built but previously had no route; they are **now connected** in the router:
+
+- **Branches:** `Branches.tsx`, `BranchDetails.tsx`, `CreateBranch.tsx`, `EditBranch.tsx` — routes: `/branches`, `/branches/create`, `/branches/:id`, `/branches/:id/edit`.
+- **Branch Requests:** `BranchRequests.tsx`, `BranchRequestDetails.tsx`, `CreateBranchRequest.tsx` — routes: `/branch-requests`, `/branch-requests/create`, `/branch-requests/:id`.
+- **Work Orders:** `WorkOrdersReviewQueue.tsx`, `WorkOrderDetails.tsx`, and components under `WorkOrders/` — routes: `/work-orders/review-queue`, `/work-orders/:id`.
+- **Station:** `InternalWorkOrders.tsx`, `InternalWorkOrderDetail.tsx`, `InternalWorkOrdersReviewQueue.tsx`, `StationRequests.tsx`, `StationRequestDetail.tsx`, `StationJobOrders.tsx`, `StationJobOrderDetail.tsx`, `CreateMaintenanceRequest.tsx` — routes: `/internal-work-orders`, `/internal-work-orders/review-queue`, `/internal-work-orders/:id`, `/station-requests`, `/station-requests/create`, `/station-requests/:id`, `/station-job-orders`, `/station-job-orders/:id`.
+
+---
+
 ## Route Audit (Legacy Reference)
 
 The previous README included a route audit split by backend integration level. If needed, you can regenerate and maintain that list from `src/router.tsx`, but this README now focuses on overall project architecture and development flow.

@@ -139,6 +139,18 @@ export interface ProviderRfqDetail extends ProviderRfqItem {
   ProviderQuotes?: ProviderQuoteItem[];
 }
 
+/** Single payment term from API (QuotePaymentTerms[] on a quote). Percent + trigger define when this installment is due. */
+export interface QuotePaymentTerm {
+  id?: number;
+  providerQuoteId?: number;
+  sequence?: number;
+  percent?: string;
+  trigger?: string;
+  note?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ProviderQuoteItem {
   id: number;
   rfqId?: number;
@@ -152,11 +164,30 @@ export interface ProviderQuoteItem {
   updatedAt?: string;
   /** When this quote is SELECTED, backend returns the linked External Job Order */
   ExternalJobOrder?: ProviderRfqExternalJobOrder;
+  /** Payment installments: e.g. 50% ON_APPROVAL, 50% ON_JOB_CLOSED. API may return QuotePaymentTerms (PascalCase). */
+  QuotePaymentTerms?: QuotePaymentTerm[];
+  quotePaymentTerms?: QuotePaymentTerm[];
 }
 
-/** Backend expects pricingJson (free-form) and submit. Use pricingJson for all quote details. */
+/** Resolve payment terms from a quote (API may use PascalCase or camelCase). */
+export function getQuotePaymentTerms(q: ProviderQuoteItem): QuotePaymentTerm[] {
+  const terms = q.QuotePaymentTerms ?? q.quotePaymentTerms ?? [];
+  return Array.isArray(terms) ? terms : [];
+}
+
+/** One payment term when creating/editing a quote (POST provider/rfqs/:id/quotes). */
+export interface CreateQuotePaymentTerm {
+  sequence: number;
+  percent: number;
+  trigger: string;
+  note?: string;
+}
+
+/** Backend expects pricingJson (free-form), optional paymentTerms, and submit. */
 export interface CreateQuoteBody {
   pricingJson?: Record<string, unknown>;
+  /** Payment in installments: array of { sequence, percent, trigger, note? }. Sum of percent must be 100. */
+  paymentTerms?: CreateQuotePaymentTerm[];
   submit?: boolean;
   /** @deprecated Prefer pricingJson.amount */
   amount?: number;
