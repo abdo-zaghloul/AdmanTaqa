@@ -205,7 +205,7 @@ export default function AuthorityExternalJobOrders() {
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Fuel station org name (search)</label>
             <Input
-              placeholder="e.g. شركة النفط"
+              placeholder="e.g. Oil Company"
               value={fuelStationOrganizationName}
               onChange={(e) => {
                 setFuelStationOrganizationName(e.target.value);
@@ -217,7 +217,7 @@ export default function AuthorityExternalJobOrders() {
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Service provider org name (search)</label>
             <Input
-              placeholder="e.g. الصيانة"
+              placeholder="e.g. Maintenance"
               value={serviceProviderOrganizationName}
               onChange={(e) => {
                 setServiceProviderOrganizationName(e.target.value);
