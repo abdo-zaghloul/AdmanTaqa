@@ -14,6 +14,8 @@ export default function useAuthorityExternalJobOrders(params?: AuthorityExternal
       params?.datePreset,
       params?.branchId,
       params?.fuelStationOrganizationId,
+      params?.fuelStationOrganizationName,
+      params?.serviceProviderOrganizationName,
       params?.providerOrganizationId,
       params?.serviceCategoryId,
     ],

@@ -35,6 +35,17 @@ const DATE_PRESETS: { value: DatePreset; label: string }[] = [
   { value: "custom", label: "Custom" },
 ];
 
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "IN_PROGRESS", label: "In progress" },
+  { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "CLOSED", label: "Closed" },
+  { value: "CREATED", label: "Created" },
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
 const LIMIT = 20;
 
 function getStatusBadgeVariant(status: string): "default" | "secondary" | "outline" | "destructive" {
@@ -50,8 +61,8 @@ export default function AuthorityExternalJobOrders() {
   const [datePreset, setDatePreset] = useState<DatePreset | "">("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [branchId, setBranchId] = useState("");
-  const [fuelStationOrganizationId, setFuelStationOrganizationId] = useState("");
+  const [fuelStationOrganizationName, setFuelStationOrganizationName] = useState("");
+  const [serviceProviderOrganizationName, setServiceProviderOrganizationName] = useState("");
   const [exportLoading, setExportLoading] = useState<"csv" | "json" | null>(null);
 
   const listParams: AuthorityExternalJobOrdersListParams = {
@@ -61,8 +72,8 @@ export default function AuthorityExternalJobOrders() {
     ...(datePreset ? { datePreset: datePreset as DatePreset } : {}),
     ...(datePreset === "custom" && fromDate ? { fromDate } : {}),
     ...(datePreset === "custom" && toDate ? { toDate } : {}),
-    ...(branchId.trim() ? { branchId: branchId.trim() } : {}),
-    ...(fuelStationOrganizationId.trim() ? { fuelStationOrganizationId: fuelStationOrganizationId.trim() } : {}),
+    ...(fuelStationOrganizationName.trim() ? { fuelStationOrganizationName: fuelStationOrganizationName.trim() } : {}),
+    ...(serviceProviderOrganizationName.trim() ? { serviceProviderOrganizationName: serviceProviderOrganizationName.trim() } : {}),
   };
 
   const { data, isLoading, isError, error } = useAuthorityExternalJobOrders(listParams);
@@ -79,8 +90,8 @@ export default function AuthorityExternalJobOrders() {
         datePreset: datePreset || undefined,
         fromDate: datePreset === "custom" ? fromDate || undefined : undefined,
         toDate: datePreset === "custom" ? toDate || undefined : undefined,
-        branchId: branchId.trim() || undefined,
-        fuelStationOrganizationId: fuelStationOrganizationId.trim() || undefined,
+        fuelStationOrganizationName: fuelStationOrganizationName.trim() || undefined,
+        serviceProviderOrganizationName: serviceProviderOrganizationName.trim() || undefined,
         format,
       });
     } catch (err) {
@@ -93,8 +104,8 @@ export default function AuthorityExternalJobOrders() {
     datePreset,
     fromDate,
     toDate,
-    branchId,
-    fuelStationOrganizationId,
+    fuelStationOrganizationName,
+    serviceProviderOrganizationName,
   ]);
 
   return (
@@ -129,16 +140,25 @@ export default function AuthorityExternalJobOrders() {
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Status (comma-separated)</label>
-            <Input
-              placeholder="e.g. ACTIVE,IN_PROGRESS"
-              value={status}
-              onChange={(e) => {
-                setStatus(e.target.value);
+            <label className="text-xs text-muted-foreground block mb-1">Status</label>
+            <Select
+              value={status || "all"}
+              onValueChange={(v) => {
+                setStatus(v === "all" ? "" : v);
                 setPage(1);
               }}
-              className="h-9"
-            />
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Date preset</label>
@@ -191,26 +211,24 @@ export default function AuthorityExternalJobOrders() {
             </>
           )}
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Branch ID</label>
+            <label className="text-xs text-muted-foreground block mb-1">Fuel station org name (search)</label>
             <Input
-              type="number"
-              placeholder="Optional"
-              value={branchId}
+              placeholder="e.g. شركة النفط"
+              value={fuelStationOrganizationName}
               onChange={(e) => {
-                setBranchId(e.target.value);
+                setFuelStationOrganizationName(e.target.value);
                 setPage(1);
               }}
               className="h-9"
             />
           </div>
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Fuel station org ID</label>
+            <label className="text-xs text-muted-foreground block mb-1">Service provider org name (search)</label>
             <Input
-              type="number"
-              placeholder="Optional"
-              value={fuelStationOrganizationId}
+              placeholder="e.g. الصيانة"
+              value={serviceProviderOrganizationName}
               onChange={(e) => {
-                setFuelStationOrganizationId(e.target.value);
+                setServiceProviderOrganizationName(e.target.value);
                 setPage(1);
               }}
               className="h-9"

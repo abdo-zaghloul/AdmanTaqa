@@ -20,6 +20,10 @@ function buildListParams(params?: AuthorityExternalJobOrdersListParams): Record<
   if (params?.branchId != null && params.branchId !== "") out.branchId = String(params.branchId);
   if (params?.fuelStationOrganizationId != null && params.fuelStationOrganizationId !== "")
     out.fuelStationOrganizationId = String(params.fuelStationOrganizationId);
+  if (params?.fuelStationOrganizationName != null && params.fuelStationOrganizationName.trim() !== "")
+    out.fuelStationOrganizationName = params.fuelStationOrganizationName.trim();
+  if (params?.serviceProviderOrganizationName != null && params.serviceProviderOrganizationName.trim() !== "")
+    out.serviceProviderOrganizationName = params.serviceProviderOrganizationName.trim();
   if (params?.providerOrganizationId != null && params.providerOrganizationId !== "")
     out.providerOrganizationId = String(params.providerOrganizationId);
   if (params?.serviceCategoryId != null && params.serviceCategoryId !== "")

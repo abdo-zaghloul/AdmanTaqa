@@ -105,7 +105,7 @@ export const ROUTE_ACCESS_RULES: Record<string, AccessRule> = {
     orgTypes: ["SERVICE_PROVIDER", "AUTHORITY"],
   },
   quotations: {
-    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION", "AUTHORITY"],
+    orgTypes: ["SERVICE_PROVIDER", "FUEL_STATION"],
     anyPermissions: ["quotations:read", "quotations:submit"],
   },
   "job-orders": {

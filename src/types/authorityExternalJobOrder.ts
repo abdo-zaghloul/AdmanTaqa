@@ -83,6 +83,10 @@ export interface AuthorityExternalJobOrdersListParams {
   datePreset?: DatePreset;
   branchId?: number | string;
   fuelStationOrganizationId?: number | string;
+  /** بحث باسم منظمة المحطة — تطابق جزئي (doc: fuelStationOrganizationName) */
+  fuelStationOrganizationName?: string;
+  /** بحث باسم منظمة مزود الخدمة — تطابق جزئي (doc: serviceProviderOrganizationName) */
+  serviceProviderOrganizationName?: string;
   providerOrganizationId?: number | string;
   serviceCategoryId?: number | string;
 }

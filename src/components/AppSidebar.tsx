@@ -180,10 +180,7 @@ export default function AppSidebar() {
     items: group.items.filter((item) => canSeeItem(item)),
   }));
 
-  const getItemLabel = (item: NavItem): string => {
-    if (item.path === "/quotations" && organization?.type === "AUTHORITY") return "Service offers";
-    return item.label;
-  };
+  const getItemLabel = (item: NavItem): string => item.label;
 
   const renderItem = (item: NavItem) => {
     if (item.isDropdown) {
