@@ -93,5 +93,5 @@ export interface AuthorityExternalJobOrdersListParams {
 
 export interface AuthorityExternalJobOrdersExportParams
   extends Omit<AuthorityExternalJobOrdersListParams, "page" | "limit"> {
-  format?: "json" | "csv";
+  format?: "csv";
 }

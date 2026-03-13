@@ -63,7 +63,7 @@ export default function AuthorityExternalJobOrders() {
   const [toDate, setToDate] = useState("");
   const [fuelStationOrganizationName, setFuelStationOrganizationName] = useState("");
   const [serviceProviderOrganizationName, setServiceProviderOrganizationName] = useState("");
-  const [exportLoading, setExportLoading] = useState<"csv" | "json" | null>(null);
+  const [exportLoading, setExportLoading] = useState<"csv" | null>(null);
 
   const listParams: AuthorityExternalJobOrdersListParams = {
     page,
@@ -82,7 +82,7 @@ export default function AuthorityExternalJobOrders() {
   const total = data?.total ?? 0;
   const maxPage = Math.max(1, Math.ceil(total / LIMIT));
 
-  const handleExport = useCallback(async (format: "csv" | "json") => {
+  const handleExport = useCallback(async (format: "csv") => {
     setExportLoading(format);
     try {
       await fetchAuthorityExternalJobOrderExport({
@@ -125,14 +125,6 @@ export default function AuthorityExternalJobOrders() {
             onClick={() => handleExport("csv")}
           >
             {exportLoading === "csv" ? "Exporting…" : "Export CSV"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={exportLoading !== null}
-            onClick={() => handleExport("json")}
-          >
-            {exportLoading === "json" ? "Exporting…" : "Export JSON"}
           </Button>
         </div>
       </div>

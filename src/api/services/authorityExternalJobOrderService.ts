@@ -52,46 +52,28 @@ export async function fetchAuthorityExternalJobOrders(
 }
 
 /**
- * GET /api/authority/external-job-orders/export — export as JSON or CSV.
- * For CSV returns blob and triggers download; for JSON returns parsed data and can trigger download.
+ * GET /api/authority/external-job-orders/export — export as CSV (blob, triggers download).
  */
 export async function fetchAuthorityExternalJobOrderExport(
   params?: AuthorityExternalJobOrdersExportParams
 ): Promise<void> {
   const exportParams = { ...params };
-  const format = exportParams?.format ?? "csv";
   const queryParams = buildListParams(exportParams);
-  queryParams.format = format;
+  queryParams.format = "csv";
   const query = new URLSearchParams(queryParams).toString();
   const url = `authority/external-job-orders/export?${query}`;
 
-  if (format === "csv") {
-    const res = await axiosInstance.get(url, { responseType: "blob" });
-    const blob = res.data as Blob;
-    const disposition = res.headers["content-disposition"];
-    const filename =
-      (typeof disposition === "string" && disposition.includes("filename=")
-        ? disposition.split("filename=")[1]?.replace(/^["']|["']$/g, "").trim()
-        : null) ?? "authority-job-orders.csv";
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
-    return;
-  }
-
-  const res = await axiosInstance.get<{ success?: boolean; data?: unknown[] }>(url);
-  const data = res.data?.data;
-  const jsonStr = JSON.stringify(data ?? [], null, 2);
-  const blob = new Blob([jsonStr], { type: "application/json" });
+  const res = await axiosInstance.get(url, { responseType: "blob" });
+  const blob = res.data as Blob;
+  const disposition = res.headers["content-disposition"];
+  const filename =
+    (typeof disposition === "string" && disposition.includes("filename=")
+      ? disposition.split("filename=")[1]?.replace(/^["']|["']$/g, "").trim()
+      : null) ?? "authority-job-orders.csv";
   const downloadUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = downloadUrl;
-  link.download = "authority-job-orders.json";
+  link.download = filename;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
