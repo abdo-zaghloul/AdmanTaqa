@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,39 +21,37 @@ import {
 import useProviderRfqs from "@/hooks/Provider/useProviderRfqs";
 import type { ProviderRfqItem } from "@/types/provider";
 
-/** EXTERNAL_REQUEST_STATUS values supported by GET /api/provider/rfqs?status= */
-const STATUS_ALL = "all";
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: STATUS_ALL, label: "All" },
-  { value: "SUBMITTED_BY_STATION", label: "Submitted by station" },
-  { value: "TRIAGED_BY_OPERATOR", label: "Triaged by operator" },
-  { value: "SENT_TO_PROVIDERS", label: "Sent to providers" },
-  { value: "QUOTING_OPEN", label: "Quoting open" },
-  { value: "QUOTE_SELECTED", label: "Quote selected" },
-  { value: "AWAITING_PAYMENT", label: "Awaiting payment" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "CANCELLED", label: "Cancelled" },
-];
-
 function rfqTitle(rfq: ProviderRfqItem): string {
   return rfq.formData?.title ?? rfq.title ?? `RFQ #${rfq.id}`;
 }
 
+const PRIORITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+];
+
 export default function ProviderRfqs() {
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<string>(STATUS_ALL);
+  const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<string>("all");
   const limit = 20;
   const { data, isLoading } = useProviderRfqs({
     page,
     limit,
-    status: status === STATUS_ALL ? undefined : status,
+    title: title.trim() || undefined,
+    priority: priority === "all" ? undefined : priority,
   });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
 
-  const handleStatusChange = (value: string) => {
-    setStatus(value);
+  const handleTitleChange = (value: string) => {
+    setTitle(value);
+    setPage(1);
+  };
+  const handlePriorityChange = (value: string) => {
+    setPriority(value);
     setPage(1);
   };
 
@@ -64,13 +63,22 @@ export default function ProviderRfqs() {
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Status</span>
-          <Select value={status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="All statuses" />
+          <span className="text-sm font-medium">Title</span>
+          <Input
+            placeholder="Search by title..."
+            value={title}
+            onChange={(e) => handleTitleChange(e.target.value)}
+            className="w-[200px] h-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Priority</span>
+          <Select value={priority} onValueChange={handlePriorityChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
+              {PRIORITY_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -88,9 +96,7 @@ export default function ProviderRfqs() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead>Organization</TableHead>
@@ -102,9 +108,7 @@ export default function ProviderRfqs() {
             <TableBody>
               {items.map((rfq) => (
                 <TableRow key={rfq.id}>
-                  <TableCell className="font-mono">{rfq.id}</TableCell>
                   <TableCell className="font-medium">{rfqTitle(rfq)}</TableCell>
-                  <TableCell>{rfq.status ?? "—"}</TableCell>
                   <TableCell>{rfq.formData?.priority ?? "—"}</TableCell>
                   <TableCell>
                     {rfq.Branch?.nameEn ?? rfq.Branch?.nameAr ?? (rfq.branchId != null ? `Branch ${rfq.branchId}` : "—")}

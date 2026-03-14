@@ -41,15 +41,25 @@ function normalizeProviderJobOrder(raw: Record<string, unknown>): Record<string,
 }
 
 /**
- * Doc (work-order-flow 3.1): قائمة طلبات العرض للمزود = GET /api/provider/rfqs (query: status, page, limit)
+ * Doc (work-order-flow 3.1, provider-rfqs-filters-and-pricing): GET /api/provider/rfqs
+ * Query: status, title (LIKE formData.title), priority (exact formData.priority), page, limit.
  */
 export async function fetchProviderRfqs(params?: {
   status?: string;
+  title?: string;
+  priority?: string;
   page?: number;
   limit?: number;
 }): Promise<{ items: ProviderRfqItem[]; total: number; page: number; limit: number }> {
+  const requestParams: Record<string, string | number> = {
+    page: params?.page ?? 1,
+    limit: params?.limit ?? 20,
+  };
+  if (params?.status != null && params.status !== "") requestParams.status = params.status;
+  if (params?.title != null && String(params.title).trim() !== "") requestParams.title = params.title.trim();
+  if (params?.priority != null && String(params.priority).trim() !== "") requestParams.priority = params.priority.trim();
   const res = await axiosInstance.get<ProviderRfqsListResponse>("provider/rfqs", {
-    params: { page: params?.page ?? 1, limit: params?.limit ?? 20, ...(params?.status && { status: params.status }) },
+    params: requestParams,
   });
   const data = res.data?.data;
   const items = Array.isArray(data) ? data : (data as { items?: ProviderRfqItem[] })?.items ?? [];

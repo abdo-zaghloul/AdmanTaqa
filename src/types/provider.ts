@@ -167,6 +167,8 @@ export interface ProviderQuoteItem {
   /** Payment installments: e.g. 50% ON_APPROVAL, 50% ON_JOB_CLOSED. API may return QuotePaymentTerms (PascalCase). */
   QuotePaymentTerms?: QuotePaymentTerm[];
   quotePaymentTerms?: QuotePaymentTerm[];
+  /** From latest ProviderQuoteRevision.pricingJson (doc: provider-rfqs-filters-and-pricing). */
+  pricingDetails?: { amount?: number; currency?: string; lineItems?: unknown[]; [key: string]: unknown };
 }
 
 /** Resolve payment terms from a quote (API may use PascalCase or camelCase). */

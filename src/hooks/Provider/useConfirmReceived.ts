@@ -15,6 +15,7 @@ export default function useConfirmReceived() {
     onSuccess: (_, { jobOrderId }) => {
       queryClient.invalidateQueries({ queryKey: ["provider-job-order", jobOrderId] });
       queryClient.invalidateQueries({ queryKey: ["provider-job-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["job-orders-web"] });
     },
   });
 }

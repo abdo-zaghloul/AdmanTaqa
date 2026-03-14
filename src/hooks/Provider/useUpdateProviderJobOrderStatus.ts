@@ -14,6 +14,7 @@ export default function useUpdateProviderJobOrderStatus() {
     onSuccess: (_, { jobOrderId }) => {
       queryClient.invalidateQueries({ queryKey: ["provider-job-order", jobOrderId] });
       queryClient.invalidateQueries({ queryKey: ["provider-job-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["job-orders-web"] });
     },
   });
 }

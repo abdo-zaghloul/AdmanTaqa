@@ -14,6 +14,7 @@ export default function useSubmitJobOrderForCompletion() {
     onSuccess: (_, { jobOrderId }) => {
       queryClient.invalidateQueries({ queryKey: ["provider-job-order", String(jobOrderId)] });
       queryClient.invalidateQueries({ queryKey: ["provider-job-orders"] });
+      queryClient.invalidateQueries({ queryKey: ["job-orders-web"] });
     },
   });
 }

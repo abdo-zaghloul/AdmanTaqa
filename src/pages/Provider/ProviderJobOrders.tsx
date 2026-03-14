@@ -18,30 +18,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import useProviderJobOrders from "@/hooks/Provider/useProviderJobOrders";
+import { useJobOrdersWebList } from "@/hooks/Provider/useJobOrdersWeb";
 import { Eye } from "lucide-react";
+import type { ProviderJobOrderItem } from "@/types/provider";
 
+/** Status filter options per job-orders-web API (CREATED, AWAITING_PAYMENT, ACTIVE, ...). */
 const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
+  { value: "all", label: "All statuses" },
+  { value: "CREATED", label: "CREATED" },
   { value: "AWAITING_PAYMENT", label: "AWAITING_PAYMENT (confirm payment received here)" },
   { value: "ACTIVE", label: "ACTIVE" },
   { value: "IN_PROGRESS", label: "IN_PROGRESS" },
+  { value: "WAITING_PARTS", label: "WAITING_PARTS" },
   { value: "UNDER_REVIEW", label: "UNDER_REVIEW" },
-  { value: "CLOSED", label: "CLOSED" },
+  { value: "REWORK_REQUIRED", label: "REWORK_REQUIRED" },
   { value: "COMPLETED", label: "COMPLETED" },
+  { value: "CANCELLED", label: "CANCELLED" },
+  { value: "CLOSED", label: "CLOSED" },
+  { value: "SUSPENDED", label: "SUSPENDED" },
 ];
 
 export default function ProviderJobOrders() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const limit = 20;
-  const { data, isLoading } = useProviderJobOrders({
+  const { data, isLoading } = useJobOrdersWebList({
     page,
     limit,
     ...(statusFilter && { status: statusFilter }),
   });
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
+  const totalPages = total > 0 && limit > 0 ? Math.ceil(total / limit) : 1;
 
   return (
     <div className="p-4 md:p-8 space-y-6">
@@ -51,13 +59,19 @@ export default function ProviderJobOrders() {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Status filter:</span>
-        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
+        <Select
+          value={statusFilter || "all"}
+          onValueChange={(v) => {
+            setStatusFilter(v === "all" ? "" : v);
+            setPage(1);
+          }}
+        >
           <SelectTrigger className="w-[280px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
             {STATUS_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value || "all"} value={opt.value || "all"}>
+              <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
             ))}
@@ -97,7 +111,7 @@ export default function ProviderJobOrders() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((jo) => {
+                  {items.map((jo: ProviderJobOrderItem) => {
                     const formData = jo.externalRequest?.formData ?? {};
                     const title = formData.title?.trim() || "—";
                     const priority = formData.priority?.trim() || "—";
@@ -136,16 +150,24 @@ export default function ProviderJobOrders() {
                 </p>
               </CardContent>
             )}
-            {total > limit && (
-              <CardContent className="pt-0 flex gap-2">
-                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                  Previous
-                </Button>
+            {totalPages > 1 && (
+              <CardContent className="pt-0 flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={page * limit >= total}
-                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
                   Next
                 </Button>

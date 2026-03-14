@@ -45,6 +45,7 @@ import Locations from "./pages/Locations/Locations";
 
 // ---------- Shared (مشترك: Authority + Service Provider) ----------
 import Quotations from "./pages/Quotations/Quotations";
+import QuotationDetail from "./pages/Quotations/QuotationDetail";
 
 export const router = createHashRouter([
   {
@@ -332,6 +333,14 @@ export const router = createHashRouter([
         element: (
           <RouteAccessGuard pathKey="quotations">
             <Quotations />
+          </RouteAccessGuard>
+        ),
+      },
+      {
+        path: "quotations/:id",
+        element: (
+          <RouteAccessGuard pathKey="quotations/:id">
+            <QuotationDetail />
           </RouteAccessGuard>
         ),
       },

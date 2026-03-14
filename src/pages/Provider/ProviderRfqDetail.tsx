@@ -182,9 +182,11 @@ export default function ProviderRfqDetail() {
                     <div className="pt-4 border-t">
                       <p className="text-sm font-medium mb-2">Your quotes</p>
                       <ul className="space-y-2">
-                        {quotes.map((q: { id: number; status?: string; amount?: number; validUntil?: string; paymentType?: string }) => {
+                        {quotes.map((q: { id: number; status?: string; amount?: number; validUntil?: string; paymentType?: string; pricingDetails?: { amount?: number; currency?: string } }) => {
                           const quotePaymentTerms = getQuotePaymentTerms(q as Parameters<typeof getQuotePaymentTerms>[0]);
                           const paymentType = q.paymentType ?? (quotePaymentTerms.length > 0 ? "INSTALLMENTS" : undefined);
+                          const amount = q.pricingDetails?.amount ?? q.amount;
+                          const currency = q.pricingDetails?.currency;
                           return (
                             <li
                               key={q.id}
@@ -193,7 +195,7 @@ export default function ProviderRfqDetail() {
                               <div className="flex flex-wrap items-center justify-between gap-2">
                                 <span>
                                   #{q.id}
-                                  {q.amount != null ? ` · ${q.amount}` : ""}
+                                  {amount != null ? ` · ${amount}${currency ? ` ${currency}` : ""}` : ""}
                                   {q.validUntil ? ` · Valid until ${String(q.validUntil).slice(0, 10)}` : ""}
                                   {paymentType ? ` · ${paymentType.replace(/_/g, " ")}` : ""}
                                 </span>

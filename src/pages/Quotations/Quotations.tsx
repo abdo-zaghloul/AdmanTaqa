@@ -6,6 +6,7 @@ import useGetOrganization from "@/hooks/Organization/useGetOrganization";
 import PendingApprovalGuard from "@/components/PendingApprovalGuard";
 import useGetQuotations from "@/hooks/Quotations/useGetQuotations";
 import useCreateQuotation from "@/hooks/Quotations/useCreateQuotation";
+import { useQuotationsWebList, type QuotationsWebStatus } from "@/hooks/Quotations/useQuotationsWeb";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +18,17 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DollarSign, Plus } from "lucide-react";
 import QuotationsTableHeader from "./Component/QuotationsTableHeader";
 import TableQuotations from "./Component/TableQuotations";
+import TableQuotationsWeb from "./Component/TableQuotationsWeb";
 import { useAuth } from "@/context/AuthContext";
 
 const PAGE_TITLE_AUTHORITY = "Service offers";
@@ -27,10 +36,21 @@ const PAGE_TITLE_DEFAULT = "financial offers";
 const PAGE_DESC_AUTHORITY = "Review and manage service offers for service requests.";
 const PAGE_DESC_DEFAULT = "Review and manage financial offers for service requests.";
 
+const QUOTATIONS_WEB_STATUS_OPTIONS: { value: QuotationsWebStatus | "all"; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "SUBMITTED", label: "Submitted" },
+  { value: "REVISED", label: "Revised" },
+  { value: "WITHDRAWN", label: "Withdrawn" },
+  { value: "REJECTED", label: "Rejected" },
+  { value: "SELECTED", label: "Selected" },
+];
+
 export default function Quotations() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 50;
+  const [webStatus, setWebStatus] = useState<QuotationsWebStatus | "">("");
   const [serviceRequestId, setServiceRequestId] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("USD");
@@ -38,9 +58,26 @@ export default function Quotations() {
   const { permissions, organization: authOrg } = useAuth();
   const organization = orgResponse?.data ?? authOrg;
   const isAuthority = organization?.type === "AUTHORITY";
+  const isServiceProvider = organization?.type === "SERVICE_PROVIDER";
   const pageTitle = isAuthority ? PAGE_TITLE_AUTHORITY : PAGE_TITLE_DEFAULT;
   const pageDescription = isAuthority ? PAGE_DESC_AUTHORITY : PAGE_DESC_DEFAULT;
+
   const { data, isLoading, isError, error } = useGetQuotations(page, limit);
+  const {
+    data: webData,
+    isLoading: webLoading,
+    isError: webError,
+    error: webErrorObj,
+  } = useQuotationsWebList(
+    { page, limit: 20, status: webStatus || undefined },
+    { enabled: isServiceProvider }
+  );
+
+  const useWebList = isServiceProvider;
+  const listData = useWebList ? webData : data;
+  const listLoading = useWebList ? webLoading : isLoading;
+  const listError = useWebList ? webError : isError;
+  const listErrorObj = useWebList ? webErrorObj : error;
   const createQuotation = useCreateQuotation();
 
   const canSubmitQuotation =
@@ -104,6 +141,12 @@ export default function Quotations() {
       currency: pricing?.currency ?? null,
     };
   });
+
+  const webItems = webData?.items ?? [];
+  const totalForPagination = listData?.total ?? 0;
+  const pageForPagination = listData?.page ?? page;
+  const limitForPagination = useWebList ? 20 : limit;
+  const maxPage = Math.max(1, Math.ceil(totalForPagination / limitForPagination));
 
   return (
     <PendingApprovalGuard organization={organization} isLoading={orgLoading}>
@@ -186,13 +229,38 @@ export default function Quotations() {
       </div>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-        <QuotationsTableHeader total={data?.total} page={data?.page} />
-        {isLoading ? (
-          <div className="p-6 text-sm text-muted-foreground">Loading quotations...</div>
-        ) : isError ? (
-          <div className="p-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : "Failed to load quotations."}
+        <QuotationsTableHeader total={listData?.total} page={listData?.page ?? page} />
+        {useWebList && (
+          <div className="px-6 pb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Status</span>
+            <Select
+              value={webStatus || "all"}
+              onValueChange={(v) => {
+                setWebStatus(v === "all" ? "" : (v as QuotationsWebStatus));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[160px] h-9">
+                <SelectValue placeholder="All" />
+              </SelectTrigger>
+              <SelectContent>
+                {QUOTATIONS_WEB_STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+        )}
+        {listLoading ? (
+          <div className="p-6 text-sm text-muted-foreground">Loading quotations...</div>
+        ) : listError ? (
+          <div className="p-6 text-sm text-destructive">
+            {listErrorObj instanceof Error ? listErrorObj.message : "Failed to load quotations."}
+          </div>
+        ) : useWebList ? (
+          <TableQuotationsWeb items={webItems} />
         ) : (
           <TableQuotations
             quotations={rows}
@@ -209,17 +277,13 @@ export default function Quotations() {
             >
               Previous
             </Button>
-            <span className="text-sm text-muted-foreground"> {page}</span>
+            <span className="text-sm text-muted-foreground">
+              Page {pageForPagination} of {maxPage}
+            </span>
             <Button
               variant="outline"
-              onClick={() => {
-                const maxPage = Math.max(
-                  1,
-                  Math.ceil((data?.total ?? rows.length) / Math.max(limit, 1))
-                );
-                setPage((p) => (p < maxPage ? p + 1 : p));
-              }}
-              disabled={page >= Math.max(1, Math.ceil((data?.total ?? rows.length) / Math.max(limit, 1)))}
+              onClick={() => setPage((p) => (p < maxPage ? p + 1 : p))}
+              disabled={page >= maxPage}
             >
               Next
             </Button>
