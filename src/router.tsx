@@ -20,11 +20,11 @@ import RegistrationsPage from "./pages/Registrations/RegistrationsPage";
 import RegistrationDetailPage from "./pages/Registrations/RegistrationDetailPage";
 import OnboardingPage from "./pages/Onboarding/OnboardingPage";
 import OnboardingDetails from "./pages/Onboarding/OnboardingDetails";
-import JobOrders from "./pages/JobOrders/JobOrders";
-import JobOrderDetails from "./pages/JobOrders/JobOrderDetails";
+// import JobOrders from "./pages/JobOrders/JobOrders";
+// import JobOrderDetails from "./pages/JobOrders/JobOrderDetails";
 import AuthorityExternalJobOrders from "./pages/Authority/ExternalJobOrders/AuthorityExternalJobOrders";
 import AuthorityExternalJobOrderDetail from "./pages/Authority/ExternalJobOrders/AuthorityExternalJobOrderDetail";
-import Inspections from "./pages/Inspections/Inspections";
+// import Inspections from "./pages/Inspections/Inspections";
 import AuditLog from "./pages/AuditLog/AuditLog";
 
 // ---------- Service Provider   ----------
@@ -41,7 +41,7 @@ import ProviderRfqDetail from "./pages/Provider/ProviderRfqDetail";
 import ProviderJobOrders from "./pages/Provider/ProviderJobOrders";
 import ProviderJobOrderDetail from "./pages/Provider/ProviderJobOrderDetail";
 import Locations from "./pages/Locations/Locations";
-import LinkedProviders from "./pages/Station/LinkedProviders";
+// import LinkedProviders from "./pages/Station/LinkedProviders";
 
 // ---------- Shared (مشترك: Authority + Service Provider) ----------
 import Quotations from "./pages/Quotations/Quotations";
@@ -163,22 +163,22 @@ export const router = createHashRouter([
           </RouteAccessGuard>
         ),
       },
-      {
-        path: "job-orders",
-        element: (
-          <RouteAccessGuard pathKey="job-orders">
-            <JobOrders />
-          </RouteAccessGuard>
-        ),
-      },
-      {
-        path: "job-orders/:id",
-        element: (
-          <RouteAccessGuard pathKey="job-orders/:id">
-            <JobOrderDetails />
-          </RouteAccessGuard>
-        ),
-      },
+      // {
+      //   path: "job-orders",
+      //   element: (
+      //     <RouteAccessGuard pathKey="job-orders">
+      //       <JobOrders />
+      //     </RouteAccessGuard>
+      //   ),
+      // },
+      // {
+      //   path: "job-orders/:id",
+      //   element: (
+      //     <RouteAccessGuard pathKey="job-orders/:id">
+      //       <JobOrderDetails />
+      //     </RouteAccessGuard>
+      //   ),
+      // },
       {
         path: "external-job-orders",
         element: (
@@ -195,14 +195,14 @@ export const router = createHashRouter([
           </RouteAccessGuard>
         ),
       },
-      {
-        path: "inspections",
-        element: (
-          <RouteAccessGuard pathKey="inspections">
-            <Inspections />
-          </RouteAccessGuard>
-        ),
-      },
+      // {
+      //   path: "inspections",
+      //   element: (
+      //     <RouteAccessGuard pathKey="inspections">
+      //       <Inspections />
+      //     </RouteAccessGuard>
+      //   ),
+      // },
       {
         path: "audit-log",
         element: (
@@ -317,14 +317,14 @@ export const router = createHashRouter([
           </RouteAccessGuard>
         ),
       },
-      {
-        path: "linked-providers",
-        element: (
-          <RouteAccessGuard pathKey="linked-providers">
-            <LinkedProviders />
-          </RouteAccessGuard>
-        ),
-      },
+      // {
+      //   path: "linked-providers",
+      //   element: (
+      //     <RouteAccessGuard pathKey="linked-providers">
+      //       <LinkedProviders />
+      //     </RouteAccessGuard>
+      //   ),
+      // },
 
       // ---------- Shared (مشترك: Authority + Service Provider + Fuel Station) ----------
       {

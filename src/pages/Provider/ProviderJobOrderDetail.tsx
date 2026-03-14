@@ -3,21 +3,12 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ChevronLeft, CheckCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip } from "lucide-react";
+import { ChevronLeft, CheckCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip, Check } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
-import useAssignProviderJobOrderOperator from "@/hooks/Provider/useAssignProviderJobOrderOperator";
 import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJobOrderStatus";
 import useSubmitJobOrderForCompletion from "@/hooks/Provider/useSubmitJobOrderForCompletion";
-import useGetOperators from "@/hooks/Provider/useGetOperators";
 import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
 import useProviderJobOrderReports from "@/hooks/Provider/useProviderJobOrderReports";
 import type { ProviderJobOrderAssignment, ProviderJobOrderVisit } from "@/types/provider";
@@ -25,9 +16,7 @@ import type { ProviderJobOrderAssignment, ProviderJobOrderVisit } from "@/types/
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: order, isLoading } = useProviderJobOrderById(id ?? null);
-  const assignMutation = useAssignProviderJobOrderOperator();
   const statusMutation = useUpdateProviderJobOrderStatus();
-  const { data: operators = [] } = useGetOperators();
   const submitCompletionMutation = useSubmitJobOrderForCompletion();
   const uploadAttachmentMutation = useUploadProviderJobOrderAttachment();
   const attachmentFileRef = useRef<HTMLInputElement>(null);
@@ -52,7 +41,6 @@ export default function ProviderJobOrderDetail() {
 
   const { data: reportsList = [] } = useProviderJobOrderReports(id);
 
-  const [selectedOperatorId, setSelectedOperatorId] = useState<string>("");
   const [completionNote, setCompletionNote] = useState("");
 
   const isCancelled = order?.status === "CANCELLED";
@@ -73,24 +61,6 @@ export default function ProviderJobOrderDetail() {
       order?.status === "CLOSED") &&
     !isUnderReview;
   const showSubmitForReviewSection = canSubmitForReview || isUnderReview;
-
-  const handleAssign = () => {
-    const operatorId = Number(selectedOperatorId);
-    if (!id || Number.isNaN(operatorId)) {
-      toast.error("Select an operator.");
-      return;
-    }
-    assignMutation.mutate(
-      { jobOrderId: id, operatorId },
-      {
-        onSuccess: () => {
-          toast.success("Operator assigned.");
-          setSelectedOperatorId("");
-        },
-        onError: (e) => toast.error(getApiErrorMessage(e, "Assign failed.")),
-      }
-    );
-  };
 
   const handleMarkCompleted = () => {
     if (!id) return;
@@ -190,37 +160,6 @@ export default function ProviderJobOrderDetail() {
 
           {showOrderActionsAndDetails && (
             <>
-              {/* {canAssignOrUpdateStatus && ( */}
-              <div className="pt-4 border-t space-y-2">
-                <p className="text-sm font-medium flex items-center gap-1">
-                  <UserPlus className="h-4 w-4" /> Assign operator
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Assign an operator from your organization to this job order. Job order must be ACTIVE, IN_PROGRESS, WAITING_PARTS, or REWORK_REQUIRED.
-                </p>
-                <div className="flex flex-wrap gap-2 items-end">
-                  <Select value={selectedOperatorId} onValueChange={setSelectedOperatorId}>
-                    <SelectTrigger className="w-[220px]">
-                      <SelectValue placeholder="Choose user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operators.map((op) => (
-                        <SelectItem key={op.id} value={String(op.id)}>
-                          {op.name ?? `Operator #${op.id}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="sm"
-                    onClick={handleAssign}
-                    disabled={assignMutation.isPending || !selectedOperatorId}
-                  >
-                    Assign
-                  </Button>
-                </div>
-              </div>
-              {/* )} */}
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <MapPin className="h-4 w-4" /> Visits
@@ -319,6 +258,16 @@ export default function ProviderJobOrderDetail() {
                               {new Date(r.createdAt).toLocaleString()}
                             </span>
                           )}
+                          {(r.ReviewedBy?.fullName ?? (r as { reviewedBy?: { fullName?: string } }).reviewedBy?.fullName) && (
+                            <span className="text-muted-foreground">
+                              Reviewed by: {r.ReviewedBy?.fullName ?? (r as { reviewedBy?: { fullName?: string } }).reviewedBy?.fullName}
+                            </span>
+                          )}
+                          {(r.reviewedAt ?? (r as { reviewedAt?: string }).reviewedAt) && (
+                            <span className="text-muted-foreground">
+                              {new Date(r.reviewedAt ?? (r as { reviewedAt?: string }).reviewedAt ?? "").toLocaleString()}
+                            </span>
+                          )}
                         </div>
                         {r.findings != null && r.findings !== "" && (
                           <p className="text-muted-foreground"><span className="font-medium text-foreground">Findings:</span> {r.findings}</p>
@@ -328,6 +277,23 @@ export default function ProviderJobOrderDetail() {
                         )}
                         {r.recommendations != null && r.recommendations !== "" && (
                           <p className="text-muted-foreground"><span className="font-medium text-foreground">Recommendations:</span> {r.recommendations}</p>
+                        )}
+                        {Array.isArray(r.checklistJson) && r.checklistJson.length > 0 && (
+                          <div className="pt-1.5">
+                            <p className="text-xs font-medium text-foreground mb-1.5">Checklist</p>
+                            <ul className="space-y-1">
+                              {r.checklistJson.map((row, idx) => (
+                                <li key={idx} className="flex items-center gap-2 text-xs">
+                                  {row.checked ? (
+                                    <Check className="h-4 w-4 text-green-600 shrink-0" />
+                                  ) : (
+                                    <span className="h-4 w-4 rounded border border-muted-foreground/50 shrink-0" />
+                                  )}
+                                  <span>{row.item ?? "—"}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                         {r.attachments != null && r.attachments.length > 0 && (
                           <div className="flex flex-wrap gap-1">
