@@ -43,6 +43,7 @@ export interface QuotationsWebListItem {
   paymentType?: string;
   hasAttachments?: boolean;
   attachments?: QuotationsWebAttachment[];
+  totalCost?: number;
   ExternalRequest?: QuotationsWebExternalRequestRef | null;
 }
 

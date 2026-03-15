@@ -42,6 +42,7 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
             <TableHead className="font-bold text-foreground">Title</TableHead>
             <TableHead className="font-bold text-foreground">Status</TableHead>
             <TableHead className="font-bold text-foreground">Version</TableHead>
+            <TableHead className="font-bold text-foreground">Total cost</TableHead>
             <TableHead className="font-bold text-foreground">Branch</TableHead>
             <TableHead className="font-bold text-foreground">Station / Org</TableHead>
             <TableHead className="font-bold text-foreground">Created</TableHead>
@@ -52,7 +53,7 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                 No offers found.
               </TableCell>
             </TableRow>
@@ -80,6 +81,9 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {item.version ?? "—"}
+                  </TableCell>
+                  <TableCell className="text-sm font-medium tabular-nums">
+                    {item.totalCost != null ? item.totalCost : "—"}
                   </TableCell>
                   <TableCell className="text-sm">{branchName}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
