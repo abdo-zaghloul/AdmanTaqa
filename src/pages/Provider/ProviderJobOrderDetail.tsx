@@ -3,11 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, CheckCircle, AlertCircle, UserPlus, RefreshCw, MapPin, FileText, Paperclip, Check } from "lucide-react";
+import { ChevronLeft,   AlertCircle, UserPlus, MapPin, FileText, Paperclip, Check } from "lucide-react";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/utils";
 import useProviderJobOrderById from "@/hooks/Provider/useProviderJobOrderById";
-import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJobOrderStatus";
+// import useUpdateProviderJobOrderStatus from "@/hooks/Provider/useUpdateProviderJobOrderStatus";
 import useSubmitJobOrderForCompletion from "@/hooks/Provider/useSubmitJobOrderForCompletion";
 import useUploadProviderJobOrderAttachment from "@/hooks/Provider/useUploadProviderJobOrderAttachment";
 import useProviderJobOrderReports from "@/hooks/Provider/useProviderJobOrderReports";
@@ -16,7 +16,7 @@ import type { ProviderJobOrderAssignment, ProviderJobOrderVisit } from "@/types/
 export default function ProviderJobOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: order, isLoading } = useProviderJobOrderById(id ?? null);
-  const statusMutation = useUpdateProviderJobOrderStatus();
+  // const statusMutation = useUpdateProviderJobOrderStatus();
   const submitCompletionMutation = useSubmitJobOrderForCompletion();
   const uploadAttachmentMutation = useUploadProviderJobOrderAttachment();
   const attachmentFileRef = useRef<HTMLInputElement>(null);
@@ -62,16 +62,16 @@ export default function ProviderJobOrderDetail() {
     !isUnderReview;
   const showSubmitForReviewSection = canSubmitForReview || isUnderReview;
 
-  const handleMarkCompleted = () => {
-    if (!id) return;
-    statusMutation.mutate(
-      { jobOrderId: id, body: { status: "COMPLETED" } },
-      {
-        onSuccess: () => toast.success("Status updated to Completed."),
-        onError: (e) => toast.error(getApiErrorMessage(e, "Update failed.")),
-      }
-    );
-  };
+  // const handleMarkCompleted = () => {
+  //   if (!id) return;
+  //   statusMutation.mutate(
+  //     { jobOrderId: id, body: { status: "COMPLETED" } },
+  //     {
+  //       onSuccess: () => toast.success("Status updated to Completed."),
+  //       onError: (e) => toast.error(getApiErrorMessage(e, "Update failed.")),
+  //     }
+  //   );
+  // };
 
   const handleSubmitForReview = () => {
     if (!id) return;

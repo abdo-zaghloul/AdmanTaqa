@@ -31,6 +31,20 @@ function paymentTriggerLabel(trigger: string | undefined): string {
   return map[trigger] ?? trigger;
 }
 
+/** Resolve pricing details from quote: either pricingDetails (flattened API) or latest ProviderQuoteRevision.pricingJson. */
+function getQuotePricingDetails(q: {
+  pricingDetails?: Record<string, unknown>;
+  ProviderQuoteRevisions?: Array<{ pricingJson?: Record<string, unknown> }>;
+}): Record<string, unknown> | undefined {
+  if (q.pricingDetails && Object.keys(q.pricingDetails).length > 0) return q.pricingDetails;
+  const revisions = q.ProviderQuoteRevisions;
+  if (Array.isArray(revisions) && revisions.length > 0) {
+    const latest = revisions.slice().sort((a, b) => ((b as { version?: number }).version ?? 0) - ((a as { version?: number }).version ?? 0))[0];
+    if (latest?.pricingJson && Object.keys(latest.pricingJson).length > 0) return latest.pricingJson;
+  }
+  return undefined;
+}
+
 export default function ProviderRfqDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: rfq, isLoading } = useProviderRfqById(id ?? null);
@@ -182,11 +196,31 @@ export default function ProviderRfqDetail() {
                     <div className="pt-4 border-t">
                       <p className="text-sm font-medium mb-2">Your quotes</p>
                       <ul className="space-y-2">
-                        {quotes.map((q: { id: number; status?: string; amount?: number; validUntil?: string; paymentType?: string; pricingDetails?: { amount?: number; currency?: string } }) => {
+                        {quotes.map((q: {
+                          id: number;
+                          status?: string;
+                          amount?: number;
+                          validUntil?: string;
+                          paymentType?: string;
+                          pricingDetails?: {
+                            amount?: number;
+                            currency?: string;
+                            notes?: string;
+                            timeline?: string;
+                            warranty?: string;
+                            laborCost?: number;
+                            scopeOfWork?: string;
+                            materialCost?: number;
+                            technicalProposal?: string;
+                            [key: string]: unknown;
+                          };
+                        }) => {
                           const quotePaymentTerms = getQuotePaymentTerms(q as Parameters<typeof getQuotePaymentTerms>[0]);
                           const paymentType = q.paymentType ?? (quotePaymentTerms.length > 0 ? "INSTALLMENTS" : undefined);
-                          const amount = q.pricingDetails?.amount ?? q.amount;
-                          const currency = q.pricingDetails?.currency;
+                          const pd = getQuotePricingDetails(q as Parameters<typeof getQuotePricingDetails>[0]);
+                          const amount = (pd?.amount as number | undefined) ?? q.pricingDetails?.amount ?? q.amount;
+                          const currency = (pd?.currency as string | undefined) ?? q.pricingDetails?.currency;
+                          const hasPricingDetails = pd && Object.keys(pd).length > 0;
                           return (
                             <li
                               key={q.id}
@@ -206,7 +240,66 @@ export default function ProviderRfqDetail() {
                                   {q.status === "SELECTED" && <Badge variant="default">Selected</Badge>}
                                 </div>
                               </div>
-                              
+
+                              {hasPricingDetails && (
+                                <div className="mt-2 pt-2 border-t border-muted/50 space-y-2">
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <CreditCard className="h-3.5 w-3.5" />
+                                    Pricing details
+                                  </p>
+                                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                                    {pd.amount != null && (
+                                      <>
+                                        <dt className="text-muted-foreground">Amount</dt>
+                                        <dd>{String(pd.amount)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
+                                      </>
+                                    )}
+                                    {pd.laborCost != null && (
+                                      <>
+                                        <dt className="text-muted-foreground">Labor cost</dt>
+                                        <dd>{String(pd.laborCost)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
+                                      </>
+                                    )}
+                                    {pd.materialCost != null && (
+                                      <>
+                                        <dt className="text-muted-foreground">Material cost</dt>
+                                        <dd>{String(pd.materialCost)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
+                                      </>
+                                    )}
+                                    {pd.timeline != null && pd.timeline !== "" && (
+                                      <>
+                                        <dt className="text-muted-foreground">Timeline</dt>
+                                        <dd>{String(pd.timeline)}</dd>
+                                      </>
+                                    )}
+                                    {pd.warranty != null && pd.warranty !== "" && (
+                                      <>
+                                        <dt className="text-muted-foreground">Warranty</dt>
+                                        <dd>{String(pd.warranty)}</dd>
+                                      </>
+                                    )}
+                                    {pd.scopeOfWork != null && pd.scopeOfWork !== "" && (
+                                      <>
+                                        <dt className="text-muted-foreground">Scope of work</dt>
+                                        <dd>{String(pd.scopeOfWork)}</dd>
+                                      </>
+                                    )}
+                                    {pd.technicalProposal != null && pd.technicalProposal !== "" && (
+                                      <>
+                                        <dt className="text-muted-foreground">Technical proposal</dt>
+                                        <dd>{String(pd.technicalProposal)}</dd>
+                                      </>
+                                    )}
+                                    {pd.notes != null && pd.notes !== "" && (
+                                      <>
+                                        <dt className="text-muted-foreground sm:col-span-1">Notes</dt>
+                                        <dd className="sm:col-span-1">{String(pd.notes)}</dd>
+                                      </>
+                                    )}
+                                  </dl>
+                                </div>
+                              )}
+
                               {quotePaymentTerms.length > 0 && (
                                 <div className="w-full mt-1 pt-2 border-t border-muted/50 space-y-2">
                                   <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
