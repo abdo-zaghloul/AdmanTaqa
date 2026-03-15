@@ -39,6 +39,7 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
       <Table>
         <TableHeader className="bg-muted/30">
           <TableRow className="hover:bg-transparent">
+            <TableHead className="font-bold text-foreground">Title</TableHead>
             <TableHead className="font-bold text-foreground">Status</TableHead>
             <TableHead className="font-bold text-foreground">Version</TableHead>
             <TableHead className="font-bold text-foreground">Branch</TableHead>
@@ -51,7 +52,7 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
         <TableBody>
           {items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 No offers found.
               </TableCell>
             </TableRow>
@@ -59,6 +60,8 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
             items.map((item) => {
               const branch = item.ExternalRequest?.Branch;
               const org = item.ExternalRequest?.Organization;
+              const formData = item.ExternalRequest?.formData as { title?: string } | undefined;
+              const title = formData?.title ?? "—";
               const branchName = branch?.nameEn ?? branch?.nameAr ?? "—";
               const stationName = org?.name ?? "—";
               const created = item.createdAt
@@ -69,6 +72,9 @@ export default function TableQuotationsWeb({ items }: TableQuotationsWebProps) {
                   key={item.id}
                   className="hover:bg-muted/20 transition-all border-b last:border-0 border-muted/20"
                 >
+                  <TableCell className="font-medium">
+                    {title}
+                  </TableCell>
                   <TableCell>
                     {item.status ? getStatusBadge(item.status) : "—"}
                   </TableCell>

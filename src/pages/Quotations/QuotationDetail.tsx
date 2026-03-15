@@ -43,6 +43,25 @@ export default function QuotationDetail() {
   const attachments = quote.attachments ?? [];
   const paymentTerms = quote.QuotePaymentTerms ?? [];
   const revisions = quote.ProviderQuoteRevisions ?? [];
+  const formData = ext?.formData as
+    | { title?: string; priority?: string; description?: string; attachments?: unknown[] }
+    | undefined;
+  const latestRevision = revisions.length > 0
+    ? revisions.slice().sort((a, b) => (b.version ?? 0) - (a.version ?? 0))[0]
+    : null;
+  const pricingJson = latestRevision?.pricingJson as
+    | {
+        notes?: string;
+        amount?: number;
+        currency?: string;
+        timeline?: string;
+        warranty?: string;
+        laborCost?: number;
+        scopeOfWork?: string;
+        materialCost?: number;
+        technicalProposal?: string;
+      }
+    | undefined;
 
   return (
     <div className="p-4 md:p-8 space-y-6">
@@ -94,6 +113,98 @@ export default function QuotationDetail() {
                 {area?.name && <p>Area: {area.name}</p>}
                 {city?.name && <p>City: {city.name}</p>}
               </div>
+            </div>
+          )}
+
+          {formData && (
+            <div className="space-y-3 pt-2 border-t">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Request details (formData)
+              </h3>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {formData.title != null && formData.title !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Title</dt>
+                    <dd>{formData.title}</dd>
+                  </>
+                )}
+                {formData.priority != null && formData.priority !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Priority</dt>
+                    <dd>{formData.priority}</dd>
+                  </>
+                )}
+                {formData.description != null && formData.description !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium sm:col-span-1">Description</dt>
+                    <dd className="sm:col-span-1">{formData.description}</dd>
+                  </>
+                )}
+                {Array.isArray(formData.attachments) && formData.attachments.length > 0 && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Attachments</dt>
+                    <dd>{formData.attachments.length} file(s)</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          )}
+
+          {pricingJson && (
+            <div className="space-y-3 pt-2 border-t">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <CreditCard className="h-4 w-4" /> Pricing details
+              </h3>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {pricingJson.amount != null && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Amount</dt>
+                    <dd>{pricingJson.amount}{pricingJson.currency ? ` ${pricingJson.currency}` : ""}</dd>
+                  </>
+                )}
+                {pricingJson.laborCost != null && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Labor cost</dt>
+                    <dd>{pricingJson.laborCost}{pricingJson.currency ? ` ${pricingJson.currency}` : ""}</dd>
+                  </>
+                )}
+                {pricingJson.materialCost != null && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Material cost</dt>
+                    <dd>{pricingJson.materialCost}{pricingJson.currency ? ` ${pricingJson.currency}` : ""}</dd>
+                  </>
+                )}
+                {pricingJson.timeline != null && pricingJson.timeline !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Timeline</dt>
+                    <dd>{pricingJson.timeline}</dd>
+                  </>
+                )}
+                {pricingJson.warranty != null && pricingJson.warranty !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Warranty</dt>
+                    <dd>{pricingJson.warranty}</dd>
+                  </>
+                )}
+                {pricingJson.scopeOfWork != null && pricingJson.scopeOfWork !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Scope of work</dt>
+                    <dd>{pricingJson.scopeOfWork}</dd>
+                  </>
+                )}
+                {pricingJson.technicalProposal != null && pricingJson.technicalProposal !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium">Technical proposal</dt>
+                    <dd>{pricingJson.technicalProposal}</dd>
+                  </>
+                )}
+                {pricingJson.notes != null && pricingJson.notes !== "" && (
+                  <>
+                    <dt className="text-muted-foreground font-medium sm:col-span-1">Notes</dt>
+                    <dd className="sm:col-span-1">{pricingJson.notes}</dd>
+                  </>
+                )}
+              </dl>
             </div>
           )}
 
