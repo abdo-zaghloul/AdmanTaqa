@@ -119,7 +119,7 @@ export default function QuotationDetail() {
           {formData && (
             <div className="space-y-3 pt-2 border-t">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4" /> Request details (formData)
+                <FileText className="h-4 w-4" /> Request details
               </h3>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 {formData.title != null && formData.title !== "" && (
