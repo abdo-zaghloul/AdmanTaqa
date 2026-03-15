@@ -139,6 +139,13 @@ export interface ProviderRfqDetail extends ProviderRfqItem {
   ProviderQuotes?: ProviderQuoteItem[];
 }
 
+/** Attachment on a payment term (from quotePaymentTerms[].attachments). */
+export interface QuotePaymentTermAttachment {
+  id?: number;
+  fileName?: string;
+  fileUrl?: string;
+}
+
 /** Single payment term from API (QuotePaymentTerms[] on a quote). Percent + trigger define when this installment is due. */
 export interface QuotePaymentTerm {
   id?: number;
@@ -149,6 +156,8 @@ export interface QuotePaymentTerm {
   note?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  /** Attachments for this installment (from quotes[].quotePaymentTerms[].attachments). */
+  attachments?: QuotePaymentTermAttachment[];
 }
 
 export interface ProviderQuoteItem {

@@ -48,7 +48,7 @@ function getQuotePricingDetails(q: {
 export default function ProviderRfqDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: rfq, isLoading } = useProviderRfqById(id ?? null);
-  const quotes = rfq?.ProviderQuotes ?? rfq?.quotes ?? [];
+  const quotes = rfq?.quotes ?? rfq?.ProviderQuotes ?? [];
   const selectedQuote = quotes.find((q: { status?: string }) => q.status === "SELECTED");
   const externalJobOrder = selectedQuote?.ExternalJobOrder ?? (selectedQuote as { ExternalJobOrder?: { id?: number; PaymentRecord?: { status?: string; receiptFileUrl?: string | null } } | null })?.ExternalJobOrder ?? null;
 
@@ -190,13 +190,56 @@ export default function ProviderRfqDetail() {
                 </div>
               )}
 
-              {rfq.status !== "AWAITING_PAYMENT" && (
-                <>
-                  {quotes.length > 0 && (
-                    <div className="pt-4 border-t">
-                      <p className="text-sm font-medium mb-2">Your quotes</p>
-                      <ul className="space-y-2">
-                        {quotes.map((q: {
+              <div className="pt-4 border-t">
+                <p className="text-sm font-medium mb-2">Your quotes</p>
+                {quotes.length === 0 ? (
+                  <div className="rounded border border-muted/50 px-3 py-4 text-sm text-muted-foreground space-y-4">
+                    <p>No quotes yet.</p>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          Pricing details
+                        </p>
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                          <><dt className="text-muted-foreground">Amount</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Labor cost</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Material cost</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Timeline</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Warranty</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Scope of work</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground">Technical proposal</dt><dd>—</dd></>
+                          <><dt className="text-muted-foreground sm:col-span-1">Notes</dt><dd className="sm:col-span-1">—</dd></>
+                        </dl>
+                      </div>
+                      <div>
+                        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-2">
+                          <CreditCard className="h-3.5 w-3.5" />
+                          Payment terms (installments)
+                        </p>
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-muted/50 hover:bg-transparent">
+                              <TableHead className="text-xs font-medium">#</TableHead>
+                              <TableHead className="text-xs font-medium">Percent</TableHead>
+                              <TableHead className="text-xs font-medium">When due</TableHead>
+                              <TableHead className="text-xs font-medium">Attachments</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow className="border-muted/50">
+                              <TableCell colSpan={4} className="text-xs py-3 text-center text-muted-foreground">
+                                No payment terms
+                              </TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {quotes.map((q: {
                           id: number;
                           status?: string;
                           amount?: number;
@@ -257,49 +300,83 @@ export default function ProviderRfqDetail() {
                                 </dl>
                               </div>
 
-                              {quotePaymentTerms.length > 0 && (
-                                <div className="w-full mt-1 pt-2 border-t border-muted/50 space-y-2">
-                                  <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                                    <CreditCard className="h-3.5 w-3.5" />
-                                    Payment terms (installments)
-                                  </p>
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow className="border-muted/50 hover:bg-transparent">
-                                        <TableHead className="text-xs font-medium">#</TableHead>
-                                        <TableHead className="text-xs font-medium">Percent</TableHead>
-                                        <TableHead className="text-xs font-medium">When due</TableHead>
+                              <div className="w-full mt-1 pt-2 border-t border-muted/50 space-y-2">
+                                <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                                  <CreditCard className="h-3.5 w-3.5" />
+                                  Payment terms (installments)
+                                </p>
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="border-muted/50 hover:bg-transparent">
+                                      <TableHead className="text-xs font-medium">#</TableHead>
+                                      <TableHead className="text-xs font-medium">Percent</TableHead>
+                                      <TableHead className="text-xs font-medium">When due</TableHead>
+                                      <TableHead className="text-xs font-medium">Attachments</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {quotePaymentTerms.length === 0 ? (
+                                      <TableRow className="border-muted/50">
+                                        <TableCell colSpan={4} className="text-xs py-3 text-center text-muted-foreground">
+                                          No payment terms
+                                        </TableCell>
                                       </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {quotePaymentTerms
+                                    ) : (
+                                      quotePaymentTerms
                                         .slice()
                                         .sort((a, b) => (a.sequence ?? 0) - (b.sequence ?? 0))
-                                        .map((term) => (
-                                          <TableRow key={term.id ?? term.sequence ?? 0} className="border-muted/50">
-                                            <TableCell className="text-xs py-1">{term.sequence ?? "—"}</TableCell>
-                                            <TableCell className="text-xs py-1">{term.percent ?? "—"}%</TableCell>
-                                            <TableCell className="text-xs py-1">{paymentTriggerLabel(term.trigger)}</TableCell>
-                                          </TableRow>
-                                        ))}
-                                    </TableBody>
-                                  </Table>
+                                        .map((term) => {
+                                          const termAttachments = Array.isArray(term.attachments) ? term.attachments : [];
+                                          return (
+                                            <TableRow key={term.id ?? term.sequence ?? 0} className="border-muted/50">
+                                              <TableCell className="text-xs py-1">{term.sequence ?? "—"}</TableCell>
+                                              <TableCell className="text-xs py-1">{term.percent ?? "—"}%</TableCell>
+                                              <TableCell className="text-xs py-1">{paymentTriggerLabel(term.trigger)}</TableCell>
+                                              <TableCell className="text-xs py-1">
+                                                {termAttachments.length > 0 ? (
+                                                  <ul className="space-y-0.5">
+                                                    {termAttachments.map((att) => (
+                                                      <li key={att.id ?? att.fileName}>
+                                                        {att.fileUrl ? (
+                                                          <a
+                                                            href={att.fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:underline"
+                                                          >
+                                                            {att.fileName ?? "Attachment"}
+                                                          </a>
+                                                        ) : (
+                                                          <span>{att.fileName ?? "—"}</span>
+                                                        )}
+                                                      </li>
+                                                    ))}
+                                                  </ul>
+                                                ) : (
+                                                  <span className="text-muted-foreground">—</span>
+                                                )}
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })
+                                    )}
+                                  </TableBody>
+                                </Table>
+                                {quotePaymentTerms.length > 0 && (
                                   <div className="flex gap-1.5 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
                                     <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                                     <span>
                                       Payment is made in {quotePaymentTerms.length} installment{quotePaymentTerms.length !== 1 ? "s" : ""}. The fuel station confirms &quot;payment sent&quot; for each milestone; you then confirm &quot;received&quot; (or reject with a reason). Until both confirm, the job stays in AWAITING_PAYMENT.
                                     </span>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </li>
                           );
                         })}
-                      </ul>
-                    </div>
-                  )}
-                </>
-              )}
+                  </ul>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
