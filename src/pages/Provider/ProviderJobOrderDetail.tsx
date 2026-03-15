@@ -315,7 +315,7 @@ export default function ProviderJobOrderDetail() {
                   <p className="text-xs text-muted-foreground">No maintenance reports.</p>
                 )}
               </div>
-              {canAssignOrUpdateStatus && !isCompleted && (
+              {/* {canAssignOrUpdateStatus && !isCompleted && (
               <div className="pt-4 border-t space-y-2">
                 <p className="text-sm font-medium flex items-center gap-1">
                   <RefreshCw className="h-4 w-4" /> Update status
@@ -329,7 +329,7 @@ export default function ProviderJobOrderDetail() {
                   Completed
                 </Button>
               </div>
-              )}
+              )} */}
               {/* Submit for station review — commented out
               {!isCompleted && showSubmitForReviewSection && (
                 <div className="pt-4 border-t space-y-2">
