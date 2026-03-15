@@ -220,7 +220,6 @@ export default function ProviderRfqDetail() {
                           const pd = getQuotePricingDetails(q as Parameters<typeof getQuotePricingDetails>[0]);
                           const amount = (pd?.amount as number | undefined) ?? q.pricingDetails?.amount ?? q.amount;
                           const currency = (pd?.currency as string | undefined) ?? q.pricingDetails?.currency;
-                          const hasPricingDetails = pd && Object.keys(pd).length > 0;
                           return (
                             <li
                               key={q.id}
@@ -241,64 +240,22 @@ export default function ProviderRfqDetail() {
                                 </div>
                               </div>
 
-                              {hasPricingDetails && (
-                                <div className="mt-2 pt-2 border-t border-muted/50 space-y-2">
-                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                    <CreditCard className="h-3.5 w-3.5" />
-                                    Pricing details
-                                  </p>
-                                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                                    {pd.amount != null && (
-                                      <>
-                                        <dt className="text-muted-foreground">Amount</dt>
-                                        <dd>{String(pd.amount)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
-                                      </>
-                                    )}
-                                    {pd.laborCost != null && (
-                                      <>
-                                        <dt className="text-muted-foreground">Labor cost</dt>
-                                        <dd>{String(pd.laborCost)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
-                                      </>
-                                    )}
-                                    {pd.materialCost != null && (
-                                      <>
-                                        <dt className="text-muted-foreground">Material cost</dt>
-                                        <dd>{String(pd.materialCost)}{pd.currency ? ` ${String(pd.currency)}` : ""}</dd>
-                                      </>
-                                    )}
-                                    {pd.timeline != null && pd.timeline !== "" && (
-                                      <>
-                                        <dt className="text-muted-foreground">Timeline</dt>
-                                        <dd>{String(pd.timeline)}</dd>
-                                      </>
-                                    )}
-                                    {pd.warranty != null && pd.warranty !== "" && (
-                                      <>
-                                        <dt className="text-muted-foreground">Warranty</dt>
-                                        <dd>{String(pd.warranty)}</dd>
-                                      </>
-                                    )}
-                                    {pd.scopeOfWork != null && pd.scopeOfWork !== "" && (
-                                      <>
-                                        <dt className="text-muted-foreground">Scope of work</dt>
-                                        <dd>{String(pd.scopeOfWork)}</dd>
-                                      </>
-                                    )}
-                                    {pd.technicalProposal != null && pd.technicalProposal !== "" && (
-                                      <>
-                                        <dt className="text-muted-foreground">Technical proposal</dt>
-                                        <dd>{String(pd.technicalProposal)}</dd>
-                                      </>
-                                    )}
-                                    {pd.notes != null && pd.notes !== "" && (
-                                      <>
-                                        <dt className="text-muted-foreground sm:col-span-1">Notes</dt>
-                                        <dd className="sm:col-span-1">{String(pd.notes)}</dd>
-                                      </>
-                                    )}
-                                  </dl>
-                                </div>
-                              )}
+                              <div className="mt-2 pt-2 border-t border-muted/50 space-y-2">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                  <CreditCard className="h-3.5 w-3.5" />
+                                  Pricing details
+                                </p>
+                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                                  <><dt className="text-muted-foreground">Amount</dt><dd>{pd?.amount != null ? `${String(pd.amount)}${pd.currency ? ` ${String(pd.currency)}` : ""}` : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Labor cost</dt><dd>{pd?.laborCost != null ? `${String(pd.laborCost)}${pd.currency ? ` ${String(pd.currency)}` : ""}` : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Material cost</dt><dd>{pd?.materialCost != null ? `${String(pd.materialCost)}${pd.currency ? ` ${String(pd.currency)}` : ""}` : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Timeline</dt><dd>{pd?.timeline != null && pd.timeline !== "" ? String(pd.timeline) : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Warranty</dt><dd>{pd?.warranty != null && pd.warranty !== "" ? String(pd.warranty) : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Scope of work</dt><dd>{pd?.scopeOfWork != null && pd.scopeOfWork !== "" ? String(pd.scopeOfWork) : "—"}</dd></>
+                                  <><dt className="text-muted-foreground">Technical proposal</dt><dd>{pd?.technicalProposal != null && pd.technicalProposal !== "" ? String(pd.technicalProposal) : "—"}</dd></>
+                                  <><dt className="text-muted-foreground sm:col-span-1">Notes</dt><dd className="sm:col-span-1">{pd?.notes != null && pd.notes !== "" ? String(pd.notes) : "—"}</dd></>
+                                </dl>
+                              </div>
 
                               {quotePaymentTerms.length > 0 && (
                                 <div className="w-full mt-1 pt-2 border-t border-muted/50 space-y-2">
